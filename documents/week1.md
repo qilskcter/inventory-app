@@ -33,8 +33,5 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 2. **`inventory-db-sg` (Dành cho Database Tier):**
    * Inbound: Chỉ cho phép Port `5432` (PostgreSQL) với Source là Security Group ID của `inventory-web-sg` (Không mở public IP).
    * Outbound: Mặc định.
----
-### 3. KẾT LUẬN & ĐÁNH GIÁ KẾT QUẢ ĐẠT ĐƯỢC
-* **Kết quả:** Đã hoàn thành bảng tổng hợp giới hạn AWS Learner Lab và thống nhất 100% sơ đồ phân vùng mạng VPC & Subnet với nhóm trưởng Nguyễn Đình Khanh.
-* **Thời gian thực hiện:** 3.0 giờ (20:00 - 23:00, Thứ Tư).
-* **Tuân thủ:** Hoàn toàn bám sát các ràng buộc của tài khoản AWS Learner Lab và chuẩn bị đầy đủ cơ sở cho các bước triển khai hạ tầng tiếp theo vào Thứ Năm và Thứ Sáu.
+
+
