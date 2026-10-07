@@ -85,7 +85,7 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 
 ## 4. SƠ ĐỒ KIẾN TRÚC TỔNG THỂ HỆ THỐNG (ARCHITECTURE DIAGRAM)
 
-### 4.1. Sơ đồ Trực quan Mermaid (Render trên GitHub / Markdown)
+### 4.1. Sơ đồ Trực quan Mermaid
 
 ```mermaid
 flowchart TD
@@ -107,7 +107,7 @@ flowchart TD
 
 ---
 
-### 4.2. Sơ đồ Khối Dạng Văn bản (ASCII Block Diagram)
+### 4.2. Sơ đồ Khối
 
 ```text
                        +-----------------------+
