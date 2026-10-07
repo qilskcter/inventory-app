@@ -13,14 +13,14 @@
 
 | Tiêu chí / Tài nguyên | Quy định & Giới hạn của AWS Learner Lab | Giải pháp & Ứng dụng cho dự án Inventory App |
 | :--- | :--- | :--- |
-| **Budget / Chi phí** | Cấp tối đa **$100 USD** credit cho cả học kỳ. Nếu hết budget, Lab sẽ bị khóa vĩnh viễn. | Dùng các gói cấu hình nhỏ nhất (t2.micro / db.t3.micro), bật/tắt EC2/RDS hợp lý, dọn tài nguyên không dùng. |
+| **Budget / Chi phí** | Cấp tối đa **$100 USD** credit cho cả học kỳ. Nếu hết budget, Lab sẽ bị khóa vĩnh viễn. | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
 | **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). | Nhóm thống nhất cố định 100% tài nguyên ở Region **`us-east-1`**. |
 | **Quyền hạn IAM** | • **Không có quyền** tạo IAM User, IAM Role mới, hoặc chỉnh sửa IAM Policy.<br>• Phải dùng IAM Role tạo sẵn: **`LabRole`**.<br>• EC2/Beanstalk chỉ được dùng **`LabInstanceProfile`**. | Mọi cấu hình kết nối giữa EC2/Beanstalk với RDS/S3/SNS đều tận dụng trực tiếp `LabRole` & `LabInstanceProfile`. |
 | **Quy định Tagging** | Bắt buộc phải gắn thẻ (Tags) tài nguyên theo hướng dẫn của môn học để kiểm soát chi phí và điểm danh. | Đính kèm đồng bộ 2 Tag bắt buộc cho mọi tài nguyên:<br>• `Project`: `inventory-app`<br>• `Owner`: `Khanh-Quan` |
 | **Compute (EC2 / Beanstalk)** | • Tối đa 9 EC2 instances chạy đồng thời (vCPU limits).<br>• Instance type hỗ trợ: **t2.micro**, **t3.micro**, **t2.small**, **t3.small**.<br>• EBS Volume tối đa 30GB/volume. | Triển khai Backend Web trên **t2.micro** hoặc Elastic Beanstalk (cấu hình Single Instance) để tiết kiệm chi phí. |
 | **Database (Amazon RDS)** | • Chỉ hỗ trợ các instance type: **db.t3.micro**, **db.t2.micro**.<br>• Hỗ trợ Multi-AZ nhưng tốn chi phí gấp đôi. | Sử dụng **RDS PostgreSQL** phiên bản mới nhất, cấu hình Single-AZ, instance type `db.t3.micro`, Storage 20GB gp2/gp3. |
 | **Storage (Amazon S3)** | Hỗ trợ đầy đủ chức năng S3 Standard. Không giới hạn số bucket nhưng cần đặt tên duy nhất trên toàn cầu. | Tạo bucket riêng tư lưu báo cáo: `inventory-reports-us-east-1-24110244`. |
-| **Dịch vụ Serverless / Tích hợp** | AWS Lambda, Amazon EventBridge, AWS SNS đều được hỗ trợ trong phạm vi lab. | Dùng EventBridge kích hoạt Lambda định kỳ kiểm tra tồn kho và bắn thông báo qua SNS Topic. |
+| **Hạ tầng dưới dạng Mã (IaC)** | **AWS CloudFormation** hỗ trợ đầy đủ việc tạo Stack trong Learner Lab. | Dùng CloudFormation Kịch bản YAML (`template.yaml`) để tự động hóa khởi tạo toàn bộ hạ tầng chỉ trong 1 bấm nút. |
 
 ---
 
@@ -81,6 +81,11 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 - **Thành phần chính:** EventBridge Scheduler (Bộ đặt lịch Cron).
 - **Vai trò trong dự án:** Đặt lịch tự động **08:00 AM mỗi ngày** để hệ thống tự động kiểm tra toàn bộ dữ liệu kho và phát báo cáo danh sách các mặt hàng sắp hết về cho ban quản lý.
 
+### 3.6. AWS CloudFormation (Tự động hóa Quản lý Hạ tầng bằng Mã - IaC)
+- **Tổng quan:** Dịch vụ Hạ tầng dưới dạng Mã (Infrastructure as Code - IaC) cho phép định nghĩa, triển khai và quản lý toàn bộ tài nguyên AWS tự động thông qua file cấu hình mẫu (Template dạng YAML/JSON).
+- **Thành phần chính:** CloudFormation Template (Mẫu cấu hình YAML), Stack (Tập hợp tài nguyên AWS được tạo đồng bộ).
+- **Vai trò trong dự án:** Tự động hóa quá trình dựng lại toàn bộ hạ tầng (VPC, Subnet, RDS, Elastic Beanstalk, S3, SNS, EventBridge) chỉ bằng 1 thao tác hoặc 1 câu lệnh CLI. Giúp tiết kiệm ngân sách `$100 USD` trên AWS Learner Lab bằng cách dễ dàng xóa Stack khi dừng làm việc và dựng lại Stack trong 5 phút khi tiếp tục đồ án.
+
 ---
 
 ## 4. SƠ ĐỒ KIẾN TRÚC TỔNG THỂ HỆ THỐNG (ARCHITECTURE DIAGRAM)
@@ -89,9 +94,12 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 
 ```mermaid
 flowchart TD
+    CFN["🛠️ AWS CloudFormation\n(Tự động hóa triển khai Hạ tầng IaC)"] -->|Khởi tạo & Quản lý toàn bộ Hạ tầng| Core_Services
+
     User["Người dùng / Quản lý Kho hàng"] -->|1. Truy cập Web| EB["AWS Elastic Beanstalk\n(Ứng dụng Web Flask)"]
 
     subgraph Core_Services["Các Dịch vụ Cloud AWS"]
+        EB
         RDS[("Amazon RDS\n(Cơ sở dữ liệu PostgreSQL)")]
         S3["Amazon S3\n(Lưu ảnh sản phẩm & Hóa đơn)"]
         SNS["Amazon SNS\n(Gửi Email / SMS Cảnh báo)"]
@@ -102,7 +110,7 @@ flowchart TD
     EB -->|3. Tải lên / Lấy file ảnh| S3
     EB -->|4. Phát thông báo khi hết hàng| SNS
     EventBridge -->|5. Kích hoạt báo cáo ngày| SNS
-    SNS -->|6. Gửi tin nhắn| Admin["📱 Quản lý Kho hàng"]
+    SNS -->|6. Gửi tin nhắn| Admin["Quản lý Kho hàng"]
 ```
 
 ---
@@ -110,8 +118,14 @@ flowchart TD
 ### 4.2. Sơ đồ Khối
 
 ```text
+               +-------------------------------------------------------+
+               |   AWS CloudFormation (Template YAML / IaC Automation)  |
+               | (Tự động hóa dựng & quản lý toàn bộ các dịch vụ dưới)  |
+               +---------------------------+---------------------------+
+                                           |
+                                           v
                        +-----------------------+
-                        |    Người dùng (Web)   |
+                       |    Người dùng (Web)   |
                        +-----------+-----------+
                                    |
                               (Gửi yêu cầu)
@@ -130,7 +144,7 @@ flowchart TD
                                  +------------+          ^
                                                          | (Tự động nhắc mỗi sáng)
                                                  +-------+--------+
-                                                 |    EventBridge |
+                                                 |   EventBridge  |
                                                  | (Đồng Hồ Hẹn)  |
                                                  +----------------+
 ```
@@ -141,9 +155,9 @@ flowchart TD
 
 | Dịch vụ AWS | Chức năng trong ứng dụng | Ý nghĩa đơn giản |
 | :--- | :--- | :--- |
-| **Elastic Beanstalk** | Hosting ứng dụng web Flask | Bộ não vận hành trang web quản lý kho. |
+| **CloudFormation** | Tự động hóa hạ tầng (IaC) | Bản thiết kế tự động dựng và xóa toàn bộ hệ thống bằng 1 click. |
+| **Elastic Beanstalk** | Hosting ứng dụng web Flask | Bộ nào vận hành trang web quản lý kho. |
 | **Amazon RDS** | Cơ sở dữ liệu PostgreSQL | Nơi lưu danh sách hàng hóa và lịch sử nhập/xuất. |
 | **Amazon S3** | Lưu trữ tệp tin | Nơi cất giữ hình ảnh sản phẩm và tệp hóa đơn PDF. |
 | **Amazon SNS** | Gửi thông báo tự động | Gửi Email / SMS thông báo khi hàng hóa sắp hết. |
 | **Amazon EventBridge**| Lập lịch tự động | Đặt lịch quét kho tự động vào 08:00 sáng mỗi ngày. |
-
