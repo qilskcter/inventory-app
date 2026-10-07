@@ -1,7 +1,5 @@
 # BÁO CÁO - TUẦN 1
----
 ## 1. BẢNG TỔNG HỢP GIỚI HẠN & QUY ĐỊNH HẠ TẦNG TRÊN AWS LEARNER LAB
-
 | Tiêu chí / Tài nguyên | Quy định & Giới hạn của AWS Learner Lab | Giải pháp & Ứng dụng cho dự án Inventory App |
 | :--- | :--- | :--- |
 | **Budget / Chi phí** | Cấp tối đa **$100 USD** credit cho cả học kỳ. Nếu hết budget, Lab sẽ bị khóa vĩnh viễn. | Dùng các gói cấu hình nhỏ nhất (t2.micro / db.t3.micro), bật/tắt EC2/RDS hợp lý, dọn tài nguyên không dùng. |
