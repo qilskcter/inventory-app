@@ -12,6 +12,7 @@
 | **Dịch vụ Serverless / Tích hợp** | AWS Lambda, Amazon EventBridge, AWS SNS đều được hỗ trợ trong phạm vi lab. | Dùng EventBridge kích hoạt Lambda định kỳ kiểm tra tồn kho và bắn thông báo qua SNS Topic. |
 ---
 ### 2. THỐNG NHẤT SƠ ĐỒ PHÂN VÙNG MẠNG VỚI SV1 (VPC & SUBNETS ARCHITECTURE)
+---
 Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã thống nhất mô hình mạng phân tầng (2-Tier Architecture) bảo mật cao như sau:
 #### A. Quy hoạch địa chỉ IP (CIDR Block):
 * **VPC CIDR:** `10.0.0.0/16` (Tên: `inventory-vpc`)
