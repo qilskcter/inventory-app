@@ -41,7 +41,7 @@ Theo kế hoạch 4 tuần của đồ án, Tuần 1 tập trung vào các công
 
 | Ngày | Thời gian | Nội dung công việc chi tiết | Công cụ / AI hỗ trợ | Số giờ | Kết quả / Minh chứng đạt được |
 | :--- | :---: | :--- | :--- | :---: | :--- |
-| **Thứ Tư** | 09:00 - 12:00 | • Tìm hiểu các quy định & giới hạn của AWS Learner Lab (Region `us-east-1`/`us-west-2`, quy định dùng `LabRole`, giới hạn EC2/EBS, vCPU).<br>• Thống nhất với SV1 về sơ đồ phân vùng mạng (VPC & Subnets). | AI hỗ trợ (ChatGPT) tóm tắt các điểm cần lưu ý về hạn mức tài nguyên AWS Learner Lab | 3.0h | Bảng tổng hợp các giới hạn hạ tầng & danh sách dịch vụ AWS tuân thủ quy định. |
+| **Thứ Tư** | 20:00 - 23:00 | • Tìm hiểu các quy định & giới hạn của AWS Learner Lab (Region `us-east-1`/`us-west-2`, quy định dùng `LabRole`, giới hạn EC2/EBS, vCPU).<br>• Thống nhất với SV1 về sơ đồ phân vùng mạng (VPC & Subnets). | AI hỗ trợ (ChatGPT) tóm tắt các điểm cần lưu ý về hạn mức tài nguyên AWS Learner Lab | 3.0h | Bảng tổng hợp các giới hạn hạ tầng & danh sách dịch vụ AWS tuân thủ quy định. |
 | **Thứ Năm** | 14:00 - 17:00 | • Quy hoạch địa chỉ IP (CIDR block) cho VPC (`10.0.0.0/16`).<br>• Thiết kế các Subnet (Public Subnet cho Web/App Tier, Private Subnet cho RDS Database Tier).<br>• Thiết kế quy tắc Security Groups (SG): Web SG (allow HTTP 80/5000), DB SG (allow PostgreSQL 5432 từ Web SG). | AI hỗ trợ (Amazon Q) kiểm tra tính hợp lệ của quy tắc Security Group | 3.0h | Tài liệu thiết kế chi tiết hạ tầng mạng VPC và Security Groups. |
 | **Thứ Sáu** | 08:30 - 11:30 | • Triển khai thực tế trên AWS Learner Lab Console: Tạo VPC `inventory-vpc`, Internet Gateway, Route Tables.<br>• Gắn Tag chuẩn cho tất cả tài nguyên vừa tạo: `Project=inventory-app`, `Owner=Khanh-Quan`. | Thao tác trên AWS Management Console (`us-east-1`) | 3.0h | Hạ tầng VPC & Subnet sẵn sàng trên AWS với đầy đủ Tagging bắt buộc. |
 | **Thứ Bảy** | 14:00 - 16:30 | • Cấu hình Security Groups thử nghiệm kết nối giao tiếp giữa Web Tier và Database Tier.<br>• Kiểm tra quyền gắn IAM Instance Profile (`LabInstanceProfile`) phục vụ việc đính kèm quyền cho EC2/Beanstalk sau này. | AI hỗ trợ giải thích các mã lỗi kết nối VPC / Security Group | 2.5h | Bảng Security Group được khởi tạo chính xác, cho phép truy cập theo đúng kịch bản bảo mật. |
@@ -54,13 +54,11 @@ Theo kế hoạch 4 tuần của đồ án, Tuần 1 tập trung vào các công
 ## IV. BÁO CÁO SỬ DỤNG TRỢ LÝ AI (AI ASSISTANCE REPORT)
 Nhóm có sử dụng các công cụ LLM/AI (**ChatGPT**, **Claude**, **Amazon Q Developer**, **Antigravity**) trong quá trình nghiên cứu và thực hiện Tuần 1. Chi tiết như sau:
 
-1. **Phần việc có AI hỗ trợ:**
+**Phần việc có AI hỗ trợ:**
    * **Tham khảo & Thiết kế:** Gợi ý sơ đồ kiến trúc đám mây chuẩn AWS cho bài toán quản lý kho kết hợp EventBridge & Lambda & SNS.
    * **Sinh mã nguồn (Code Generation):** Hỗ trợ sinh khung code DDL SQL cho PostgreSQL local và mã nguồn boilerplate Flask API.
    * **Gỡ lỗi & Cấu hình:** Hỗ trợ kiểm tra cú pháp Security Group CIDR và rà soát lỗi kết nối PostgreSQL.
-2. **Cam kết của sinh viên:**
-   * Tất cả các tài nguyên hạ tầng (S3, VPC, Security Group) đã được triển khai, thử nghiệm và chạy thực tế trên môi trường **AWS Learner Lab** (`us-east-1`).
-   * Các sinh viên nắm vững, hiểu rõ và có khả năng giải thích chi tiết toàn bộ cấu hình hạ tầng, sơ đồ CSDL và mã nguồn Python/Flask khi tham gia vấn đáp với Giảng viên.
+
 
 ---
 
