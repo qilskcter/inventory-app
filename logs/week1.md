@@ -51,7 +51,7 @@ Theo kế hoạch 4 tuần của đồ án, Tuần 1 tập trung vào các công
 
 ---
 
-## 🤖 IV. BÁO CÁO SỬ DỤNG TRỢ LÝ AI (AI ASSISTANCE REPORT)
+## IV. BÁO CÁO SỬ DỤNG TRỢ LÝ AI (AI ASSISTANCE REPORT)
 Nhóm có sử dụng các công cụ LLM/AI (**ChatGPT**, **Claude**, **Amazon Q Developer**, **Antigravity**) trong quá trình nghiên cứu và thực hiện Tuần 1. Chi tiết như sau:
 
 1. **Phần việc có AI hỗ trợ:**
@@ -64,7 +64,7 @@ Nhóm có sử dụng các công cụ LLM/AI (**ChatGPT**, **Claude**, **Amazon 
 
 ---
 
-## 🔒 V. TUÂN THỦ QUY ĐỊNH AWS LEARNER LAB
+## V. TUÂN THỦ QUY ĐỊNH AWS LEARNER LAB
 * **Region sử dụng:** `us-east-1` (N. Virginia).
 * **Quyền IAM:** Sử dụng `LabRole` và `LabInstanceProfile` có sẵn của tài khoản Learner Lab (Không tạo mới IAM User/Role).
 * **Tagging:** 100% tài nguyên đã tạo (S3 Bucket, VPC, Subnets, Security Groups) đều được đính kèm Tag:
@@ -74,7 +74,7 @@ Nhóm có sử dụng các công cụ LLM/AI (**ChatGPT**, **Claude**, **Amazon 
 
 ---
 
-## 📊 VI. ĐÁNH GIÁ KẾT QUẢ TUẦN 1 VÀ KẾ HOẠCH TUẦN 2
+## VI. ĐÁNH GIÁ KẾT QUẢ TUẦN 1 VÀ KẾ HOẠCH TUẦN 2
 
 ### 1. Đánh giá Tuần 1:
 * **Mức độ hoàn thành:** **100%** kế hoạch Tuần 1.
