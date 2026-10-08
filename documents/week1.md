@@ -164,10 +164,10 @@ flowchart TD
 
 ---
 
-## 5. THIẾT KẾ CHI TIẾT HẠ TẦNG MẠNG VPC VÀ SECURITY GROUPS (CÔNG VIỆC THỨ NĂM - VÕ MINH QUÂN)
+## 5. THIẾT KẾ CHI TIẾT HẠ TẦNG MẠNG VPC VÀ SECURITY GROUPS 
 
 ### 5.1. Mục tiêu & Yêu cầu Kỹ thuật
-Dựa trên mục tiêu xây dựng hạ tầng mạng an toàn, có khả năng mở rộng và tiết kiệm chi phí trên **AWS Learner Lab** (`us-east-1`), công việc thiết kế mạng chi tiết vào Thứ Năm do sinh viên **Võ Minh Quân (MSSV: 24110312)** thực hiện tập trung vào việc hiện thực hóa mô hình mạng phân tầng (2-Tier Architecture):
+
 - **Phân tách ranh giới an toàn (Network Isolation):** Tầng Web/App giao tiếp với Internet được đặt ở Public Subnets; Tầng Database lưu trữ dữ liệu nhạy cảm được cô lập tuyệt đối ở Private Subnets.
 - **Tuân thủ quy chuẩn Amazon RDS:** Cơ sở dữ liệu RDS PostgreSQL yêu cầu một DB Subnet Group chứa tối thiểu 2 Availability Zones (AZ) khác nhau để đảm bảo dự phòng và tương thích cấu hình AWS.
 - **Nguyên tắc đặc quyền tối thiểu (Least Privilege):** Thiết kế Security Group kiểm soát chặt chẽ từng cổng giao tiếp (port), hạn chế tối đa rủi ro quét cổng hoặc tấn công trái phép.
@@ -315,14 +315,3 @@ flowchart TB
 | **Nguồn lạ trong VPC ➔ DB** | Dải IP khác / SG khác | `inventory-db-sg` | TCP `5432` | **CHẶN** (DENY) | `inventory-db-sg` chỉ cấp quyền cho nguồn có nhãn `inventory-web-sg`. |
 | **Web Tier ➔ AWS Services** | `inventory-web-sg` | S3, SNS, EventBridge | TCP `443` (HTTPS) | **Cho phép** (ALLOW) | Tải ảnh lên S3 Bucket và gửi email cảnh báo tồn kho qua SNS Topic. |
 
----
-
-### 5.7. Báo cáo Rà soát AI & Tuân thủ Quy định Gắn thẻ (Tagging)
-
-* **Hỗ trợ từ Trợ lý AI (Amazon Q Developer):**
-  * Đã kiểm tra tính hợp lệ của quy tắc Security Group Chaining, xác nhận việc liên kết `Source = inventory-web-sg` giúp loại bỏ hoàn toàn việc phải cập nhật lại IP động của EC2/Beanstalk mỗi khi khởi động lại máy chủ.
-  * Xác nhận thiết kế chia subnet `/24` hoàn toàn không bị chồng lấn (No overlapping CIDRs) và đáp ứng đúng quy định tối thiểu 2 AZs cho RDS PostgreSQL trên AWS.
-* **Quy chuẩn Tagging bắt buộc được chuẩn hóa cho toàn bộ tài nguyên mạng:**
-  * Tag `Project`: `inventory-app`
-  * Tag `Owner`: `Khanh-Quan`
-* **Mức độ hoàn thành:** Bản thiết kế chi tiết đã hoàn tất vào Thứ Năm (14:00 - 17:00, 3.0h) và sẵn sàng 100% để tiến hành khởi tạo thực tế trên AWS Management Console vào Thứ Sáu.
