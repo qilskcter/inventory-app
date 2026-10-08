@@ -25,10 +25,12 @@
 inventory-app/
 │
 ├── app.py                  # Mã nguồn chính của ứng dụng Flask & kết nối CSDL
+├── init_db.py              # Script Python tự động đọc database/schema.sql và khởi tạo/cập nhật CSDL
+├── database/               # Thư mục chứa cấu trúc CSDL
+│   └── schema.sql          # Script SQL DDL chứa cấu trúc 2 bảng products & transactions
 ├── requirements.txt        # Danh sách các thư viện Python phụ thuộc
 └── templates/              # Thư mục chứa giao diện HTML
     └── index.html          # Giao diện trang chủ quản lý kho & bảng dữ liệu
-
 ```
 
 ---
@@ -38,13 +40,13 @@ inventory-app/
 ### 1. Yêu cầu hệ thống
 
 * Python 3.x đã được cài đặt trên máy tính.
-* PostgreSQL đã được cài đặt và khởi động.
+* PostgreSQL đã được cài đặt và khởi động (hoặc có thông tin kết nối AWS RDS PostgreSQL).
 
 ### 2. Các bước thực hiện
 
 1. **Clone repository này về máy:**
 ```bash
-git clone [https://github.com/TEN_USER_CUA_BAN/inventory-app.git](https://github.com/TEN_USER_CUA_BAN/inventory-app.git)
+git clone https://github.com/TEN_USER_CUA_BAN/inventory-app.git
 cd inventory-app
 ```
 
@@ -67,7 +69,7 @@ pip install -r requirements.txt
 ```
 
 4. **Cấu hình kết nối cơ sở dữ liệu:**
-Mở file `app.py` và điều chỉnh thông tin kết nối PostgreSQL ở phần đầu file cho khớp với cấu hình máy của bạn:
+Mở file `init_db.py` (hoặc đặt các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`) cho khớp với cấu hình PostgreSQL máy bạn:
 ```python
 DB_HOST = "localhost"
 DB_NAME = "inventory_db"   # Đảm bảo bạn đã tạo database này trên PostgreSQL
@@ -76,12 +78,28 @@ DB_PASS = "123456"         # Mật khẩu database của bạn
 DB_PORT = "5432"
 ```
 
-5. **Chạy ứng dụng:**
+5. **Khởi tạo / Cập nhật Cơ sở dữ liệu (Database Setup & Update):**
+
+Bạn có thể chọn 1 trong 2 cách sau để khởi tạo hoặc cập nhật cấu trúc CSDL từ `database/schema.sql`:
+
+* **Cách 1: Dùng script Python (Khuyên dùng):**
+```bash
+python init_db.py
+```
+
+* **Cách 2: Chạy trực tiếp qua câu lệnh `psql`:**
+```bash
+psql -h localhost -U postgres -d inventory_db -f database/schema.sql
+```
+
+*(Lưu ý: Khi chạy ứng dụng `python app.py`, hệ thống cũng sẽ tự động gọi hàm khởi tạo CSDL từ `init_db.py` nếu các bảng chưa tồn tại).*
+
+6. **Chạy ứng dụng:**
 ```bash
 python app.py
 ```
 
-6. **Trải nghiệm:**
+7. **Trải nghiệm:**
 Mở trình duyệt web và truy cập vào địa chỉ: `http://127.0.0.1:5000`
 
 ---

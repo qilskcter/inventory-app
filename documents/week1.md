@@ -94,7 +94,7 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 
 ```mermaid
 flowchart TD
-    CFN["🛠️ AWS CloudFormation\n(Tự động hóa triển khai Hạ tầng IaC)"] -->|Khởi tạo & Quản lý toàn bộ Hạ tầng| Core_Services
+    CFN["AWS CloudFormation\n(Tự động hóa triển khai Hạ tầng IaC)"] -->|Khởi tạo & Quản lý toàn bộ Hạ tầng| Core_Services
 
     User["Người dùng / Quản lý Kho hàng"] -->|1. Truy cập Web| EB["AWS Elastic Beanstalk\n(Ứng dụng Web Flask)"]
 

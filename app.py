@@ -5,53 +5,7 @@ import psycopg2.extras
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-# Cấu hình kết nối PostgreSQL
-DB_HOST = "localhost"
-DB_NAME = "inventory_db"
-DB_USER = "postgres"
-DB_PASS = "123456"
-DB_PORT = "5432"
-
-def get_db_connection():
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASS,
-        port=DB_PORT
-    )
-    return conn
-
-# Khởi tạo Database và Bảng nếu chưa có
-def init_db():
-    try:
-        conn = get_db_connection()
-        print("KẾT NỐI POSTGRESQL THÀNH CÔNG!")
-        cur = conn.cursor()
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS products (
-                id SERIAL PRIMARY KEY,
-                sku VARCHAR(50) UNIQUE NOT NULL,
-                name VARCHAR(100) NOT NULL,
-                quantity INT NOT NULL DEFAULT 0,
-                min_threshold INT NOT NULL DEFAULT 5
-            );
-        ''')
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS transactions (
-                id SERIAL PRIMARY KEY,
-                product_id INT REFERENCES products(id),
-                type VARCHAR(10) NOT NULL, -- 'IN' hoặc 'OUT'
-                quantity INT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ''')
-        conn.commit()
-        cur.close()
-        conn.close()
-
-    except Exception as e:
-        print(f"LỖI KẾT NỐI DATABASE: {e}")
+from init_db import init_db, get_db_connection, DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_PORT
 
 # Trang chủ: Hiển thị danh sách sản phẩm
 @app.route('/')
