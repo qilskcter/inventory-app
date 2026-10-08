@@ -162,72 +162,8 @@ flowchart TD
 | **Amazon SNS** | Gửi thông báo tự động | Gửi Email / SMS thông báo khi hàng hóa sắp hết. |
 | **Amazon EventBridge**| Lập lịch tự động | Đặt lịch quét kho tự động vào 08:00 sáng mỗi ngày. |
 
---
-       #### A. Cổng Internet Gateway (IGW):
-* **Tên tài nguyên:** `inventory-igw`
-* **Cơ chế hoạt động:** Đính kèm trực tiếp vào `inventory-vpc`, cho phép phiên dịch địa chỉ mạng (1-to-1 NAT) giữa địa chỉ Public IPv4 và Private IPv4 của máy chủ trong Public Subnets.
-
-#### B. Cấu hình Bảng Định tuyến (Route Table Configuration):
-
-1. **`inventory-public-rt` (Bảng định tuyến Công cộng):**
-   * **Liên kết Subnet (Subnet Associations):** `public-subnet-1`, `public-subnet-2`.
-   * **Bảng quy tắc định tuyến:**
-     | Destination | Target | Mục đích |
-     | :--- | :--- | :--- |
-     | `10.0.0.0/16` | `local` | Cho phép giao tiếp nội bộ giữa mọi Subnet trong toàn bộ VPC |
-     | `0.0.0.0/0` | `inventory-igw` | Điều hướng toàn bộ lưu lượng truy cập Internet qua Internet Gateway |
-
-2. **`inventory-private-rt` (Bảng định tuyến Riêng tư):**
-   * **Liên kết Subnet (Subnet Associations):** `private-db-subnet-1`, `private-db-subnet-2`.
-   * **Bảng quy tắc định tuyến:**
-     | Destination | Target | Mục đích |
-     | :--- | :--- | :--- |
-     | `10.0.0.0/16` | `local` | Chỉ cho phép lưu lượng mạng luân chuyển nội bộ trong VPC |
-   * **Đặc tính an toàn:** Hoàn toàn **không** có dòng định tuyến `0.0.0.0/0` đi ra Internet. Do đó, các tài nguyên nằm trong Subnet này (RDS Database) không thể bị dò quét hay truy cập trái phép từ Internet.
-
 ---
-
-### 5.4. Thiết kế Chi tiết Quy tắc Security Groups (SG Rules Design)
-
-Hệ thống bảo mật tường lửa ảo (Security Group) hoạt động theo nguyên tắc **Stateful** (nếu gói tin gửi đi được cấp phép thì gói tin phản hồi về tự động được chấp nhận). Để đảm bảo an toàn tối đa, nhóm áp dụng kỹ thuật **Security Group Chaining** (tham chiếu định danh Security Group thay vì gán dải IP tĩnh).
-
-#### A. `inventory-web-sg` (Dành cho Web Application Tier):
-* **Mô tả:** Kiểm soát lưu lượng truy cập vào/ra của máy chủ Web Flask và Elastic Beanstalk.
-* **Quy tắc Inbound (Chiều vào):**
-  | Type | Protocol | Port Range | Source | Mô tả chi tiết |
-  | :--- | :---: | :---: | :--- | :--- |
-  | **HTTP** | TCP | `80` | `0.0.0.0/0` | Cho phép người dùng truy cập giao diện web chuẩn HTTP |
-  | **Custom TCP** | TCP | `5000` | `0.0.0.0/0` | Hỗ trợ truy cập trực tiếp cổng phát triển mặc định của Flask App |
-  | **HTTPS** | TCP | `443` | `0.0.0.0/0` | Dự phòng cho việc cấu hình bảo mật SSL/TLS trong tương lai |
-* **Quy tắc Outbound (Chiều ra):**
-  | Type | Protocol | Port Range | Destination | Mô tả chi tiết |
-  | :--- | :---: | :---: | :--- | :--- |
-  | **PostgreSQL**| TCP | `5432` | `inventory-db-sg` | Gửi truy vấn đọc/ghi dữ liệu tới Database Tier |
-  | **HTTPS** | TCP | `443` | `0.0.0.0/0` | Kết nối tới các AWS API Endpoints (S3 lưu ảnh, SNS gửi tin) |
-  | **All traffic**| ALL | ALL | `0.0.0.0/0` | Mặc định cho phép các gói tin phản hồi và cập nhật hệ điều hành |
-
-#### B. `inventory-db-sg` (Dành cho Database Tier):
-* **Mô tả:** Bảo vệ cơ sở dữ liệu Amazon RDS PostgreSQL, chỉ tiếp nhận kết nối nội bộ từ Web Tier.
-* **Quy tắc Inbound (Chiều vào):**
-  | Type | Protocol | Port Range | Source | Mô tả chi tiết |
-  | :--- | :---: | :---: | :--- | :--- |
-  | **PostgreSQL**| TCP | `5432` | `inventory-web-sg` | **Chỉ cho phép** các máy chủ thuộc nhóm `inventory-web-sg` kết nối. Chặn tuyệt đối IP công cộng và mọi nguồn lạ khác. |
-* **Quy tắc Outbound (Chiều ra):**
-  | Type | Protocol | Port Range | Destination | Mô tả chi tiết |
-  | :--- | :---: | :---: | :--- | :--- |
-  | **All traffic**| ALL | ALL | `0.0.0.0/0` | Mặc định phản hồi các kết nối hợp lệ |
-
----
-
-### 5.5. Sơ đồ Cấu trúc Hạ tầng Mạng Chi tiết (VPC Network Topology Diagram)
-
-```mermaid
-flowchart TB
-    Internet(("Internet\n(Người dùng truy cập)"))
-
-    subgraph VPC ["AWS VPC: inventory-vpc (10.0.0.0/16) - us-east-1"]
-        IGW["Internet Gateway: inventory-igw"]
-
+       
         subgraph PublicZone ["Public Subnets (Có kết nối Internet)"]
             subgraph PubSubnet1 ["public-subnet-1 (10.0.1.0/24) | us-east-1a"]
                 WebApp1["Web App / Beanstalk\n(Flask Port 80/5000)"]
@@ -245,4 +181,45 @@ flowchart TB
         subgraph PrivateZone ["Private Subnets (Cô lập hoàn toàn khỏi Internet)"]
             subgraph PrivSubnet1 ["private-db-subnet-1 (10.0.11.0/24) | us-east-1a"]
                 RDSMaster[("Amazon RDS PostgreSQL\nMaster Instance\n(Port 5432)")]
+            end
+            subgraph PrivSubnet2 ["private-db-subnet-2 (10.0.12.0/24) | us-east-1b"]
+                RDSStandby[("RDS DB Subnet Group\n(AZ Standby Area)")]
+            end
+        end
 
+        subgraph SecurityGroupDB ["Security Group: inventory-db-sg"]
+            RDSMaster
+            RDSStandby
+        end
+    end
+
+    Internet <==>|Inbound HTTP :80, :5000| IGW
+    IGW <==> PublicZone
+
+    SecurityGroupWeb ==>|Chỉ cho phép TCP :5432\ntruy cập nội bộ| SecurityGroupDB
+
+```
+
+---
+
+### 5.6. Ma trận Phân luồng Lưu lượng Mạng (Network Traffic Flow Matrix)
+
+| Chiều giao tiếp | Nguồn (Source) | Đích (Destination) | Cổng & Giao thức | Trạng thái | Đánh giá & Cơ chế Bảo vệ |
+| :--- | :--- | :--- | :---: | :---: | :--- |
+| **Internet ➔ Web** | `0.0.0.0/0` | `inventory-web-sg` | TCP `80`, `5000` | **Cho phép** (ALLOW) | Người dùng truy cập dịch vụ quản lý kho bình thường. |
+| **Internet ➔ Database** | `0.0.0.0/0` | `inventory-db-sg` | Bất kỳ cổng nào | **CHẶN** (DENY) | RDS nằm ở Private Subnet, không có Public IP và không có Route ra IGW. |
+| **Web ➔ Database** | `inventory-web-sg` | `inventory-db-sg` | TCP `5432` | **Cho phép** (ALLOW) | Web App đọc/ghi danh mục sản phẩm và lịch sử giao dịch kho. |
+| **Nguồn lạ trong VPC ➔ DB** | Dải IP khác / SG khác | `inventory-db-sg` | TCP `5432` | **CHẶN** (DENY) | `inventory-db-sg` chỉ cấp quyền cho nguồn có nhãn `inventory-web-sg`. |
+| **Web Tier ➔ AWS Services** | `inventory-web-sg` | S3, SNS, EventBridge | TCP `443` (HTTPS) | **Cho phép** (ALLOW) | Tải ảnh lên S3 Bucket và gửi email cảnh báo tồn kho qua SNS Topic. |
+
+---
+
+### 5.7. Báo cáo Rà soát AI & Tuân thủ Quy định Gắn thẻ (Tagging)
+
+* **Hỗ trợ từ Trợ lý AI (Amazon Q Developer):**
+  * Đã kiểm tra tính hợp lệ của quy tắc Security Group Chaining, xác nhận việc liên kết `Source = inventory-web-sg` giúp loại bỏ hoàn toàn việc phải cập nhật lại IP động của EC2/Beanstalk mỗi khi khởi động lại máy chủ.
+  * Xác nhận thiết kế chia subnet `/24` hoàn toàn không bị chồng lấn (No overlapping CIDRs) và đáp ứng đúng quy định tối thiểu 2 AZs cho RDS PostgreSQL trên AWS.
+* **Quy chuẩn Tagging bắt buộc được chuẩn hóa cho toàn bộ tài nguyên mạng:**
+  * Tag `Project`: `inventory-app`
+  * Tag `Owner`: `Khanh-Quan`
+* **Mức độ hoàn thành:** Bản thiết kế chi tiết đã hoàn tất vào Thứ Năm (14:00 - 17:00, 3.0h) và sẵn sàng 100% để tiến hành khởi tạo thực tế trên AWS Management Console vào Thứ Sáu.
