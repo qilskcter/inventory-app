@@ -10,6 +10,31 @@
 * **Cảnh báo tồn kho thấp:** Tự động phát hiện và hiển thị cảnh báo (trực quan trên giao diện và tích hợp AWS SNS) khi số lượng sản phẩm tụt xuống dưới ngưỡng an toàn.
 * **Nền tảng Cloud-Ready:** Thiết kế tương thích với các dịch vụ AWS (Elastic Beanstalk, RDS PostgreSQL, S3, EventBridge, SNS).
 
+## Flask JSON API
+
+Các endpoint API dùng JSON; lỗi trả về theo định dạng `{"error": "..."}`. Tồn kho chỉ được thay đổi qua giao dịch nhập/xuất để giữ lịch sử giao dịch nhất quán.
+
+| Method | Endpoint | Chức năng |
+| --- | --- | --- |
+| `GET` | `/api/products` | Liệt kê sản phẩm |
+| `POST` | `/api/products` | Tạo sản phẩm (`sku`, `name`; `quantity` mặc định `0`, `min_threshold` mặc định `5`) |
+| `GET` | `/api/products/<id>` | Xem sản phẩm |
+| `PUT` | `/api/products/<id>` | Cập nhật `sku`, `name`, `min_threshold` |
+| `PATCH` | `/api/products/<id>` | Cập nhật một hoặc nhiều trường trên |
+| `DELETE` | `/api/products/<id>` | Xóa sản phẩm |
+| `GET` | `/api/transactions` | Xem lịch sử nhập/xuất |
+| `POST` | `/api/transactions` | Tạo giao dịch kho |
+
+Ví dụ tạo giao dịch nhập kho:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 1, "type": "IN", "quantity": 10}'
+```
+
+Giao dịch xuất được cập nhật tồn kho bằng một câu lệnh SQL có điều kiện, nên không thể xuất vượt tồn ngay cả khi có yêu cầu đồng thời. Cả cập nhật tồn kho và ghi lịch sử đều commit trong cùng một database transaction. Thành công trả `201`; dữ liệu không hợp lệ trả `400`, không tìm thấy sản phẩm trả `404`, SKU trùng hoặc tồn kho không đủ trả `409`.
+
 ---
 
 ## Công nghệ sử dụng

@@ -2,104 +2,158 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hệ thống Quản lý Kho hàng</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Quản lý sản phẩm, theo dõi tồn kho và ghi nhận giao dịch nhập xuất.">
+    <title>Quản lý kho | Inventory App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: #f4f7fb;
+        }
+
+        .app-header {
+            background: linear-gradient(120deg, #123b64, #176b87);
+        }
+
+        .inventory-card {
+            border: 0;
+            border-radius: 1rem;
+        }
+
+        .inventory-table th {
+            white-space: nowrap;
+        }
+
+        .stock-actions {
+            min-width: 245px;
+        }
+
+        .sku {
+            font-family: var(--bs-font-monospace);
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <h2 class="mb-4">📦 Quản lý Kho hàng & Cảnh báo tồn kho</h2>
+<body>
+    <header class="app-header text-white py-4 mb-4">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                <div>
+                    <p class="text-white-50 text-uppercase small fw-semibold mb-1">Inventory App</p>
+                    <h1 class="h3 mb-1">Quản lý kho hàng</h1>
+                    <p class="mb-0 text-white-50">Theo dõi sản phẩm và cập nhật nhập xuất kho.</p>
+                </div>
+                <a class="btn btn-light fw-semibold" href="#add-product">+ Thêm sản phẩm</a>
+            </div>
+        </div>
+    </header>
 
-        <!-- Hiển thị thông báo flash -->
-        with messages = get_flashed_messages(with_categories=true)
-            if messages:
-                for category, message in messages:
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                endfor
-            endif
-        endwith
+    <main class="container pb-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng thông báo"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-        <!-- Form thêm sản phẩm -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-primary text-white">Thêm Sản phẩm Mới</div>
-            <div class="card-body">
-                <form action="/add" method="POST" class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Mã SKU</label>
-                        <input type="text" class="form-control" name="sku" required>
+        <section class="card inventory-card shadow-sm mb-4" id="add-product" aria-labelledby="add-product-heading">
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <h2 class="h5 mb-1" id="add-product-heading">Thêm sản phẩm mới</h2>
+                    <p class="text-secondary small mb-0">Nhập thông tin sản phẩm và mức tồn kho cảnh báo.</p>
+                </div>
+                <form action="{{ url_for('add_product') }}" method="POST" class="row g-3">
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="sku" class="form-label">Mã SKU</label>
+                        <input id="sku" type="text" class="form-control" name="sku" maxlength="50" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Tên sản phẩm</label>
-                        <input type="text" class="form-control" name="name" required>
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <label for="name" class="form-label">Tên sản phẩm</label>
+                        <input id="name" type="text" class="form-control" name="name" maxlength="255" required>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Số lượng ban đầu</label>
-                        <input type="number" class="form-control" name="quantity" value="0" required>
+                    <div class="col-6 col-lg-2">
+                        <label for="quantity" class="form-label">Tồn ban đầu</label>
+                        <input id="quantity" type="number" class="form-control" name="quantity" value="0" min="0" step="1" required>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Ngưỡng cảnh báo</label>
-                        <input type="number" class="form-control" name="min_threshold" value="5" required>
+                    <div class="col-6 col-lg-2">
+                        <label for="min_threshold" class="form-label">Ngưỡng cảnh báo</label>
+                        <input id="min_threshold" type="number" class="form-control" name="min_threshold" value="5" min="0" step="1" required>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-success w-100">Thêm</button>
+                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Lưu sản phẩm</button>
                     </div>
                 </form>
             </div>
-        </div>
+        </section>
 
-        <!-- Bảng danh sách sản phẩm & Form Nhập/Xuất kho -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-secondary text-white">Danh sách Tồn kho</div>
-            <div class="card-body">
-                <table class="table table-bordered table-striped align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>SKU</th>
-                            <th>Tên sản phẩm</th>
-                            <th>Tồn kho</th>
-                            <th>Ngưỡng tối thiểu</th>
-                            <th>Thao tác (Nhập / Xuất kho)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in products %}
-                        <tr class="{% if p.quantity <= p.min_threshold %}table-warning{% endif %}">
-                            <td>{{ p.id }}</td>
-                            <td>{{ p.sku }}</td>
-                            <td>{{ p.name }}</td>
-                            <td><strong>{{ p.quantity }}</strong></td>
-                            <td>{{ p.min_threshold }}</td>
-                            <td>
-                                <form action="/transaction" method="POST" class="row g-1">
-                                    <input type="hidden" name="product_id" value="{{ p.id }}">
-                                    <div class="col-5">
-                                        <input type="number" class="form-control form-control-sm" name="quantity" placeholder="Số lượng" min="1" required>
-                                    </div>
-                                    <div class="col-4">
-                                        <select class="form-select form-select-sm" name="type">
-                                            <option value="IN">Nhập kho</option>
-                                            <option value="OUT">Xuất kho</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-3">
-                                        <button type="submit" class="btn btn-primary btn-sm w-100">Thực hiện</button>
-                                    </div>
-                                </form>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center">Chưa có sản phẩm nào trong kho.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <section class="card inventory-card shadow-sm" aria-labelledby="inventory-heading">
+            <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
+                    <div>
+                        <h2 class="h5 mb-1" id="inventory-heading">Tồn kho hiện tại</h2>
+                        <p class="text-secondary small mb-0">Có {{ products|length }} sản phẩm trong danh sách.</p>
+                    </div>
+                    <span class="badge text-bg-light border align-self-start align-self-sm-center">Dữ liệu từ kho</span>
+                </div>
             </div>
-        </div>
-    </div>
+            <div class="card-body p-0 p-sm-3">
+                <div class="table-responsive">
+                    <table class="table inventory-table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-4">SKU</th>
+                                <th scope="col">Sản phẩm</th>
+                                <th scope="col">Tồn kho</th>
+                                <th scope="col">Ngưỡng tối thiểu</th>
+                                <th scope="col" class="pe-4">Thao tác nhập / xuất</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                                {% set low_stock = p.quantity <= p.min_threshold %}
+                                <tr class="{% if low_stock %}table-warning{% endif %}">
+                                    <td class="ps-4 sku fw-semibold">{{ p.sku }}</td>
+                                    <td>
+                                        <span class="fw-semibold">{{ p.name }}</span>
+                                        {% if low_stock %}
+                                            <span class="badge text-bg-warning ms-1">Sắp hết</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold">{{ p.quantity }}</td>
+                                    <td>{{ p.min_threshold }}</td>
+                                    <td class="pe-4">
+                                        <form action="{{ url_for('transaction') }}" method="POST" class="stock-actions">
+                                            <input type="hidden" name="product_id" value="{{ p.id }}">
+                                            <label class="visually-hidden" for="quantity-{{ p.id }}">Số lượng giao dịch cho {{ p.name }}</label>
+                                            <div class="input-group input-group-sm">
+                                                <input id="quantity-{{ p.id }}" type="number" class="form-control" name="quantity" placeholder="Số lượng" min="1" step="1" required>
+                                                <button type="submit" class="btn btn-outline-success" name="type" value="IN" aria-label="Nhập kho {{ p.name }}">Nhập</button>
+                                                <button type="submit" class="btn btn-outline-danger" name="type" value="OUT" aria-label="Xuất kho {{ p.name }}">Xuất</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <p class="fw-semibold mb-1">Kho chưa có sản phẩm</p>
+                                        <p class="text-secondary small mb-0">Dùng biểu mẫu phía trên để thêm sản phẩm đầu tiên.</p>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -315,3 +315,70 @@ flowchart TB
 | **Nguồn lạ trong VPC ➔ DB** | Dải IP khác / SG khác | `inventory-db-sg` | TCP `5432` | **CHẶN** (DENY) | `inventory-db-sg` chỉ cấp quyền cho nguồn có nhãn `inventory-web-sg`. |
 | **Web Tier ➔ AWS Services** | `inventory-web-sg` | S3, SNS, EventBridge | TCP `443` (HTTPS) | **Cho phép** (ALLOW) | Tải ảnh lên S3 Bucket và gửi email cảnh báo tồn kho qua SNS Topic. |
 
+---
+
+## 6. CẬP NHẬT TRIỂN KHAI BACKEND FLASK API
+
+### 6.1. Các hạng mục đã hoàn thành
+
+Backend Flask đã được mở rộng để cung cấp API JSON phục vụ quản lý sản phẩm và nhập/xuất kho. Các route giao diện HTML hiện có (`/`, `/add`, `/transaction`) vẫn được giữ lại để không làm gián đoạn chức năng hiện tại.
+
+| Hạng mục | Nội dung đã triển khai |
+| :--- | :--- |
+| **CRUD sản phẩm** | `GET /api/products` liệt kê; `POST /api/products` tạo; `GET /api/products/<id>` đọc chi tiết; `PUT` và `PATCH /api/products/<id>` cập nhật thông tin; `DELETE /api/products/<id>` xóa sản phẩm. |
+| **Lịch sử giao dịch kho** | `GET /api/transactions` trả về lịch sử nhập/xuất, gồm mã và tên sản phẩm, loại giao dịch, số lượng và thời điểm phát sinh. |
+| **Nhập/xuất kho** | `POST /api/transactions` nhận `product_id`, `type` (`IN` hoặc `OUT`) và `quantity`; API cập nhật tồn kho đồng thời ghi lịch sử giao dịch. |
+| **Kiểm tra dữ liệu** | Kiểm tra JSON hợp lệ, trường bắt buộc, chuỗi không rỗng, số lượng nguyên không âm/dương phù hợp và loại giao dịch hợp lệ. API từ chối thay đổi tồn kho qua endpoint cập nhật sản phẩm để đảm bảo giao dịch luôn có lịch sử. |
+| **An toàn giao dịch đồng thời** | Xuất kho dùng câu lệnh cập nhật có điều kiện `quantity >= số lượng xuất`; cập nhật tồn và ghi lịch sử trong cùng transaction PostgreSQL, rollback nếu thao tác thất bại. |
+| **Mã phản hồi API** | Dữ liệu sai: `400`; không tìm thấy sản phẩm: `404`; SKU trùng hoặc tồn kho không đủ: `409`; tạo sản phẩm/giao dịch thành công: `201`. |
+| **Tài liệu và kiểm thử** | Bổ sung mô tả endpoint, ví dụ gọi API trong `README.md` và bộ kiểm thử tự động tại `tests/test_app.py`. |
+
+### 6.2. Ví dụ gọi API nhập kho
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 1, "type": "IN", "quantity": 10}'
+```
+
+Khi yêu cầu thành công, API trả thông tin sản phẩm sau khi cập nhật cùng bản ghi giao dịch vừa tạo. Tồn kho được cập nhật ngay trong database; việc đẩy dữ liệu tức thời tới các trình duyệt đang mở (WebSocket/push) chưa nằm trong phạm vi phần triển khai này.
+
+### 6.3. Kết quả kiểm tra
+
+- **Kiểm thử tự động:** 12/12 test đạt; các trường hợp được kiểm tra gồm giao diện danh sách và trạng thái kho trống, hiển thị thông báo, gửi giao dịch từ form, tạo sản phẩm và giá trị mặc định, từ chối dữ liệu không hợp lệ, nhập kho, xuất vượt tồn, SKU trùng, cập nhật thông tin sản phẩm và xóa sản phẩm.
+- **Kiểm tra mã nguồn:** Pylance không phát hiện lỗi trong `app.py` và `tests/test_app.py`; `git diff --check` hoàn tất không có lỗi định dạng.
+- **Giới hạn xác nhận:** Bộ test hiện giả lập kết nối cơ sở dữ liệu. Chưa xác nhận kết nối, khởi tạo schema hoặc giao dịch trên một PostgreSQL server thực tế.
+
+### 6.4. Việc cần tiếp tục
+
+1. Cấu hình thông tin kết nối PostgreSQL bằng biến môi trường và chạy ứng dụng với database thật.
+2. Kiểm tra thủ công các endpoint bằng `curl` hoặc Postman sau khi database hoạt động.
+3. Nếu yêu cầu giao diện cập nhật tức thời trên nhiều trình duyệt, bổ sung WebSocket/Flask-SocketIO; API hiện chỉ đảm bảo tồn kho được ghi nhận ngay và chính xác trong PostgreSQL.
+4. Tích hợp thông báo AWS SNS và các hạng mục triển khai AWS sau khi cấu hình hạ tầng được thiết lập.
+
+### 6.5. Hoàn thiện giao diện HTML5 / Bootstrap 5
+
+Kiểm tra ban đầu cho thấy trang `templates/index.html` đã có Bootstrap, biểu mẫu thêm sản phẩm và bảng tồn kho kèm thao tác nhập/xuất. Tuy nhiên, cú pháp Jinja hiển thị flash message chưa hợp lệ, nên phần thông báo thành công/lỗi không được dựng đúng. Template đã được hoàn thiện với các nội dung:
+
+- Bố cục responsive cho màn hình nhỏ và lớn, tiêu đề trang và liên kết tới biểu mẫu thêm sản phẩm.
+- Form thêm sản phẩm với nhãn liên kết tới input, kiểm tra bắt buộc và giới hạn số lượng/ngưỡng không âm.
+- Bảng tồn kho responsive hiển thị SKU, tên, số lượng, ngưỡng tối thiểu và trạng thái cảnh báo khi tồn kho chạm ngưỡng.
+- Mỗi sản phẩm có ô nhập số lượng cùng hai nút **Nhập** và **Xuất** riêng, gửi loại giao dịch tới route `/transaction`.
+- Hiển thị flash message bằng cú pháp Jinja chuẩn và trạng thái hướng dẫn khi kho chưa có sản phẩm.
+
+Đã bổ sung test cho việc render danh sách và cảnh báo tồn kho thấp, trạng thái kho trống, hiển thị flash message và gửi giao dịch nhập qua form. Giao diện dùng Bootstrap 5 từ CDN nên khi chạy cần kết nối Internet để tải stylesheet và JavaScript của Bootstrap.
+
+### 6.6. Cơ sở dữ liệu PostgreSQL và môi trường Flask
+
+Ứng dụng sử dụng PostgreSQL làm cơ sở dữ liệu quan hệ và Flask làm backend. Schema được định nghĩa trong `database/schema.sql`; kết nối database được cấu hình trong `init_db.py` và hỗ trợ đọc thông tin kết nối từ các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`.
+
+Schema gồm hai bảng chính:
+
+| Bảng | Dữ liệu và ràng buộc |
+| :--- | :--- |
+| `products` | Lưu mã SKU duy nhất, tên sản phẩm, số lượng tồn kho không âm, ngưỡng cảnh báo `min_threshold` không âm, cùng thời điểm tạo và cập nhật. |
+| `transactions` | Lưu sản phẩm liên quan, loại giao dịch chỉ nhận `IN` hoặc `OUT`, số lượng giao dịch phải lớn hơn 0 và thời điểm phát sinh. Khóa ngoại liên kết tới `products`; xóa sản phẩm sẽ xóa các giao dịch liên quan. |
+
+Các chỉ mục trên SKU, mã sản phẩm của giao dịch và thời điểm giao dịch hỗ trợ tra cứu sản phẩm, lịch sử theo sản phẩm và sắp xếp giao dịch. Hàm `init_db()` đọc schema và khởi tạo các bảng; ứng dụng gọi hàm này khi chạy trực tiếp bằng `python app.py`.
+
+Môi trường phát triển gồm Flask, `psycopg2-binary` và PostgreSQL local. Cơ sở dữ liệu được cấu hình mặc định là `inventory_db`; thông tin kết nối có thể điều chỉnh qua biến môi trường mà không cần sửa mã nguồn.
