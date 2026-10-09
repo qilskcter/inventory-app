@@ -382,3 +382,56 @@ Schema gồm hai bảng chính:
 Các chỉ mục trên SKU, mã sản phẩm của giao dịch và thời điểm giao dịch hỗ trợ tra cứu sản phẩm, lịch sử theo sản phẩm và sắp xếp giao dịch. Hàm `init_db()` đọc schema và khởi tạo các bảng; ứng dụng gọi hàm này khi chạy trực tiếp bằng `python app.py`.
 
 Môi trường phát triển gồm Flask, `psycopg2-binary` và PostgreSQL local. Cơ sở dữ liệu được cấu hình mặc định là `inventory_db`; thông tin kết nối có thể điều chỉnh qua biến môi trường mà không cần sửa mã nguồn.
+###7. KHỞI TẠO HẠ TẦNG MẠNG NỀN TẢNG (VPC, SUBNETS, IGW, ROUTE TABLES) VÀ THỰC THI QUY ĐỊNH TAGGING TRÊN AWS CONSOLE
+* **Nhiệm vụ trọng tâm:** Khởi tạo và thiết lập hạ tầng mạng VPC, Subnets, Internet Gateway, Route Tables trên AWS Learner Lab Console (`us-east-1`) và gắn Tag theo quy định.
+* **Thời gian thực hiện:** 3.0 giờ.
+* **Môi trường thao tác:** AWS Management Console / Region `us-east-1` (N. Virginia) trên tài khoản AWS Learner Lab.
+
+#### A. Các bước triển khai chi tiết:
+7.1 **Khởi tạo Virtual Private Cloud (VPC):**
+   * Đăng nhập AWS Management Console và truy cập dịch vụ **VPC**.
+   * Nhấn **Create VPC** (chọn chế độ cấu hình thủ công *VPC only* để kiểm soát chính xác từng thành phần):
+     * **Name tag:** `inventory-vpc`
+     * **IPv4 CIDR block:** `10.0.0.0/16` (cung cấp tối đa 65,536 địa chỉ IP).
+     * **Tenancy:** `Default`.
+   * Bật cài đặt DNS cho VPC sau khi tạo:
+     * `Enable DNS resolution`: **Enabled**.
+     * `Enable DNS hostnames`: **Enabled** (bắt buộc để các instance EC2/Beanstalk nhận DNS public và RDS phân giải endpoint nội bộ).
+
+7.2 **Khởi tạo 4 Subnets (Phân vùng theo 2 Availability Zones `us-east-1a` và `us-east-1b`):**
+   * **`public-subnet-1`:**
+     * VPC: `inventory-vpc` | AZ: `us-east-1a` | CIDR: `10.0.1.0/24` (251 IP khả dụng).
+     * Bật tính năng **Enable auto-assign public IPv4 address** để máy chủ Web/App tự nhận IP công khai.
+   * **`public-subnet-2`:**
+     * VPC: `inventory-vpc` | AZ: `us-east-1b` | CIDR: `10.0.2.0/24` (251 IP khả dụng).
+     * Bật tính năng **Enable auto-assign public IPv4 address** (dự phòng đa vùng).
+   * **`private-db-subnet-1`:**
+     * VPC: `inventory-vpc` | AZ: `us-east-1a` | CIDR: `10.0.11.0/24` (251 IP khả dụng).
+     * Tắt gán public IPv4 (cô lập cho tầng Database RDS).
+   * **`private-db-subnet-2`:**
+     * VPC: `inventory-vpc` | AZ: `us-east-1b` | CIDR: `10.0.12.0/24` (251 IP khả dụng).
+     * Tắt gán public IPv4 (đáp ứng điều kiện tối thiểu 2 AZs cho RDS DB Subnet Group).
+
+7.3 **Tạo và gắn kết Internet Gateway (IGW):**
+   * Khởi tạo **Internet Gateway**: `inventory-igw`.
+   * Thao tác **Attach to VPC** và chọn `inventory-vpc` để mở cổng kết nối Internet cho các Public Subnet.
+
+7.4 **Cấu hình bảng định tuyến (Route Tables):**
+   * **Public Route Table (`inventory-public-rt`):**
+     * Thêm rule: Destination `0.0.0.0/0` ➔ Target `inventory-igw`.
+     * **Subnet Associations:** Liên kết với `public-subnet-1` và `public-subnet-2`.
+   * **Private Route Table (`inventory-private-rt`):**
+     * Chỉ giữ rule mặc định: Destination `10.0.0.0/16` ➔ Target `local`.
+     * Không gắn route đi ra Internet, đảm bảo an toàn cho cơ sở dữ liệu.
+     * **Subnet Associations:** Liên kết với `private-db-subnet-1` và `private-db-subnet-2`.
+
+7.5 **Thực thi quy định gắn thẻ (Resource Tagging):**
+   * Kiểm tra toàn bộ 100% tài nguyên mạng vừa khởi tạo (VPC, 4 Subnets, IGW, 2 Route Tables).
+   * Đảm bảo đính kèm đầy đủ cặp Tag chuẩn:
+     * `Project`: `inventory-app`
+     * `Owner`: `Khanh-Quan`
+
+#### B. Kết quả & Minh chứng đạt được:
+* Toàn bộ hạ tầng mạng phân tầng 2-Tier trên AWS Learner Lab (`us-east-1`) đã sẵn sàng.
+* Sẵn sàng các dải Subnet cô lập để bước tiếp theo (Thứ Bảy) thiết lập Security Groups và triển khai RDS Database Group.
+* Ảnh chụp minh chứng trên AWS Management Console hiển thị rõ `VPC ID`, bảng Subnet list, Route Table associations cùng thông tin User/Account ID và Region `us-east-1`.
