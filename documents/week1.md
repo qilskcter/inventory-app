@@ -435,3 +435,142 @@ Môi trường phát triển gồm Flask, `psycopg2-binary` và PostgreSQL local
 * Toàn bộ hạ tầng mạng phân tầng 2-Tier trên AWS Learner Lab (`us-east-1`) đã sẵn sàng.
 * Sẵn sàng các dải Subnet cô lập để bước tiếp theo (Thứ Bảy) thiết lập Security Groups và triển khai RDS Database Group.
 * Ảnh chụp minh chứng trên AWS Management Console hiển thị rõ `VPC ID`, bảng Subnet list, Route Table associations cùng thông tin User/Account ID và Region `us-east-1`.
+
+
+---
+
+## 8. TRIỂN KHAI HẠ TẦNG AWS THỰC TẾ TRÊN LEARNER LAB
+  
+**Môi trường:** AWS Learner Lab – Region `us-east-1`
+
+---
+
+### 8.1. Đăng nhập & Xác minh AWS Learner Lab
+
+Thực hiện đăng nhập vào AWS Academy Learner Lab và xác minh identity của session đang hoạt động bằng lệnh:
+
+```bash
+aws sts get-caller-identity --no-cli-pager
+```
+
+**Kết quả thực tế:**
+
+```json
+{
+    "UserId": "AROAQTEW4QKAWCT3QSKEZ:user5470815=24110244@student.hcmute.edu.vn",
+    "Account": "041118630529",
+    "Arn": "arn:aws:sts::041118630529:assumed-role/voclabs/user5470815=24110244@student.hcmute.edu.vn"
+}
+```
+
+> **Nhận xét:** Session sử dụng role `voclabs` — đây là role mặc định của Learner Lab, cho phép thao tác AWS thông qua credentials tạm thời được cấp tự động mỗi khi khởi động Lab.
+
+---
+
+### 8.2. Xác minh Quyền hạn IAM Role `LabRole`
+
+#### A. Thông tin Role
+
+```bash
+aws iam get-role --role-name LabRole --no-cli-pager
+```
+
+**Kết quả:**
+
+| Thuộc tính | Giá trị |
+| :--- | :--- |
+| **RoleName** | `LabRole` |
+| **RoleId** | `AROAQTEW4QKAXDETP2WOD` |
+| **ARN** | `arn:aws:iam::041118630529:role/LabRole` |
+| **CreateDate** | `2026-10-10T11:35:11+00:00` |
+
+Role `LabRole` được cấu hình với **Trust Policy** cho phép nhiều dịch vụ AWS giả định role này, bao gồm: `s3`, `lambda`, `rds`, `dynamodb`, `eks`, `ecs`, `sagemaker`, `sns`, `apigateway`, `cloudformation`, `codedeploy`, `secretsmanager`, v.v.
+
+#### B. Các Policy gắn với LabRole
+
+```bash
+aws iam list-attached-role-policies --role-name LabRole --no-cli-pager
+```
+
+**Kết quả:**
+
+| # | PolicyName | Loại |
+| :-: | :--- | :--- |
+| 1 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy1-j0puGCnNFb8p` | Custom (VocLab) |
+| 2 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy2-IWblPOpQheRy` | Custom (VocLab) |
+| 3 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy3-3hnH61ywwtbH` | Custom (VocLab) |
+| 4 | `AmazonSSMManagedInstanceCore` | AWS Managed |
+| 5 | `AmazonEKSClusterPolicy` | AWS Managed |
+| 6 | `AmazonEC2ContainerRegistryReadOnly` | AWS Managed |
+| 7 | `AmazonEKSWorkerNodePolicy` | AWS Managed |
+
+> **Nhận xét:** Ba `VocLabPolicy` tùy chỉnh chứa toàn bộ quyền hạn thực tế cho các dịch vụ như S3, Lambda, RDS, SNS, EventBridge, Beanstalk, CloudFormation, v.v. — đủ để triển khai toàn bộ hạ tầng của dự án `inventory-app`.
+
+---
+
+### 8.3. Khởi tạo Amazon S3 Bucket lưu trữ báo cáo
+
+#### A. Tạo Bucket
+
+```bash
+aws s3api create-bucket \
+  --bucket inventory-reports-us-east-1-24110244 \
+  --region us-east-1 \
+  --no-cli-pager
+```
+
+**Kết quả:**
+
+```json
+{
+    "Location": "/inventory-reports-us-east-1-24110244",
+    "BucketArn": "arn:aws:s3:::inventory-reports-us-east-1-24110244"
+}
+```
+
+| Thuộc tính | Giá trị |
+| :--- | :--- |
+| **Bucket Name** | `inventory-reports-us-east-1-24110244` |
+| **Region** | `us-east-1` |
+| **ARN** | `arn:aws:s3:::inventory-reports-us-east-1-24110244` |
+| **Account ID** | `041118630529` |
+
+#### B. Gắn Tag chuẩn cho Bucket
+
+```bash
+aws s3api put-bucket-tagging \
+  --bucket inventory-reports-us-east-1-24110244 \
+  --tagging 'TagSet=[{Key=Project,Value=inventory-app},{Key=Owner,Value=Khanh-Quan}]' \
+  --no-cli-pager
+```
+
+#### C. Xác minh Tag đã gắn thành công
+
+```bash
+aws s3api get-bucket-tagging \
+  --bucket inventory-reports-us-east-1-24110244 \
+  --no-cli-pager
+```
+
+**Kết quả:**
+
+```json
+{
+    "TagSet": [
+        { "Key": "Project", "Value": "inventory-app" },
+        { "Key": "Owner",   "Value": "Khanh-Quan"   }
+    ]
+}
+```
+
+---
+
+### 8.4. Tổng kết kết quả Bước 8
+
+| Hạng mục | Trạng thái | Chi tiết |
+| :--- | :---: | :--- |
+| Đăng nhập AWS Learner Lab | Hoàn thành | Session `voclabs`, Account `041118630529` |
+| Xác minh IAM Role LabRole | Hoàn thành | 7 policies, đủ quyền triển khai hạ tầng |
+| Tạo S3 Bucket báo cáo | Hoàn thành | `inventory-reports-us-east-1-24110244` |
+| Gắn Tag `Project=inventory-app` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
+| Gắn Tag `Owner=Khanh-Quan` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
