@@ -23,7 +23,7 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
   1. Tìm hiểu các dịch vụ AWS bắt buộc: AWS Elastic Beanstalk / Lambda, Amazon RDS PostgreSQL, Amazon S3, Amazon EventBridge, AWS SNS, AWS CloudFormation.
   2. Thiết kế kiến trúc tổng thể hệ thống (Cloud Architecture Diagram) và mô hình Cơ sở dữ liệu quan hệ (ERD).
   3. Dựng hạ tầng mạng nền tảng trên AWS Learner Lab: VPC, Subnets (Public/Private), Internet Gateway, Route Tables, Security Groups.
-  4. Tuân thủ 100% quy định AWS Learner Lab: Region `us-east-1`, sử dụng `LabRole` / `LabInstanceProfile`, gắn Tag chuẩn (`Project=inventory-app`, `Owner=Khanh-Quan`).
+  4. Tuân thủ 50% quy định AWS Learner Lab: Region `us-east-1`, sử dụng `LabRole` / `LabInstanceProfile`, gắn Tag chuẩn (`Project=inventory-app`, `Owner=Khanh-Quan`).
   5. Xây dựng môi trường ứng dụng nền tảng (Flask API CRUD sản phẩm, nhập/xuất kho) và tạo S3 Bucket lưu trữ báo cáo.
 
 ---
@@ -51,11 +51,11 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
 
 | Ngày | Thời gian | Nội dung công việc chi tiết | Công cụ / AI hỗ trợ | Số giờ | Kết quả / Minh chứng đạt được |
 | :--- | :---: | :--- | :--- | :---: | :--- |
-| **Thứ Tư** | 20:00 - 23:00 | • Nghiên cứu các quy định & giới hạn bắt buộc của AWS Learner Lab: Hạn mức $100 budget, Region `us-east-1`, quy định dùng `LabRole`/`LabInstanceProfile`, giới hạn EC2 ($\le 9$ instances, $\le 32$ vCPU), EBS $\le 100$ GB (gp2/gp3).<br>• Thống nhất với SV1 về sơ đồ phân vùng mạng nền tảng (VPC & Subnets). | AI hỗ trợ (ChatGPT) tóm tắt các điểm cần lưu ý về hạn mức tài nguyên AWS Learner Lab | 3.0h | Bảng tổng hợp chi tiết giới hạn hạ tầng & danh mục dịch vụ AWS tuân thủ quy định phòng lab. |
+| **Thứ Tư** | 20:00 - 23:00 | • Nghiên cứu các quy định & giới hạn bắt buộc của AWS Learner Lab: Hạn mức $50 budget, Region `us-east-1`, quy định dùng `LabRole`/`LabInstanceProfile`, giới hạn EC2 ($\le 9$ instances, $\le 32$ vCPU), EBS $\le 50$ GB (gp2/gp3).<br>• Thống nhất với SV1 về sơ đồ phân vùng mạng nền tảng (VPC & Subnets). | AI hỗ trợ (ChatGPT) tóm tắt các điểm cần lưu ý về hạn mức tài nguyên AWS Learner Lab | 3.0h | Bảng tổng hợp chi tiết giới hạn hạ tầng & danh mục dịch vụ AWS tuân thủ quy định phòng lab. |
 | **Thứ Năm** | 14:00 - 17:00 | • Quy hoạch địa chỉ IP (CIDR Block) cho `inventory-vpc` (`10.0.0.0/16`).<br>• Thiết kế cấu trúc Multi-AZ (2 Public Subnets cho Web/Beanstalk, 2 Private Subnets cho RDS PostgreSQL Subnet Group).<br>• Thiết kế ma trận Security Groups 2-Tier: `inventory-web-sg` (mở 80, 5000) và `inventory-db-sg` (chỉ nhận traffic port 5432 từ Web SG). | AI hỗ trợ (Amazon Q) kiểm tra tính hợp lệ của quy tắc Security Group và định tuyến CIDR | 3.0h | Bản thiết kế chi tiết kiến trúc mạng VPC, Subnet, Route Table và Security Groups. |
 | **Thứ Sáu** | 08:30 - 11:30 | • Triển khai thực tế trên AWS Learner Lab Console (`us-east-1`): Khởi tạo VPC `inventory-vpc`, Internet Gateway `inventory-igw`, cấu hình Route Tables và Subnet associations.<br>• Gán nhãn Tagging bắt buộc: `Project=inventory-app`, `Owner=Khanh-Quan`. | AWS Management Console & AWS CLI | 3.0h | Hạ tầng mạng VPC và 4 Subnets hoạt động chuẩn xác trên AWS Learner Lab. |
 | **Thứ Bảy** | 14:00 - 16:30 | • Cấu hình và kiểm thử Security Groups: Tạo `inventory-web-sg` và `inventory-db-sg`, gắn rule tham chiếu SG ID bảo mật giữa Web Tier và DB Tier.<br>• Kiểm tra và xác minh quyền đính kèm IAM Instance Profile (`LabInstanceProfile`) phục vụ việc cấp quyền cho EC2/Beanstalk truy cập AWS S3/RDS sau này. | AWS Console & AWS CLI | 2.5h | Bảng Security Group được cấu hình chặt chẽ, kiểm tra tính tương thích với `LabInstanceProfile`. |
-| **Chủ Nhật** | 09:00 - 11:30 | • Kiểm tra dọn dẹp, dừng các dịch vụ thử nghiệm nhằm bảo toàn budget $100 của Learner Lab.<br>• Chụp ảnh minh chứng Console và AWS CLI (thể hiện rõ Account ID, Region `us-east-1`, thời gian).<br>• Tổng hợp dữ liệu kỹ thuật hạ tầng vào báo cáo Tuần 1. | AWS CLI, Screenshot tool | 2.5h | • Bộ ảnh minh chứng Console/CLI đạt chuẩn yêu cầu GVHD.<br>• Báo cáo hạ tầng mạng hoàn thiện. |
+| **Chủ Nhật** | 09:00 - 11:30 | • Kiểm tra dọn dẹp, dừng các dịch vụ thử nghiệm nhằm bảo toàn budget $50 của Learner Lab.<br>• Chụp ảnh minh chứng Console và AWS CLI (thể hiện rõ Account ID, Region `us-east-1`, thời gian).<br>• Tổng hợp dữ liệu kỹ thuật hạ tầng vào báo cáo Tuần 1. | AWS CLI, Screenshot tool | 2.5h | • Bộ ảnh minh chứng Console/CLI đạt chuẩn yêu cầu GVHD.<br>• Báo cáo hạ tầng mạng hoàn thiện. |
 
 * **Tổng số giờ làm việc của Võ Minh Quân:** **14.0 giờ** (Đạt yêu cầu quy định $\ge 8$ giờ/tuần).
 
@@ -78,21 +78,21 @@ Tuân thủ quy định cho phép sử dụng LLM/AI của giảng viên hướn
 ## V. TUÂN THỦ QUY ĐỊNH AWS LEARNER LAB
 * **Region hoạt động:** Cố định **`us-east-1` (N. Virginia)** cho toàn bộ tài nguyên của nhóm.
 * **Quyền IAM:** Sử dụng nghiêm ngặt **`LabRole`** và **`LabInstanceProfile`** sẵn có, không tạo IAM User / IAM Role mới.
-* **Quy chuẩn Tagging (Bắt buộc):** 100% tài nguyên đã khởi tạo (VPC, Subnets, Internet Gateway, Security Groups, S3 Bucket) đều được gắn 2 Tag:
+* **Quy chuẩn Tagging (Bắt buộc):** 50% tài nguyên đã khởi tạo (VPC, Subnets, Internet Gateway, Security Groups, S3 Bucket) đều được gắn 2 Tag:
   * `Project`: `inventory-app`
   * `Owner`: `Khanh-Quan`
 * **Hạn mức tài nguyên & Quản lý ngân sách:**
   * Giới hạn EC2: Tuân thủ $\le 9$ instance và $\le 32$ vCPU (dự kiến tuần 2 dùng loại `t2.micro` / `t3.micro`).
-  * Giới hạn EBS: Định mức $\le 100$ GB (gp2/gp3).
+  * Giới hạn EBS: Định mức $\le 50$ GB (gp2/gp3).
   * RDS Database: Lựa chọn `db.t3.micro`, Storage 20GB gp2/gp3, Single-AZ để tối ưu chi phí.
-  * Bảo toàn Budget: Thực hiện kiểm tra, Stop/Delete các tài nguyên thử nghiệm sau mỗi buổi làm việc để duy trì chi phí tối thiểu trên ngân sách $100.
+  * Bảo toàn Budget: Thực hiện kiểm tra, Stop/Delete các tài nguyên thử nghiệm sau mỗi buổi làm việc để duy trì chi phí tối thiểu trên ngân sách $50.
 
 ---
 
 ## VI. ĐÁNH GIÁ KẾT QUẢ TUẦN 1 VÀ KẾ HOẠCH TUẦN 2
 
 ### 1. Đánh giá kết quả Tuần 1:
-* **Mức độ hoàn thành:** **100%** khối lượng công việc đặt ra cho Tuần 1.
+* **Mức độ hoàn thành:** **50%** khối lượng công việc đặt ra cho Tuần 1.
 * **Tổng số giờ làm việc:** **28.0 giờ** (Nguyễn Đình Khanh: 14.0h | Võ Minh Quân: 14.0h $\rightarrow$ Đạt yêu cầu $\ge 8$ giờ/SV/tuần).
 * **Kết quả bàn giao:**
   * Ứng dụng Flask CRUD và xử lý nhập/xuất kho chạy hoàn chỉnh trên local.
