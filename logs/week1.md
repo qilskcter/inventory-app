@@ -41,6 +41,7 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
 | **Thứ Bảy** | 09:00 - 11:30 | • Đăng nhập AWS Learner Lab (`us-east-1`), xác minh quyền hạn tài khoản với `LabRole`.<br>• Khởi tạo Amazon S3 Bucket lưu trữ báo cáo PDF/CSV định kỳ: `inventory-reports-us-east-1-24110244`.<br>• Cấu hình thuộc tính Bucket: Block Public Access, gán Tag bắt buộc `Project=inventory-app`, `Owner=Khanh-Quan`. | Thao tác trên AWS Management Console (`us-east-1`) | 2.5h | S3 Bucket sẵn sàng tiếp nhận file báo cáo định kỳ; có ảnh chụp minh chứng Console. |
 | **Chủ Nhật** | 14:00 - 16:30 | • Soạn thảo tài liệu `README.md` hướng dẫn chạy ứng dụng và tài liệu kiến trúc Tuần 1.<br>• Rà soát mã nguồn, commit và push toàn bộ source code sạch lên GitHub repository.<br>• Họp nhóm tổng kết kết quả Tuần 1 và lập kế hoạch Tuần 2. | Git, GitHub, Markdown | 2.5h | • Repository GitHub được cập nhật đầy đủ mã nguồn & tài liệu.<br>• Biên bản họp nhóm Tuần 1. |
 
+
 * **Tổng số giờ làm việc của Nguyễn Đình Khanh:** **14.0 giờ** (Đạt yêu cầu quy định $\ge 8$ giờ/tuần).
 
 ---
