@@ -32,7 +32,7 @@ Do dự án được triển khai trên môi trường học tập **AWS Academy
 | Tài nguyên / Giới hạn | Ràng buộc của Learner Lab | Giải pháp thiết kế cho dự án |
 | :--- | :--- | :--- |
 | **Ngân sách (Budget)** | Cấp tối đa **$50 USD** credit. Nếu cạn kiệt, tài khoản bị khoá vĩnh viễn và mất dữ liệu. | Tối ưu kích cỡ máy chủ, tắt/dừng các instance khi không thao tác, kiểm tra chi phí sau mỗi buổi lab. |
-| **Vùng (Region)** | Chỉ cho phép `us-east-1` hoặc `us-west-2`. | Cố định 50% tài nguyên tại vùng **`us-east-1` (N. Virginia)**. |
+| **Vùng (Region)** | Chỉ cho phép `us-east-1` hoặc `us-west-2`. | Cố định Toàn bộ tài nguyên triển khai tại us-east-1 tại vùng **`us-east-1` (N. Virginia)**. |
 | **IAM Permission** | Không thể tạo User/Role mới; không được sửa Policy. Bắt buộc dùng `LabRole`. | Toàn bộ ứng dụng và Lambda đều tận dụng **`LabRole`** và **`LabInstanceProfile`**. |
 | **Quy định Tagging** | Bắt buộc gắn thẻ định danh để kiểm soát tài nguyên. | Mọi tài nguyên khởi tạo đều gắn: `Project=inventory-app`, `Owner=Khanh-Quan`. |
 | **Compute (EC2)** | Giới hạn $\le 9$ instance và $\le 32$ vCPU; loại instance từ nano $\rightarrow$ large. | Chỉ sử dụng `t2.micro` hoặc `t3.micro` (1 vCPU, 1 GiB RAM). |
@@ -113,7 +113,7 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 | **Kế hoạch thời gian** | Đạt **28.0 giờ** toàn nhóm (Khanh: 14.0h, Quân: 14.0h (8h/SV)). | Chi tiết tại logs/week1.md. |
 | **Môi trường & Vùng** | Triển khai trên AWS Learner Lab tại vùng `us-east-1`. | Console / AWS CLI output Region `us-east-1`. |
 | **Quyền IAM** | Sử dụng `LabRole` & `LabInstanceProfile`. | Không tạo mới bất kỳ IAM Role/User nào. |
-| **Quy chuẩn Tagging** | 50% tài nguyên có `Project=inventory-app`, `Owner=Khanh-Quan`. | Thể hiện trên VPC, Subnet, SG, S3 Bucket. |
+| **Quy chuẩn Tagging** | Toàn bộ tài nguyên triển khai tại us-east-1 có `Project=inventory-app`, `Owner=Khanh-Quan`. | Thể hiện trên VPC, Subnet, SG, S3 Bucket. |
 | **Minh chứng mã nguồn** | Toàn bộ mã nguồn, SQL script, tài liệu trên GitHub. | GitHub Repo: `qilskcter/inventory-app`. |
 | **Báo cáo sử dụng AI** | Ghi rõ phạm vi hỗ trợ của ChatGPT, Claude, Amazon Q, Antigravity. | Trình bày tại Mục IV trong Worklog Tuần 1. |
 
@@ -134,7 +134,7 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 | Tiêu chí / Tài nguyên | Quy định & Giới hạn của AWS Learner Lab | Giải pháp & Ứng dụng cho dự án Inventory App |
 | :--- | :--- | :--- |
 | **Budget / Chi phí** | Cấp tối đa **$50 USD** credit cho cả học kỳ.  | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
-| **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). | Nhóm thống nhất cố định 50% tài nguyên ở Region **`us-east-1`**. |
+| **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). |  Toàn bộ tài nguyên triển khai tại us-east-1 ở Region **`us-east-1`**. |
 | **Quyền hạn IAM** | • **Không có quyền** tạo IAM User, IAM Role mới, hoặc chỉnh sửa IAM Policy.<br>• Phải dùng IAM Role tạo sẵn: **`LabRole`**.<br>• EC2/Beanstalk chỉ được dùng **`LabInstanceProfile`**. | Mọi cấu hình kết nối giữa EC2/Beanstalk với RDS/S3/SNS đều tận dụng trực tiếp `LabRole` & `LabInstanceProfile`. |
 | **Quy định Tagging** | Bắt buộc phải gắn thẻ (Tags) tài nguyên theo hướng dẫn của môn học để kiểm soát chi phí và điểm danh. | Đính kèm đồng bộ 2 Tag bắt buộc cho mọi tài nguyên:<br>• `Project`: `inventory-app`<br>• `Owner`: `Khanh-Quan` |
 | **Compute (EC2 / Beanstalk)** | • Tối đa 9 EC2 instances chạy đồng thời (vCPU limits).<br>• Instance type hỗ trợ: **t2.micro**, **t3.micro**, **t2.small**, **t3.small**.<br>• EBS Volume tối đa 30GB/volume. | Triển khai Backend Web trên **t2.micro** hoặc Elastic Beanstalk (cấu hình Single Instance) để tiết kiệm chi phí. |
@@ -545,7 +545,7 @@ Môi trường phát triển gồm Flask, `psycopg2-binary` và PostgreSQL local
      * **Subnet Associations:** Liên kết với `private-db-subnet-1` và `private-db-subnet-2`.
 
 ### 7.5 Thực thi quy định gắn thẻ (Resource Tagging):
-   * Kiểm tra toàn bộ 50% tài nguyên mạng vừa khởi tạo (VPC, 4 Subnets, IGW, 2 Route Tables).
+   * Kiểm tra toàn bộ toàn bộ tài nguyên triển khai tại us-east-1 mạng vừa khởi tạo (VPC, 4 Subnets, IGW, 2 Route Tables).
    * Đảm bảo đính kèm đầy đủ cặp Tag chuẩn:
      * `Project`: `inventory-app`
      * `Owner`: `Khanh-Quan`
@@ -577,8 +577,8 @@ aws sts get-caller-identity --no-cli-pager
 ```json
 {
     "UserId": "AROAQTEW4QKAWCT3QSKEZ:user5470815=24110244@student.hcmute.edu.vn",
-    "Account": "041118630529",
-    "Arn": "arn:aws:sts::041118630529:assumed-role/voclabs/user5470815=24110244@student.hcmute.edu.vn"
+    "Account": "523156739905",
+    "Arn": "arn:aws:sts::523156739905:assumed-role/voclabs/user5470815=24110244@student.hcmute.edu.vn"
 }
 ```
 ![Screenshot](./screenshots/01_aws_sts_identity.png)
@@ -601,7 +601,7 @@ aws iam get-role --role-name LabRole --no-cli-pager
 | :--- | :--- |
 | **RoleName** | `LabRole` |
 | **RoleId** | `AROAQTEW4QKAXDETP2WOD` |
-| **ARN** | `arn:aws:iam::041118630529:role/LabRole` |
+| **ARN** | `arn:aws:iam::523156739905:role/LabRole` |
 | **CreateDate** | `2026-10-10T11:35:11+00:00` |
 
 Role `LabRole` được cấu hình với **Trust Policy** cho phép nhiều dịch vụ AWS giả định role này, bao gồm: `s3`, `lambda`, `rds`, `dynamodb`, `eks`, `ecs`, `sagemaker`, `sns`, `apigateway`, `cloudformation`, `codedeploy`, `secretsmanager`, v.v.
@@ -617,9 +617,9 @@ aws iam list-attached-role-policies --role-name LabRole --no-cli-pager
 
 | # | PolicyName | Loại |
 | :-: | :--- | :--- |
-| 1 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy1-j0puGCnNFb8p` | Custom (VocLab) |
-| 2 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy2-IWblPOpQheRy` | Custom (VocLab) |
-| 3 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy3-3hnH61ywwtbH` | Custom (VocLab) |
+| 1 | `c234923a5899957l17539795t1w523156739905-VocLabPolicy1-j0puGCnNFb8p` | Custom (VocLab) |
+| 2 | `c234923a5899957l17539795t1w523156739905-VocLabPolicy2-IWblPOpQheRy` | Custom (VocLab) |
+| 3 | `c234923a5899957l17539795t1w523156739905-VocLabPolicy3-3hnH61ywwtbH` | Custom (VocLab) |
 | 4 | `AmazonSSMManagedInstanceCore` | AWS Managed |
 | 5 | `AmazonEKSClusterPolicy` | AWS Managed |
 | 6 | `AmazonEC2ContainerRegistryReadOnly` | AWS Managed |
@@ -654,7 +654,7 @@ aws s3api create-bucket \
 | **Bucket Name** | `inventory-reports-us-east-1-24110244` |
 | **Region** | `us-east-1` |
 | **ARN** | `arn:aws:s3:::inventory-reports-us-east-1-24110244` |
-| **Account ID** | `041118630529` |
+| **Account ID** | `523156739905` |
 
 #### B. Gắn Tag chuẩn cho Bucket
 
@@ -692,7 +692,7 @@ aws s3api get-bucket-tagging \
 
 | Hạng mục | Trạng thái | Chi tiết |
 | :--- | :---: | :--- |
-| Đăng nhập AWS Learner Lab | Hoàn thành | Session `voclabs`, Account `041118630529` |
+| Đăng nhập AWS Learner Lab | Hoàn thành | Session `voclabs`, Account `523156739905` |
 | Xác minh IAM Role LabRole | Hoàn thành | 7 policies, đủ quyền triển khai hạ tầng |
 | Tạo S3 Bucket báo cáo | Hoàn thành | `inventory-reports-us-east-1-24110244` |
 | Gắn Tag `Project=inventory-app` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
@@ -828,7 +828,7 @@ Thực hiện thử nghiệm và đánh giá kịch bản kết nối giữa cá
 
 | Kịch bản thử nghiệm | Nguồn (Source) | Đích (Destination) | Cổng & Giao thức | Kỳ vọng | Kết quả thực nghiệm | Đánh giá |
 | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **1** | Người dùng Internet | `inventory-web-sg` | TCP `80`, `5000` | Cho phép kết nối | **Thành công (200 OK)** | Web App tiếp nhận HTTP traffic bình thường. |
+| **1** | Người dùng Internet | `inventory-web-sg` | TCP `80`, `5000` | Cho phép kết nối | Chưa kiểm thử thực tế — thực hiện tuần 2 | Web App tiếp nhận HTTP traffic bình thường. |
 | **2** | Web Server (`inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Cho phép kết nối nội bộ | **Thành công (Connected)** | Web App đọc/ghi dữ liệu kho vào RDS. |
 | **3** | Internet bên ngoài | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Chặn kết nối | **Bị từ chối / Timeout** | RDS nằm ở Private Subnet & không mở port cho IP công cộng. |
 | **4** | Tài nguyên khác trong VPC (không mang `inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Chặn kết nối | **Bị từ chối (Connection Refused)** | Rule Inbound từ chối vì không khớp Source SG ID. |
@@ -875,8 +875,8 @@ aws iam get-instance-profile \
 | Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0bb46c5bbb3ba364b`, mở port 80, 5000, 443 |
 | Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f5e8348f198a9f97`, Inbound TCP 5432 từ Web SG |
 | Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, đã cấu hình cổng 5432 tham chiếu Web SG|
-| Kiểm thử an ninh luồng mạng | Đạt  | Chỉ cho phép Web Tier kết nối DB; chặn  Internet |
-| Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
+| Kiểm thử an ninh luồng mạng | Chờ kiểm thử tuần 2  | Chỉ cho phép Web Tier kết nối DB; chặn  Internet |
+| Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::523156739905:instance-profile/LabInstanceProfile` |
 | Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
 
 ---
@@ -922,7 +922,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 ### 10.2. Thu thập & Chuẩn hóa Bộ Ảnh Minh chứng (Screenshots) Tuần 1
 
 Để phục vụ báo cáo và bảo vệ đồ án trước Giảng viên hướng dẫn ThS. Huỳnh Xuân Phụng, mọi ảnh chụp màn hình đều tuân thủ 3 tiêu chí:
-1. Hiển thị rõ **AWS Account ID (`041118630529`)** hoặc User ARN góc trên cùng bên phải.
+1. Hiển thị rõ **AWS Account ID (`523156739905`)** hoặc User ARN góc trên cùng bên phải.
 2. Hiển thị đúng **Region: `us-east-1` (N. Virginia)**.
 3. Tài nguyên có tiền tố chuẩn `inventory-*` và đầy đủ thẻ **Tag (`Project: inventory-app`, `Owner: Khanh-Quan`)**.
 
@@ -930,7 +930,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 | STT | Tên file ảnh | Dịch vụ AWS | Nội dung minh chứng | Sinh viên thực hiện | Trạng thái file |
 | :-: | :--- | :---: | :--- | :---: | :---: |
-| 1 | `01_aws_sts_identity.png` | AWS STS | Caller Identity, Account ID `041118630529`, ARN sinh viên | Nguyễn Đình Khanh | Đã lưu trữ |
+| 1 | `01_aws_sts_identity.png` | AWS STS | Caller Identity, Account ID `523156739905`, ARN sinh viên | Nguyễn Đình Khanh | Đã lưu trữ |
 | 2 | `02_labrole_policies.png` | AWS IAM | 7 Policies đính kèm vào `LabRole` | Nguyễn Đình Khanh | Đã lưu trữ |
 | 3 | `03_s3_bucket_created.png` | Amazon S3 | Bucket `inventory-reports-us-east-1-24110244` & Tagging | Nguyễn Đình Khanh | Đã lưu trữ |
 | 4 | `04_vpc_created.png` | Amazon VPC | VPC `inventory-vpc` (`10.0.0.0/16`), DNS resolution & hostnames | Võ Minh Quân | Đã lưu trữ |
@@ -1007,7 +1007,6 @@ Vào cuối buổi sáng Chủ Nhật, Võ Minh Quân đã họp trao đổi v�
 
 | Tiêu chí | Kết quả đạt được | Đánh giá |
 | :--- | :--- | :---: |
-| **Tổng số giờ cả tuần** | **14.0 giờ** (Thứ Tư: 3h, Thứ Năm: 3h, Thứ Sáu: 3h, Thứ Bảy: 2.5h, Chủ Nhật: 2.5h) | 8 giờ/tuần (Đạt yêu cầu) |
 | **Bảo tồn ngân sách** | Kiểm tra toàn bộ tài nguyên, chi phí phát sinh giữ ở mức $0.00 USD | Xuất sắc |
 | **Bộ ảnh minh chứng** | Danh mục ảnh minh chứng được chuẩn hóa, đáp ứng yêu cầu Account ID & Region | Hoàn chỉnh |
 | **Kịch bản tự động hóa** | Đóng gói script PowerShell/Bash cho hạ tầng Security Groups | Sẵn sàng tái sử dụng |
