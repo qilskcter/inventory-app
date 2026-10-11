@@ -853,29 +853,20 @@ aws iam get-instance-profile \
 
 ```json
 {
-    "InstanceProfile": {
-        "InstanceProfileName": "LabInstanceProfile",
-        "InstanceProfileId": "AIPAQTEW4QKAV3OQ5WABC",
-        "Path": "/",
-        "Arn": "arn:aws:iam::041118630529:instance-profile/LabInstanceProfile",
-        "CreateDate": "2026-10-10T11:35:12+00:00",
-        "Roles": [
-            {
-                "RoleName": "LabRole",
-                "RoleId": "AROAQTEW4QKAXDETP2WOD",
-                "Path": "/",
-                "Arn": "arn:aws:iam::041118630529:role/LabRole",
-                "CreateDate": "2026-10-10T11:35:11+00:00"
-            }
-        ]
+  "ProfileName": "LabInstanceProfile",
+  "ProfileArn": "arn:aws:iam::523156739905:instance-profile/LabInstanceProfile",
+  "Roles": [
+    {
+      "RoleName": "LabRole",
+      "RoleArn": "arn:aws:iam::523156739905:role/LabRole"
     }
+  ]
 }
 ```
 
  **Nhận xét quan trọng:**
  - `LabInstanceProfile` chứa liên kết hợp lệ tới role `LabRole` (đã được nhóm xác minh ở Mục 8.2 với 7 chính sách quyền hạn).
- - Cấu hình này đáp ứng đầy đủ yêu cầu để đính kèm vào máy chủ EC2 / Elastic Beanstalk ở **Tuần 2**, đảm bảo backend web có thể kết nối với S3 lưu ảnh và SNS gửi cảnh báo mà không gặp lỗi phân quyền (`AccessDenied`).
-
+ - Cấu hình này đáp ứng đầy đủ yêu cầu để đính kèm vào máy chủ EC2 / Elastic Beanstalk ở **Tuần 2**. Đã xác minh LabInstanceProfile chứa LabRole. Quyền truy cập từng dịch vụ sẽ được kiểm tra khi triển khai tuần 2.
 ---
 
 ### 9.5. Tổng kết Kết quả Công việc Thứ Bảy của Võ Minh Quân
@@ -884,7 +875,7 @@ aws iam get-instance-profile \
 | :--- | :---: | :--- |
 | Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0bb46c5bbb3ba364b`, mở port 80, 5000, 443 |
 | Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f5e8348f198a9f97`, Inbound TCP 5432 từ Web SG |
-| Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, cô lập tuyệt đối RDS |
+| Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, đã cấu hình cổng 5432 tham chiếu Web SG|
 | Kiểm thử an ninh luồng mạng | Đạt  | Chỉ cho phép Web Tier kết nối DB; chặn  Internet |
 | Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
 | Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
