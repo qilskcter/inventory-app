@@ -577,8 +577,8 @@ aws sts get-caller-identity --no-cli-pager
 ```json
 {
     "UserId": "AROAQTEW4QKAWCT3QSKEZ:user5470815=24110244@student.hcmute.edu.vn",
-    "Account": "523156739905",
-    "Arn": "arn:aws:sts::523156739905:assumed-role/voclabs/user5470815=24110244@student.hcmute.edu.vn"
+    "Account": "041118630529",
+    "Arn": "arn:aws:sts::041118630529:assumed-role/voclabs/user5470815=24110244@student.hcmute.edu.vn"
 }
 ```
 ![Screenshot](./screenshots/01_aws_sts_identity.png)
@@ -601,7 +601,7 @@ aws iam get-role --role-name LabRole --no-cli-pager
 | :--- | :--- |
 | **RoleName** | `LabRole` |
 | **RoleId** | `AROAQTEW4QKAXDETP2WOD` |
-| **ARN** | `arn:aws:iam::523156739905:role/LabRole` |
+| **ARN** | `arn:aws:iam::041118630529:role/LabRole` |
 | **CreateDate** | `2026-10-10T11:35:11+00:00` |
 
 Role `LabRole` được cấu hình với **Trust Policy** cho phép nhiều dịch vụ AWS giả định role này, bao gồm: `s3`, `lambda`, `rds`, `dynamodb`, `eks`, `ecs`, `sagemaker`, `sns`, `apigateway`, `cloudformation`, `codedeploy`, `secretsmanager`, v.v.
@@ -617,9 +617,9 @@ aws iam list-attached-role-policies --role-name LabRole --no-cli-pager
 
 | # | PolicyName | Loại |
 | :-: | :--- | :--- |
-| 1 | `c234923a5899957l17539795t1w523156739905-VocLabPolicy1-j0puGCnNFb8p` | Custom (VocLab) |
-| 2 | `c234923a5899957l17539795t1w523156739905-VocLabPolicy2-IWblPOpQheRy` | Custom (VocLab) |
-| 3 | `c234923a5899957l17539795t1w523156739905-VocLabPolicy3-3hnH61ywwtbH` | Custom (VocLab) |
+| 1 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy1-j0puGCnNFb8p` | Custom (VocLab) |
+| 2 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy2-IWblPOpQheRy` | Custom (VocLab) |
+| 3 | `c234923a5899957l17539795t1w041118630529-VocLabPolicy3-3hnH61ywwtbH` | Custom (VocLab) |
 | 4 | `AmazonSSMManagedInstanceCore` | AWS Managed |
 | 5 | `AmazonEKSClusterPolicy` | AWS Managed |
 | 6 | `AmazonEC2ContainerRegistryReadOnly` | AWS Managed |
