@@ -891,10 +891,7 @@ aws iam get-instance-profile \
 
 ---
 
-## 10. BÁO CÁO CÔNG VIỆC CHỦ NHẬT (09:00 - 11:30) - VÕ MINH QUÂN (MSSV: 24110312)
-
-* **Thời gian thực hiện:** 09:00 - 11:30, Chủ Nhật (2.5 giờ)
-* **Người thực hiện:** Võ Minh Quân (MSSV: `24110312` - Phụ trách Network, Security & Infrastructure Setup)
+## 10. TỔNG KẾT HẠ TẦNG AWS, MINH CHỨNG TRIỂN KHAI & CHUẨN BỊ TUẦN 2
 * **Công cụ / AI hỗ trợ:** AWS CLI, AWS Management Console (`us-east-1`), PowerShell, Git.
 
 ---
