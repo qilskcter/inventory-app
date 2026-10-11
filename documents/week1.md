@@ -117,7 +117,6 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 | **Minh chứng mã nguồn** | Toàn bộ mã nguồn, SQL script, tài liệu trên GitHub. | GitHub Repo: `qilskcter/inventory-app`. |
 | **Báo cáo sử dụng AI** | Ghi rõ phạm vi hỗ trợ của ChatGPT, Claude, Amazon Q, Antigravity. | Trình bày tại Mục IV trong Worklog Tuần 1. |
 
->>>>>>> 308fa1f0f18c847356c88ff4d6c58ae92e367f45
 # BÁO CÁO - TUẦN 1
 ## HỆ THỐNG QUẢN LÝ KHO HÀNG & CẢNH BÁO TỒN KHO (`inventory-app`)
 
