@@ -47,7 +47,7 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
 | **Thứ Sáu** | 13:00 - 16:00 | • Xây dựng mã nguồn Backend (Flask API) xử lý CRUD sản phẩm, logic Nhập/Xuất kho theo thời gian thực.<br>• Thiết kế giao diện HTML5/Bootstrap 5 (`templates/index.html`) hiển thị bảng tồn kho & nút nhập xuất. | AI hỗ trợ (Antigravity / Copilot) viết hàm helper xử lý validation dữ liệu | 3.0h | Ứng dụng chạy thành công tại `http://127.0.0.1:5000` với đầy đủ chức năng cốt lõi. |
 | **Thứ Bảy** | 09:00 - 11:00 | • Đăng nhập AWS Learner Lab (`us-east-1`), xác minh quyền hạn của `LabRole`.<br>• Khởi tạo Amazon S3 Bucket lưu trữ báo cáo định kỳ: `inventory-reports-us-east-1-24110244`.<br>• Gắn Tag chuẩn cho S3: `Project=inventory-app`, `Owner=Khanh-Quan`. | Thao tác trực tiếp trên AWS Management Console | 2.0h | S3 Bucket được tạo thành công với cấu hình private và đúng Tagging quy định. |
 | **Chủ Nhật** | 14:00 - 16:30 | • Tối ưu hóa mã nguồn, viết file `README.md` chi tiết và cấu trúc dự án chuẩn Git.<br>• Push toàn bộ source code Tuần 1 lên GitHub repository.<br>• Họp nhóm tổng kết kết quả Tuần 1. | Tự thực hiện & kiểm thử | 2.5h | • Git commit/push sạch sẽ.<br>• Ảnh chụp AWS Console S3 có Account ID & Region. |
->>>>>>> 1f0702d2097577cf5bbe08f466230d497637e557
+
 
 * **Tổng số giờ làm việc của Nguyễn Đình Khanh:** **14.0 giờ** (Đạt yêu cầu quy định $\ge 8$ giờ/tuần).
 
