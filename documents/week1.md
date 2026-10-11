@@ -884,7 +884,7 @@ aws iam get-instance-profile \
 | Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0a81f3d2e4c7b91a0`, mở port 80, 5000, 443 |
 | Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f72c4e9b1d8a35c2`, Inbound TCP 5432 từ Web SG |
 | Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, cô lập tuyệt đối RDS |
-| Kiểm thử an ninh luồng mạng | Đạt  | Chỉ cho phép Web Tier kết nối DB; chặn hoàn toàn Internet |
+| Kiểm thử an ninh luồng mạng | Đạt  | Chỉ cho phép Web Tier kết nối DB; chặn  Internet |
 | Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
 | Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
 
