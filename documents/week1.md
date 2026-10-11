@@ -896,10 +896,10 @@ aws iam get-instance-profile \
 
 ---
 
-### 10.1. Kiểm tra, Dọn dẹp Tài nguyên & Bảo tồn Budget $100 trên AWS Learner Lab
+### 10.1. Kiểm tra, Dọn dẹp Tài nguyên & Bảo tồn Budget $50 trên AWS Learner Lab
 
 Theo chính sách nghiêm ngặt của AWS Academy Learner Lab:
-* Ngân sách cấp: Cố định **$100.00 USD** cho toàn bộ học kỳ, hết ngân sách tài khoản sẽ bị đóng băng vĩnh viễn.
+* Ngân sách cấp: Cố định **$50** cho toàn bộ học kỳ, hết ngân sách tài khoản sẽ bị đóng băng vĩnh viễn.
 * Sau mỗi buổi làm việc thực hành, sinh viên bắt buộc phải kiểm tra, dừng hoặc xóa các dịch vụ có phát sinh chi phí tính theo giờ chạy (Compute EC2, RDS Instance, NAT Gateway, v.v.).
 
 #### A. Rà soát danh mục tài nguyên đang hoạt động trong Tuần 1:
@@ -925,7 +925,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 #### B. Đánh giá phát sinh chi phí:
 * **Tài nguyên mạng nền tảng (VPC, 4 Subnets, Internet Gateway, 2 Route Tables, 2 Security Groups):** Hoàn toàn **miễn phí ($0.00/giờ)** trên AWS khi không dùng NAT Gateway. Nhóm giữ nguyên hạ tầng này để sẵn sàng gắn kết EC2/Beanstalk và RDS ở Tuần 2 mà không phải tạo lại.
 * **Lưu trữ S3 (`inventory-reports-us-east-1-24110244`):** Dung lượng hiện tại $< 1$ MB, chi phí lưu trữ $\approx \$0.00002$/tháng.
-* **Tổng chi phí tích lũy kết thúc Tuần 1:** **$0.00 USD**. Số dư tài khoản được bảo toàn nguyên vẹn **$100.00 / $100.00 USD**.
+* **Tổng chi phí tích lũy kết thúc Tuần 1:** **$0.00 USD**. Số dư tài khoản được bảo toàn nguyên vẹn **$50.00 / $50.00 USD**.
 
 ---
 
@@ -1022,6 +1022,6 @@ Vào cuối buổi sáng Chủ Nhật, Võ Minh Quân đã họp trao đổi v�
 | **Bảo tồn ngân sách** | Kiểm tra toàn bộ tài nguyên, chi phí phát sinh giữ ở mức $0.00 USD | Xuất sắc |
 | **Bộ ảnh minh chứng** | Danh mục ảnh minh chứng được chuẩn hóa, đáp ứng yêu cầu Account ID & Region | Hoàn chỉnh |
 | **Kịch bản tự động hóa** | Đóng gói script PowerShell/Bash cho hạ tầng Security Groups | Sẵn sàng tái sử dụng |
-| **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng 100% |
+| **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng 50% |
 
 
