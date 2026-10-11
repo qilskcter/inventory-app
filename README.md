@@ -10,6 +10,31 @@
 * **Cảnh báo tồn kho thấp:** Tự động phát hiện và hiển thị cảnh báo (trực quan trên giao diện và tích hợp AWS SNS) khi số lượng sản phẩm tụt xuống dưới ngưỡng an toàn.
 * **Nền tảng Cloud-Ready:** Thiết kế tương thích với các dịch vụ AWS (Elastic Beanstalk, RDS PostgreSQL, S3, EventBridge, SNS).
 
+## Flask JSON API
+
+Các endpoint API dùng JSON; lỗi trả về theo định dạng `{"error": "..."}`. Tồn kho chỉ được thay đổi qua giao dịch nhập/xuất để giữ lịch sử giao dịch nhất quán.
+
+| Method | Endpoint | Chức năng |
+| --- | --- | --- |
+| `GET` | `/api/products` | Liệt kê sản phẩm |
+| `POST` | `/api/products` | Tạo sản phẩm (`sku`, `name`; `quantity` mặc định `0`, `min_threshold` mặc định `5`) |
+| `GET` | `/api/products/<id>` | Xem sản phẩm |
+| `PUT` | `/api/products/<id>` | Cập nhật `sku`, `name`, `min_threshold` |
+| `PATCH` | `/api/products/<id>` | Cập nhật một hoặc nhiều trường trên |
+| `DELETE` | `/api/products/<id>` | Xóa sản phẩm |
+| `GET` | `/api/transactions` | Xem lịch sử nhập/xuất |
+| `POST` | `/api/transactions` | Tạo giao dịch kho |
+
+Ví dụ tạo giao dịch nhập kho:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 1, "type": "IN", "quantity": 10}'
+```
+
+Giao dịch xuất được cập nhật tồn kho bằng một câu lệnh SQL có điều kiện, nên không thể xuất vượt tồn ngay cả khi có yêu cầu đồng thời. Cả cập nhật tồn kho và ghi lịch sử đều commit trong cùng một database transaction. Thành công trả `201`; dữ liệu không hợp lệ trả `400`, không tìm thấy sản phẩm trả `404`, SKU trùng hoặc tồn kho không đủ trả `409`.
+
 ---
 
 ## Công nghệ sử dụng
@@ -25,10 +50,17 @@
 inventory-app/
 │
 ├── app.py                  # Mã nguồn chính của ứng dụng Flask & kết nối CSDL
-├── requirements.txt        # Danh sách các thư viện Python phụ thuộc
-└── templates/              # Thư mục chứa giao diện HTML
-    └── index.html          # Giao diện trang chủ quản lý kho & bảng dữ liệu
-
+├── init_db.py              # Script Python tự động đọc database/schema.sql và khởi tạo/cập nhật CSDL
+├── database/               # Thư mục chứa cấu trúc CSDL
+│   └── schema.sql          # Script SQL DDL chứa cấu trúc 2 bảng products & transactions
+├── documents/              # Báo cáo chi tiết đồ án các tuần (week1.md)
+├── logs/                   # Nhật ký phân công và tiến độ công việc (week1.md)
+├── scripts/                # Kịch bản tự động hóa hạ tầng AWS (Security Groups, VPC, IAM)
+├── templates/              # Thư mục chứa giao diện HTML (Bootstrap 5)
+│   └── index.html          # Giao diện trang chủ quản lý kho & bảng dữ liệu
+├── tests/                  # Bộ kiểm thử tự động (Unit Test & Integration Test)
+│   └── test_app.py         # Kiểm thử các API và giao diện Flask
+└── requirements.txt        # Danh sách các thư viện Python phụ thuộc
 ```
 
 ---
@@ -38,13 +70,13 @@ inventory-app/
 ### 1. Yêu cầu hệ thống
 
 * Python 3.x đã được cài đặt trên máy tính.
-* PostgreSQL đã được cài đặt và khởi động.
+* PostgreSQL đã được cài đặt và khởi động (hoặc có thông tin kết nối AWS RDS PostgreSQL).
 
 ### 2. Các bước thực hiện
 
 1. **Clone repository này về máy:**
 ```bash
-git clone [https://github.com/TEN_USER_CUA_BAN/inventory-app.git](https://github.com/TEN_USER_CUA_BAN/inventory-app.git)
+git clone https://github.com/TEN_USER_CUA_BAN/inventory-app.git
 cd inventory-app
 ```
 
@@ -67,7 +99,7 @@ pip install -r requirements.txt
 ```
 
 4. **Cấu hình kết nối cơ sở dữ liệu:**
-Mở file `app.py` và điều chỉnh thông tin kết nối PostgreSQL ở phần đầu file cho khớp với cấu hình máy của bạn:
+Mở file `init_db.py` (hoặc đặt các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`) cho khớp với cấu hình PostgreSQL máy bạn:
 ```python
 DB_HOST = "localhost"
 DB_NAME = "inventory_db"   # Đảm bảo bạn đã tạo database này trên PostgreSQL
@@ -76,12 +108,28 @@ DB_PASS = "123456"         # Mật khẩu database của bạn
 DB_PORT = "5432"
 ```
 
-5. **Chạy ứng dụng:**
+5. **Khởi tạo / Cập nhật Cơ sở dữ liệu (Database Setup & Update):**
+
+Bạn có thể chọn 1 trong 2 cách sau để khởi tạo hoặc cập nhật cấu trúc CSDL từ `database/schema.sql`:
+
+* **Cách 1: Dùng script Python (Khuyên dùng):**
+```bash
+python init_db.py
+```
+
+* **Cách 2: Chạy trực tiếp qua câu lệnh `psql`:**
+```bash
+psql -h localhost -U postgres -d inventory_db -f database/schema.sql
+```
+
+*(Lưu ý: Khi chạy ứng dụng `python app.py`, hệ thống cũng sẽ tự động gọi hàm khởi tạo CSDL từ `init_db.py` nếu các bảng chưa tồn tại).*
+
+6. **Chạy ứng dụng:**
 ```bash
 python app.py
 ```
 
-6. **Trải nghiệm:**
+7. **Trải nghiệm:**
 Mở trình duyệt web và truy cập vào địa chỉ: `http://127.0.0.1:5000`
 
 ---
