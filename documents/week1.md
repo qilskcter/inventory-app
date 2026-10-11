@@ -133,7 +133,7 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 
 | Tiêu chí / Tài nguyên | Quy định & Giới hạn của AWS Learner Lab | Giải pháp & Ứng dụng cho dự án Inventory App |
 | :--- | :--- | :--- |
-| **Budget / Chi phí** | Cấp tối đa **$50 USD** credit cho cả học kỳ. Nếu hết budget, Lab sẽ bị khóa vĩnh viễn. | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
+| **Budget / Chi phí** | Cấp tối đa **$50 USD** credit cho cả học kỳ.  | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
 | **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). | Nhóm thống nhất cố định 50% tài nguyên ở Region **`us-east-1`**. |
 | **Quyền hạn IAM** | • **Không có quyền** tạo IAM User, IAM Role mới, hoặc chỉnh sửa IAM Policy.<br>• Phải dùng IAM Role tạo sẵn: **`LabRole`**.<br>• EC2/Beanstalk chỉ được dùng **`LabInstanceProfile`**. | Mọi cấu hình kết nối giữa EC2/Beanstalk với RDS/S3/SNS đều tận dụng trực tiếp `LabRole` & `LabInstanceProfile`. |
 | **Quy định Tagging** | Bắt buộc phải gắn thẻ (Tags) tài nguyên theo hướng dẫn của môn học để kiểm soát chi phí và điểm danh. | Đính kèm đồng bộ 2 Tag bắt buộc cho mọi tài nguyên:<br>• `Project`: `inventory-app`<br>• `Owner`: `Khanh-Quan` |
@@ -204,8 +204,7 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 ### 3.6. AWS CloudFormation (Tự động hóa Quản lý Hạ tầng bằng Mã - IaC)
 - **Tổng quan:** Dịch vụ Hạ tầng dưới dạng Mã (Infrastructure as Code - IaC) cho phép định nghĩa, triển khai và quản lý toàn bộ tài nguyên AWS tự động thông qua file cấu hình mẫu (Template dạng YAML/JSON).
 - **Thành phần chính:** CloudFormation Template (Mẫu cấu hình YAML), Stack (Tập hợp tài nguyên AWS được tạo đồng bộ).
-- **Vai trò trong dự án:** Tự động hóa quá trình dựng lại toàn bộ hạ tầng (VPC, Subnet, RDS, Elastic Beanstalk, S3, SNS, EventBridge) chỉ bằng 1 thao tác hoặc 1 câu lệnh CLI. Giúp tiết kiệm ngân sách `$50 USD` trên AWS Learner Lab bằng cách dễ dàng xóa Stack khi dừng làm việc và dựng lại Stack trong 5 phút khi tiếp tục đồ án.
-
+- **Vai trò trong dự án:** Tự động hóa quá trình dựng lại toàn bộ hạ tầng (VPC, Subnet, RDS, Elastic Beanstalk, S3, SNS, EventBridge) chỉ bằng 1 thao tác hoặc 1 câu lệnh CLI. Giúp tiết kiệm ngân sách `$50 USD` trên AWS Learner Lab bằng cách dễ dàng xóa Stack khi dừng làm việc.
 ---
 
 ## 4. SƠ ĐỒ KIẾN TRÚC TỔNG THỂ HỆ THỐNG (ARCHITECTURE DIAGRAM)
@@ -915,7 +914,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 #### B. Đánh giá phát sinh chi phí:
 * **Tài nguyên mạng nền tảng (VPC, 4 Subnets, Internet Gateway, 2 Route Tables, 2 Security Groups):** Hoàn toàn **miễn phí ($0.00/giờ)** trên AWS khi không dùng NAT Gateway. Nhóm giữ nguyên hạ tầng này để sẵn sàng gắn kết EC2/Beanstalk và RDS ở Tuần 2 mà không phải tạo lại.
-* **Lưu trữ S3 (`inventory-reports-us-east-1-24110244`):** Dung lượng hiện tại $< 1$ MB, chi phí lưu trữ $\approx \$0.00002$/tháng.
+* **Lưu trữ S3 (`inventory-reports-us-east-1-24110244`):** Dung lượng hiện tại $< 1$ MB, chi phí lưu trữ $\approx \$0.0000$/tháng.
 * **Tổng chi phí tích lũy kết thúc Tuần 1:** **$0.00 USD**. Số dư tài khoản được bảo toàn nguyên vẹn **$50.00 / $50.00 USD**.
 
 ---
