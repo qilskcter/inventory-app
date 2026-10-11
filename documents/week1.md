@@ -1,123 +1,3 @@
-<<<<<<< HEAD
-# BÁO CÁO KỸ THUẬT VÀ KẾT QUẢ TRIỂN KHAI - TUẦN 1
-
----
-
-## I. TỔNG QUAN ĐỀ TÀI & KIẾN TRÚC HỆ THỐNG
-
-### 1. Thông tin đồ án:
-* **Tên đề tài:** Xây dựng hệ thống quản lý nhập/xuất kho, cảnh báo tồn kho thấp và báo cáo định kỳ
-* **Môn học:** Cloud Computing (Điện toán đám mây - Đợt 1, 2026 - 2027)
-* **Giảng viên hướng dẫn (GVHD):** ThS. Huỳnh Xuân Phụng
-* **Nhóm thực hiện (2 sinh viên):**
-  * **Nguyễn Đình Khanh** - MSSV: `24110244` (Nhóm trưởng / Phụ trách Backend & Database)
-  * **Võ Minh Quân** - MSSV: `24110312` (Thành viên / Phụ trách Network & Infrastructure)
-
-### 2. Mô hình kiến trúc tổng thể (Architecture Overview):
-Hệ thống được thiết kế theo mô hình Cloud-Native 2-Tier kết hợp kiến trúc hướng sự kiện (Event-Driven Architecture):
-1. **Web Tier:** Ứng dụng Flask Web App chạy trên AWS Elastic Beanstalk (hoặc EC2) đặt trong **Public Subnets**, phục vụ người dùng quản lý sản phẩm và thao tác nhập/xuất kho.
-2. **Database Tier:** Cơ sở dữ liệu quan hệ **Amazon RDS PostgreSQL** (Single-AZ, `db.t3.micro`) nằm ẩn trong **Private Subnets**, chỉ cho phép truy cập từ Web Tier thông qua Security Group.
-3. **Cảnh báo tồn kho tự động (Alerting):**
-   * Cơ chế sự kiện thời gian thực / định kỳ: **Amazon EventBridge** kích hoạt **AWS Lambda function** quét các mặt hàng có số lượng $\le$ `min_threshold`.
-   * Gửi cảnh báo: Lambda đẩy thông điệp cảnh báo qua **Amazon SNS Topic**, gửi email trực tiếp tới quản lý kho.
-4. **Báo cáo định kỳ (Reporting):** AWS Lambda định kỳ hàng tuần tổng hợp dữ liệu giao dịch thành file **PDF / CSV** và lưu trữ an toàn trong **Amazon S3 Bucket**.
-5. **Tự động hóa hạ tầng (IaC):** Toàn bộ tài nguyên (VPC, Subnets, SG, S3, RDS, Lambda, SNS, EventBridge) sẽ được mã hóa và triển khai tự động qua **AWS CloudFormation template**.
-
----
-
-## II. BÁO CÁO CÔNG VIỆC CHI TIẾT - VÕ MINH QUÂN (MSSV: 24110312)
-
-### 1. Phân tích & Tổng hợp Giới hạn của AWS Learner Lab:
-Do dự án được triển khai trên môi trường học tập **AWS Academy Learner Lab**, nhóm đã rà soát nghiêm ngặt các điều kiện biên nhằm đảm bảo tài nguyên hoạt động liên tục mà không vi phạm chính sách lab:
-
-| Tài nguyên / Giới hạn | Ràng buộc của Learner Lab | Giải pháp thiết kế cho dự án |
-| :--- | :--- | :--- |
-| **Ngân sách (Budget)** | Cấp tối đa **$100 USD** credit. Nếu cạn kiệt, tài khoản bị khoá vĩnh viễn và mất dữ liệu. | Tối ưu kích cỡ máy chủ, tắt/dừng các instance khi không thao tác, kiểm tra chi phí sau mỗi buổi lab. |
-| **Vùng (Region)** | Chỉ cho phép `us-east-1` hoặc `us-west-2`. | Cố định 100% tài nguyên tại vùng **`us-east-1` (N. Virginia)**. |
-| **IAM Permission** | Không thể tạo User/Role mới; không được sửa Policy. Bắt buộc dùng `LabRole`. | Toàn bộ ứng dụng và Lambda đều tận dụng **`LabRole`** và **`LabInstanceProfile`**. |
-| **Quy định Tagging** | Bắt buộc gắn thẻ định danh để kiểm soát tài nguyên. | Mọi tài nguyên khởi tạo đều gắn: `Project=inventory-app`, `Owner=Khanh-Quan`. |
-| **Compute (EC2)** | Giới hạn $\le 9$ instance và $\le 32$ vCPU; loại instance từ nano $\rightarrow$ large. | Chỉ sử dụng `t2.micro` hoặc `t3.micro` (1 vCPU, 1 GiB RAM). |
-| **Lưu trữ (EBS)** | Tổng dung lượng EBS $\le 100$ GB (gp2 hoặc gp3). | Khởi tạo ổ đĩa hệ thống 20GB - 30GB gp3. |
-| **Amazon RDS** | Hỗ trợ `db.t2.micro` / `db.t3.micro`. | Sử dụng RDS PostgreSQL `db.t3.micro` (Single-AZ, 20GB gp2/gp3). |
-
----
-
-### 2. Thiết kế Hạ tầng Mạng & Bảo mật (Network & Security Design):
-
-#### A. Sơ đồ phân vùng VPC và Subnets:
-* **VPC Name:** `inventory-vpc`
-* **CIDR Block:** `10.0.0.0/16`
-* **Multi-AZ Configuration:** Phân bổ đều trên 2 Availability Zones (`us-east-1a` và `us-east-1b`) nhằm thỏa mãn yêu cầu DB Subnet Group của RDS:
-  * `inventory-public-subnet-1`: `10.0.1.0/24` (AZ: `us-east-1a`) $\rightarrow$ Dành cho Web Tier (Public)
-  * `inventory-public-subnet-2`: `10.0.2.0/24` (AZ: `us-east-1b`) $\rightarrow$ Dành cho Web Tier (Public)
-  * `inventory-private-subnet-1`: `10.0.11.0/24` (AZ: `us-east-1a`) $\rightarrow$ Dành cho Database Tier (Private)
-  * `inventory-private-subnet-2`: `10.0.12.0/24` (AZ: `us-east-1b`) $\rightarrow$ Dành cho Database Tier (Private)
-
-#### B. Định tuyến (Route Tables) & Gateways:
-* **Internet Gateway (IGW):** `inventory-igw` được đính kèm trực tiếp vào `inventory-vpc`.
-* **Public Route Table (`inventory-public-rt`):**
-  * Route: `0.0.0.0/0` trỏ tới `inventory-igw`.
-  * Liên kết Subnet: Gắn với `inventory-public-subnet-1` và `inventory-public-subnet-2`.
-* **Private Route Table (`inventory-private-rt`):**
-  * Route: Chỉ chứa route nội bộ `10.0.0.0/16 local`, không có đường dẫn trực tiếp ra ngoài Internet nhằm bảo vệ an toàn cho RDS PostgreSQL.
-  * Liên kết Subnet: Gắn với `inventory-private-subnet-1` và `inventory-private-subnet-2`.
-
-#### C. Chiến lược kiểm soát truy cập (Security Groups 2-Tier):
-1. **`inventory-web-sg` (Web Application Security Group):**
-   * **Inbound:**
-     * Port `80` (HTTP) từ `0.0.0.0/0` (Truy cập Web cho người dùng)
-     * Port `5000` (Custom TCP) từ `0.0.0.0/0` (Kiểm thử Flask dev server)
-   * **Outbound:** All Traffic (hoặc TCP port 5432 đến DB SG)
-2. **`inventory-db-sg` (Database Security Group):**
-   * **Inbound:**
-     * Port `5432` (PostgreSQL) chỉ chấp nhận nguồn là Security Group ID của `inventory-web-sg` (`source: sg-xxxxxx`). Tuyệt đối không mở IP public hoặc `0.0.0.0/0`.
-   * **Outbound:** Mặc định.
-
----
-
-## III. BÁO CÁO CÔNG VIỆC CHI TIẾT - NGUYỄN ĐÌNH KHANH (MSSV: 24110244)
-
-### 1. Thiết kế Cơ sở dữ liệu quan hệ (PostgreSQL Database Schema):
-Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
-1. **Bảng `products`:** Quản lý thông tin và số lượng mặt hàng
-   * `id`: SERIAL PRIMARY KEY
-   * `sku`: VARCHAR(50) UNIQUE NOT NULL (Mã sản phẩm)
-   * `name`: VARCHAR(100) NOT NULL (Tên sản phẩm)
-   * `quantity`: INT NOT NULL DEFAULT 0 (Số lượng tồn thực tế)
-   * `min_threshold`: INT NOT NULL DEFAULT 5 (Định mức tồn tối thiểu để kích hoạt cảnh báo)
-2. **Bảng `transactions`:** Lưu trữ toàn bộ lịch sử xuất/nhập kho
-   * `id`: SERIAL PRIMARY KEY
-   * `product_id`: INT REFERENCES products(id) (Khóa ngoại)
-   * `type`: VARCHAR(10) NOT NULL ('IN' - Nhập kho, 'OUT' - Xuất kho)
-   * `quantity`: INT NOT NULL (Số lượng giao dịch)
-   * `created_at`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP (Thời gian thực hiện)
-
-### 2. Xây dựng Ứng dụng Backend & Giao diện Local:
-* Khởi tạo ứng dụng Flask (`app.py`), kết nối PostgreSQL qua thư viện `psycopg2-binary`.
-* Cài đặt các API xử lý:
-  * Xem danh sách hàng tồn (`/`).
-  * Thêm mới mặt hàng với mức cảnh báo tối thiểu (`/add`).
-  * Thực hiện giao dịch nhập/xuất kho (`/transaction`), có cơ chế ngăn chặn việc xuất hàng vượt quá số lượng tồn hiện có (`current_qty < trans_qty`).
-  * Tự động hiển thị Flash Warning khi `quantity <= min_threshold`.
-
-### 3. Khởi tạo Amazon S3 Bucket lưu trữ báo cáo:
-* Tạo thành công S3 Bucket: `inventory-reports-us-east-1-24110244` tại vùng `us-east-1`.
-* Cấu hình chế độ Private (Block all public access).
-* Gán Tagging đầy đủ: `Project=inventory-app`, `Owner=Khanh-Quan`.
-
----
-
-## IV. BẢNG TỔNG HỢP MINH CHỨNG & TIÊU CHÍ ĐÁNH GIÁ TUẦN 1
-
-| Tiêu chí yêu cầu của GVHD | Hiện trạng triển khai của nhóm | Minh chứng kiểm tra |
-| :--- | :--- | :--- |
-| **Kế hoạch thời gian** | Đạt **28.0 giờ** toàn nhóm (Khanh: 14.0h, Quân: 14.0h $\ge 8$h/SV). | Chi tiết tại [logs/week1.md](file:///c:/Users/ASUS/Downloads/AWSS/inventory-app/logs/week1.md). |
-| **Môi trường & Vùng** | Triển khai trên AWS Learner Lab tại vùng `us-east-1`. | Console / AWS CLI output Region `us-east-1`. |
-| **Quyền IAM** | Sử dụng `LabRole` & `LabInstanceProfile`. | Không tạo mới bất kỳ IAM Role/User nào. |
-| **Quy chuẩn Tagging** | 100% tài nguyên có `Project=inventory-app`, `Owner=Khanh-Quan`. | Thể hiện trên VPC, Subnet, SG, S3 Bucket. |
-| **Minh chứng mã nguồn** | Toàn bộ mã nguồn, SQL script, tài liệu trên GitHub. | GitHub Repo: `qilskcter/inventory-app`. |
-| **Báo cáo sử dụng AI** | Ghi rõ phạm vi hỗ trợ của ChatGPT, Claude, Amazon Q, Antigravity. | Trình bày tại Mục IV trong Worklog Tuần 1. |
-=======
 # BÁO CÁO - TUẦN 1
 ## HỆ THỐNG QUẢN LÝ KHO HÀNG & CẢNH BÁO TỒN KHO (`inventory-app`)
 
@@ -889,4 +769,108 @@ aws iam get-instance-profile \
 | Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
 | Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
 
->>>>>>> 1f0702d2097577cf5bbe08f466230d497637e557
+---
+
+## 10. BÁO CÁO CÔNG VIỆC CHỦ NHẬT (09:00 - 11:30) - VÕ MINH QUÂN (MSSV: 24110312)
+
+* **Thời gian thực hiện:** 09:00 - 11:30, Chủ Nhật (2.5 giờ)
+* **Người thực hiện:** Võ Minh Quân (MSSV: `24110312` - Phụ trách Network, Security & Infrastructure Setup)
+* **Công cụ / AI hỗ trợ:** AWS CLI, AWS Management Console (`us-east-1`), PowerShell, Git.
+
+---
+
+### 10.1. Kiểm tra, Dọn dẹp Tài nguyên & Bảo tồn Budget $100 trên AWS Learner Lab
+
+Theo chính sách nghiêm ngặt của AWS Academy Learner Lab:
+* Ngân sách cấp: Cố định **$100.00 USD** cho toàn bộ học kỳ, hết ngân sách tài khoản sẽ bị đóng băng vĩnh viễn.
+* Sau mỗi buổi làm việc thực hành, sinh viên bắt buộc phải kiểm tra, dừng hoặc xóa các dịch vụ có phát sinh chi phí tính theo giờ chạy (Compute EC2, RDS Instance, NAT Gateway, v.v.).
+
+#### A. Rà soát danh mục tài nguyên đang hoạt động trong Tuần 1:
+Thực hiện các câu lệnh kiểm tra trên AWS CLI (`us-east-1`):
+
+```bash
+# 1. Kiểm tra trạng thái máy chủ EC2 (đảm bảo không có instance nào chạy ngầm)
+aws ec2 describe-instances \
+  --filters "Name=instance-state-name,Values=running,pending" \
+  --query "Reservations[*].Instances[*].[InstanceId,InstanceType,State.Name]" \
+  --region us-east-1 --output table --no-cli-pager
+
+# 2. Kiểm tra cơ sở dữ liệu RDS (chưa khởi tạo instance trong Tuần 1, chuẩn bị cho Tuần 2)
+aws rds describe-db-instances \
+  --query "DBInstances[*].[DBInstanceIdentifier,DBInstanceClass,DBInstanceStatus]" \
+  --region us-east-1 --output table --no-cli-pager
+
+# 3. Kiểm tra các dịch vụ mạng nền tảng (VPC, Subnet, Route Table, IGW, Security Groups)
+aws ec2 describe-vpcs --filters "Name=tag:Project,Values=inventory-app" --region us-east-1 --output table --no-cli-pager
+aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-app" --region us-east-1 --output table --no-cli-pager
+```
+
+#### B. Đánh giá phát sinh chi phí:
+* **Tài nguyên mạng nền tảng (VPC, 4 Subnets, Internet Gateway, 2 Route Tables, 2 Security Groups):** Hoàn toàn **miễn phí ($0.00/giờ)** trên AWS khi không dùng NAT Gateway. Nhóm giữ nguyên hạ tầng này để sẵn sàng gắn kết EC2/Beanstalk và RDS ở Tuần 2 mà không phải tạo lại.
+* **Lưu trữ S3 (`inventory-reports-us-east-1-24110244`):** Dung lượng hiện tại $< 1$ MB, chi phí lưu trữ $\approx \$0.00002$/tháng.
+* **Tổng chi phí tích lũy kết thúc Tuần 1:** **$0.00 USD**. Số dư tài khoản được bảo toàn nguyên vẹn **$100.00 / $100.00 USD**.
+
+---
+
+### 10.2. Thu thập & Chuẩn hóa Bộ Ảnh Minh chứng (Screenshots) Tuần 1
+
+Để phục vụ báo cáo và bảo vệ đồ án trước Giảng viên hướng dẫn ThS. Huỳnh Xuân Phụng, mọi ảnh chụp màn hình đều tuân thủ 3 tiêu chí:
+1. Hiển thị rõ **AWS Account ID (`041118630529`)** hoặc User ARN góc trên cùng bên phải.
+2. Hiển thị đúng **Region: `us-east-1` (N. Virginia)**.
+3. Tài nguyên có tiền tố chuẩn `inventory-*` và đầy đủ thẻ **Tag (`Project: inventory-app`, `Owner: Khanh-Quan`)**.
+
+#### Bảng tổng hợp trạng thái các ảnh minh chứng:
+
+| STT | Tên file ảnh | Dịch vụ AWS | Nội dung minh chứng | Sinh viên | Trạng thái |
+| :-: | :--- | :---: | :--- | :---: | :---: |
+| 1 | `01_aws_sts_identity.png` | AWS STS | Caller Identity, Account ID `041118630529`, ARN sinh viên | Nguyễn Đình Khanh | Đã lưu trữ |
+| 2 | `02_labrole_policies.png` | AWS IAM | 7 Policies đính kèm vào `LabRole` | Nguyễn Đình Khanh | Đã lưu trữ |
+| 3 | `03_s3_bucket_created.png` | Amazon S3 | Bucket `inventory-reports-us-east-1-24110244` & Tagging | Nguyễn Đình Khanh | Đã lưu trữ |
+| 4 | `04_vpc_created.png` | Amazon VPC | VPC `inventory-vpc` (`10.0.0.0/16`), DNS resolution & hostnames | Võ Minh Quân | Sẵn sàng Console |
+| 5 | `05_subnets_list.png` | Amazon VPC | 4 Subnets (2 Public, 2 Private) Multi-AZ `us-east-1a` & `us-east-1b` | Võ Minh Quân | Sẵn sàng Console |
+| 6 | `06_route_tables.png` | Amazon VPC | `inventory-public-rt` (trỏ ra IGW) & `inventory-private-rt` (local) | Võ Minh Quân | Sẵn sàng Console |
+| 7 | `07_internet_gateway.png` | Amazon VPC | Internet Gateway `inventory-igw` đã attach vào `inventory-vpc` | Võ Minh Quân | Sẵn sàng Console |
+| 8 | `08_security_group_web.png` | EC2 / SG | `inventory-web-sg` với Inbound Rules (Port 80, 5000, 443) | Võ Minh Quân | Sẵn sàng Console |
+| 9 | `09_security_group_db.png` | EC2 / SG | `inventory-db-sg` Inbound Port 5432 tham chiếu Web SG ID | Võ Minh Quân | Sẵn sàng Console |
+| 10 | `10_lab_instance_profile.png`| AWS IAM | Xác minh `LabInstanceProfile` liên kết hợp lệ với `LabRole` | Võ Minh Quân | Sẵn sàng Console |
+
+---
+
+### 10.3. Xây dựng Script Tự động hóa Khởi tạo & Kiểm thử Security Groups
+
+Để hỗ trợ nhóm tái lập cấu hình nhanh chóng hoặc kiểm tra đối soát mà không cần bấm thủ công trên Console, Võ Minh Quân đã phát triển và hoàn thiện script tự động hóa:
+* **Script PowerShell:** [`scripts/setup_security_groups.ps1`](file:///c:/Users/ASUS/Downloads/AWSS/inventory-app/scripts/setup_security_groups.ps1) (dành cho Windows).
+* **Script Bash Shell:** [`scripts/setup_security_groups.sh`](file:///c:/Users/ASUS/Downloads/AWSS/inventory-app/scripts/setup_security_groups.sh) (dành cho Linux / macOS).
+
+**Các chức năng chính của script:**
+1. Tự động kiểm tra identity AWS Learner Lab (`sts get-caller-identity`).
+2. Tự động truy vấn tìm `VpcId` của `inventory-vpc`.
+3. Khởi tạo `inventory-web-sg` và mở các cổng `80`, `5000`, `443` cho `0.0.0.0/0`.
+4. Khởi tạo `inventory-db-sg` và thiết lập **Security Group Chaining**: chỉ mở cổng `5432` cho Source là `WebSgId`.
+5. Tự động gán nhãn `Project=inventory-app` và `Owner=Khanh-Quan`.
+6. Xác minh liên kết `LabInstanceProfile`.
+
+---
+
+### 10.4. Tổng hợp Báo cáo Hạ tầng Tuần 1 & Họp Giao ban với Nhóm trưởng
+
+Vào cuối buổi sáng Chủ Nhật, Võ Minh Quân đã họp trao đổi với Nguyễn Đình Khanh để tổng kết Tuần 1:
+1. **Khớp nối kết quả:** Hạ tầng mạng nền tảng (VPC, Subnet, Route Table, Security Groups) của Võ Minh Quân đã hoàn toàn tương thích với mã nguồn ứng dụng Flask + PostgreSQL do Nguyễn Đình Khanh xây dựng.
+2. **Kế hoạch phối hợp Tuần 2:**
+   * Nguyễn Đình Khanh phụ trách cấu hình tạo DB Subnet Group và khởi tạo instance Amazon RDS PostgreSQL (`db.t3.micro`) trong 2 Private Subnet.
+   * Võ Minh Quân phụ trách triển khai môi trường Web App (AWS Elastic Beanstalk hoặc EC2) đặt trong Public Subnet, đính kèm `inventory-web-sg` và `LabInstanceProfile`.
+   * Cả hai cùng kiểm thử luồng kết nối từ Web App sang RDS PostgreSQL qua Security Group Chaining.
+
+---
+
+### 10.5. Đánh giá Kết quả Thực hiện Chủ Nhật của Võ Minh Quân
+
+| Tiêu chí | Kết quả đạt được | Đánh giá |
+| :--- | :--- | :---: |
+| **Thời gian làm việc** | 2.5 giờ (09:00 - 11:30, Chủ Nhật) | Đạt chuẩn kế hoạch |
+| **Tổng số giờ cả tuần** | **14.0 giờ** (Thứ Tư: 3h, Thứ Năm: 3h, Thứ Sáu: 3h, Thứ Bảy: 2.5h, Chủ Nhật: 2.5h) | $\ge 8$ giờ/tuần (Đạt yêu cầu) |
+| **Bảo tồn ngân sách** | Kiểm tra toàn bộ tài nguyên, chi phí phát sinh giữ ở mức $0.00 USD | Xuất sắc |
+| **Bộ ảnh minh chứng** | Danh mục ảnh minh chứng được chuẩn hóa, đáp ứng yêu cầu Account ID & Region | Hoàn chỉnh |
+| **Kịch bản tự động hóa** | Đóng gói script PowerShell/Bash cho hạ tầng Security Groups | Sẵn sàng tái sử dụng |
+| **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng 100% |
+
