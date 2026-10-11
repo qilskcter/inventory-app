@@ -1013,15 +1013,14 @@ Vào cuối buổi sáng Chủ Nhật, Võ Minh Quân đã họp trao đổi v�
 
 ---
 
-### 10.5. Đánh giá Kết quả Thực hiện Chủ Nhật của Võ Minh Quân
+### 10.5. Đánh giá Kết quả Thực hiện 
 
 | Tiêu chí | Kết quả đạt được | Đánh giá |
 | :--- | :--- | :---: |
-| **Thời gian làm việc** | 2.5 giờ (09:00 - 11:30, Chủ Nhật) | Đạt chuẩn kế hoạch |
-| **Tổng số giờ cả tuần** | **14.0 giờ** (Thứ Tư: 3h, Thứ Năm: 3h, Thứ Sáu: 3h, Thứ Bảy: 2.5h, Chủ Nhật: 2.5h) | $\ge 8$ giờ/tuần (Đạt yêu cầu) |
+| **Tổng số giờ cả tuần** | **14.0 giờ** (Thứ Tư: 3h, Thứ Năm: 3h, Thứ Sáu: 3h, Thứ Bảy: 2.5h, Chủ Nhật: 2.5h) | 8 giờ/tuần (Đạt yêu cầu) |
 | **Bảo tồn ngân sách** | Kiểm tra toàn bộ tài nguyên, chi phí phát sinh giữ ở mức $0.00 USD | Xuất sắc |
 | **Bộ ảnh minh chứng** | Danh mục ảnh minh chứng được chuẩn hóa, đáp ứng yêu cầu Account ID & Region | Hoàn chỉnh |
 | **Kịch bản tự động hóa** | Đóng gói script PowerShell/Bash cho hạ tầng Security Groups | Sẵn sàng tái sử dụng |
-| **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng 50% |
+| **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng  |
 
 
