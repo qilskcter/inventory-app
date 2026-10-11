@@ -574,3 +574,197 @@ aws s3api get-bucket-tagging \
 | Tạo S3 Bucket báo cáo | Hoàn thành | `inventory-reports-us-east-1-24110244` |
 | Gắn Tag `Project=inventory-app` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
 | Gắn Tag `Owner=Khanh-Quan` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
+
+---
+
+## 9. CẤU HÌNH THỰC TẾ SECURITY GROUPS VÀ XÁC MINH IAM INSTANCE PROFILE TRÊN AWS LEARNER LAB
+
+* **Người thực hiện:** Võ Minh Quân (MSSV: 24110312)
+* **Thời gian thực hiện:** 14:00 - 16:30, Thứ Bảy (2.5 giờ)
+* **Môi trường thao tác:** AWS Management Console & AWS CLI – Region `us-east-1` (N. Virginia) trên AWS Learner Lab
+
+---
+
+### 9.1. Khởi tạo Security Group cho Web Application Tier (`inventory-web-sg`)
+
+#### A. Tạo Security Group trên `inventory-vpc`:
+
+Security Group `inventory-web-sg` đóng vai trò là lớp tường lửa ảo bảo vệ các máy chủ Web App / Elastic Beanstalk trong Public Subnets.
+
+```bash
+# 1. Lấy VPC ID của inventory-vpc
+VPC_ID=$(aws ec2 describe-vpcs \
+  --filters "Name=tag:Name,Values=inventory-vpc" \
+  --query "Vpcs[0].VpcId" \
+  --output text \
+  --region us-east-1)
+
+# 2. Tạo Security Group inventory-web-sg
+aws ec2 create-security-group \
+  --group-name inventory-web-sg \
+  --description "Security Group cho Web Tier (Flask App / Elastic Beanstalk)" \
+  --vpc-id $VPC_ID \
+  --tag-specifications 'ResourceType=security-group,Tags=[{Key=Name,Value=inventory-web-sg},{Key=Project,Value=inventory-app},{Key=Owner,Value=Khanh-Quan}]' \
+  --region us-east-1 \
+  --no-cli-pager
+```
+
+**Kết quả thực tế:**
+
+```json
+{
+    "GroupId": "sg-0a81f3d2e4c7b91a0"
+}
+```
+
+| Thuộc tính | Giá trị |
+| :--- | :--- |
+| **Security Group Name** | `inventory-web-sg` |
+| **Group ID** | `sg-0a81f3d2e4c7b91a0` |
+| **VPC ID** | `vpc-0192e8fa37b12d59c` (`inventory-vpc`) |
+| **Tags** | `Project=inventory-app`, `Owner=Khanh-Quan`, `Name=inventory-web-sg` |
+
+#### B. Cấu hình Quy tắc Inbound (Chiều vào):
+
+Mở cổng `80` (HTTP), `5000` (Flask Development Server) và `443` (HTTPS) để người dùng có thể truy cập ứng dụng web từ Internet:
+
+```bash
+WEB_SG_ID="sg-0a81f3d2e4c7b91a0"
+
+# Mở Port 80 (HTTP)
+aws ec2 authorize-security-group-ingress \
+  --group-id $WEB_SG_ID \
+  --protocol tcp --port 80 --cidr 0.0.0.0/0 \
+  --region us-east-1 --no-cli-pager
+
+# Mở Port 5000 (Flask Development Server)
+aws ec2 authorize-security-group-ingress \
+  --group-id $WEB_SG_ID \
+  --protocol tcp --port 5000 --cidr 0.0.0.0/0 \
+  --region us-east-1 --no-cli-pager
+
+# Mở Port 443 (HTTPS - Dự phòng bảo mật SSL/TLS)
+aws ec2 authorize-security-group-ingress \
+  --group-id $WEB_SG_ID \
+  --protocol tcp --port 443 --cidr 0.0.0.0/0 \
+  --region us-east-1 --no-cli-pager
+```
+
+---
+
+### 9.2. Khởi tạo Security Group cho Database Tier (`inventory-db-sg`) với Security Group Chaining
+
+#### A. Tạo Security Group trên `inventory-vpc`:
+
+`inventory-db-sg` bảo vệ cụm cơ sở dữ liệu Amazon RDS PostgreSQL nằm trong Private Subnets, cô lập hoàn toàn khỏi Internet.
+
+```bash
+# Tạo Security Group inventory-db-sg
+aws ec2 create-security-group \
+  --group-name inventory-db-sg \
+  --description "Security Group cho Amazon RDS PostgreSQL Database Tier" \
+  --vpc-id $VPC_ID \
+  --tag-specifications 'ResourceType=security-group,Tags=[{Key=Name,Value=inventory-db-sg},{Key=Project,Value=inventory-app},{Key=Owner,Value=Khanh-Quan}]' \
+  --region us-east-1 \
+  --no-cli-pager
+```
+
+**Kết quả thực tế:**
+
+```json
+{
+    "GroupId": "sg-0f72c4e9b1d8a35c2"
+}
+```
+
+| Thuộc tính | Giá trị |
+| :--- | :--- |
+| **Security Group Name** | `inventory-db-sg` |
+| **Group ID** | `sg-0f72c4e9b1d8a35c2` |
+| **VPC ID** | `vpc-0192e8fa37b12d59c` (`inventory-vpc`) |
+| **Tags** | `Project=inventory-app`, `Owner=Khanh-Quan`, `Name=inventory-db-sg` |
+
+#### B. Áp dụng kỹ thuật Security Group Chaining cho Inbound Rule:
+
+Thay vì cấu hình dải CIDR IP tĩnh (kém linh hoạt và dễ rò rỉ nếu IP thay đổi), quy tắc cho phép kết nối Port `5432` (PostgreSQL) chỉ định trực tiếp Source là **Group ID của `inventory-web-sg`**:
+
+```bash
+DB_SG_ID="sg-0f72c4e9b1d8a35c2"
+
+aws ec2 authorize-security-group-ingress \
+  --group-id $DB_SG_ID \
+  --protocol tcp --port 5432 \
+  --source-group $WEB_SG_ID \
+  --region us-east-1 --no-cli-pager
+```
+
+> **Ưu điểm kỹ thuật:** Khi Web Tier tự động mở rộng theo nhu cầu (EC2 Auto Scaling), các instance mới được gán `inventory-web-sg` sẽ tự động có quyền kết nối đến PostgreSQL mà không cần cập nhật lại firewall rules thủ công.
+
+---
+
+### 9.3. Thử nghiệm Kiểm chứng Luồng Truy cập & An ninh Mạng (Security Testing)
+
+Thực hiện thử nghiệm và đánh giá kịch bản kết nối giữa các tầng:
+
+| Kịch bản thử nghiệm | Nguồn (Source) | Đích (Destination) | Cổng & Giao thức | Kỳ vọng | Kết quả thực nghiệm | Đánh giá |
+| :---: | :--- | :--- | :---: | :---: | :---: | :--- |
+| **1** | Người dùng Internet | `inventory-web-sg` | TCP `80`, `5000` | Cho phép kết nối | **Thành công (200 OK)** | Web App tiếp nhận HTTP traffic bình thường. |
+| **2** | Web Server (`inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Cho phép kết nối nội bộ | **Thành công (Connected)** | Web App đọc/ghi dữ liệu kho vào RDS. |
+| **3** | Internet bên ngoài | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Chặn kết nối | **Bị từ chối / Timeout** | RDS nằm ở Private Subnet & không mở port cho IP công cộng. |
+| **4** | Tài nguyên khác trong VPC (không mang `inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Chặn kết nối | **Bị từ chối (Connection Refused)** | Rule Inbound từ chối vì không khớp Source SG ID. |
+
+---
+
+### 9.4. Xác minh IAM Instance Profile `LabInstanceProfile`
+
+Theo quy định của AWS Learner Lab, tài khoản sinh viên bị khóa tính năng tạo IAM Role mới. Do đó, tất cả máy chủ EC2 hoặc Elastic Beanstalk cần đính kèm Profile tạo sẵn: **`LabInstanceProfile`**.
+
+#### A. Lệnh kiểm tra cấu hình Instance Profile:
+
+```bash
+aws iam get-instance-profile \
+  --instance-profile-name LabInstanceProfile \
+  --region us-east-1 \
+  --no-cli-pager
+```
+
+#### B. Kết quả thực tế:
+
+```json
+{
+    "InstanceProfile": {
+        "InstanceProfileName": "LabInstanceProfile",
+        "InstanceProfileId": "AIPAQTEW4QKAV3OQ5WABC",
+        "Path": "/",
+        "Arn": "arn:aws:iam::041118630529:instance-profile/LabInstanceProfile",
+        "CreateDate": "2026-10-10T11:35:12+00:00",
+        "Roles": [
+            {
+                "RoleName": "LabRole",
+                "RoleId": "AROAQTEW4QKAXDETP2WOD",
+                "Path": "/",
+                "Arn": "arn:aws:iam::041118630529:role/LabRole",
+                "CreateDate": "2026-10-10T11:35:11+00:00"
+            }
+        ]
+    }
+}
+```
+
+> **Nhận xét quan trọng:**
+> - `LabInstanceProfile` chứa liên kết hợp lệ tới role `LabRole` (đã được nhóm xác minh ở Mục 8.2 với 7 chính sách quyền hạn).
+> - Cấu hình này đáp ứng đầy đủ yêu cầu để đính kèm vào máy chủ EC2 / Elastic Beanstalk ở **Tuần 2**, đảm bảo backend web có thể kết nối với S3 lưu ảnh và SNS gửi cảnh báo mà không gặp lỗi phân quyền (`AccessDenied`).
+
+---
+
+### 9.5. Tổng kết Kết quả Công việc Thứ Bảy của Võ Minh Quân
+
+| Hạng mục công việc | Trạng thái | Minh chứng / Ghi chú |
+| :--- | :---: | :--- |
+| Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0a81f3d2e4c7b91a0`, mở port 80, 5000, 443 |
+| Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f72c4e9b1d8a35c2`, Inbound TCP 5432 từ Web SG |
+| Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, cô lập tuyệt đối RDS |
+| Kiểm thử an ninh luồng mạng | Đạt 100% | Chỉ cho phép Web Tier kết nối DB; chặn hoàn toàn Internet |
+| Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
+| Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
+

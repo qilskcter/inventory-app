@@ -53,9 +53,14 @@ inventory-app/
 ├── init_db.py              # Script Python tự động đọc database/schema.sql và khởi tạo/cập nhật CSDL
 ├── database/               # Thư mục chứa cấu trúc CSDL
 │   └── schema.sql          # Script SQL DDL chứa cấu trúc 2 bảng products & transactions
-├── requirements.txt        # Danh sách các thư viện Python phụ thuộc
-└── templates/              # Thư mục chứa giao diện HTML
-    └── index.html          # Giao diện trang chủ quản lý kho & bảng dữ liệu
+├── documents/              # Báo cáo chi tiết đồ án các tuần (week1.md)
+├── logs/                   # Nhật ký phân công và tiến độ công việc (week1.md)
+├── scripts/                # Kịch bản tự động hóa hạ tầng AWS (Security Groups, VPC, IAM)
+├── templates/              # Thư mục chứa giao diện HTML (Bootstrap 5)
+│   └── index.html          # Giao diện trang chủ quản lý kho & bảng dữ liệu
+├── tests/                  # Bộ kiểm thử tự động (Unit Test & Integration Test)
+│   └── test_app.py         # Kiểm thử các API và giao diện Flask
+└── requirements.txt        # Danh sách các thư viện Python phụ thuộc
 ```
 
 ---
