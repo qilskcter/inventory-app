@@ -734,15 +734,15 @@ aws ec2 create-security-group \
 
 ```json
 {
-    "GroupId": "sg-0a81f3d2e4c7b91a0"
+    "GroupId": "sg-0bb46c5bbb3ba364b"
 }
 ```
 
 | Thuộc tính | Giá trị |
 | :--- | :--- |
 | **Security Group Name** | `inventory-web-sg` |
-| **Group ID** | `sg-0a81f3d2e4c7b91a0` |
-| **VPC ID** | `vpc-0192e8fa37b12d59c` (`inventory-vpc`) |
+| **Group ID** | `sg-0bb46c5bbb3ba364b` |
+| **VPC ID** | `vpc-08899e1e1656f5f73` (`inventory-vpc`) |
 | **Tags** | `Project=inventory-app`, `Owner=Khanh-Quan`, `Name=inventory-web-sg` |
 
 #### B. Cấu hình Quy tắc Inbound (Chiều vào):
@@ -750,7 +750,7 @@ aws ec2 create-security-group \
 Mở cổng `80` (HTTP), `5000` (Flask Development Server) và `443` (HTTPS) để người dùng có thể truy cập ứng dụng web từ Internet:
 
 ```bash
-WEB_SG_ID="sg-0a81f3d2e4c7b91a0"
+WEB_SG_ID="sg-0bb46c5bbb3ba364b"
 
 # Mở Port 80 (HTTP)
 aws ec2 authorize-security-group-ingress \
@@ -794,15 +794,15 @@ aws ec2 create-security-group \
 
 ```json
 {
-    "GroupId": "sg-0f72c4e9b1d8a35c2"
+    "GroupId": "sg-0f5e8348f198a9f97"
 }
 ```
 
 | Thuộc tính | Giá trị |
 | :--- | :--- |
 | **Security Group Name** | `inventory-db-sg` |
-| **Group ID** | `sg-0f72c4e9b1d8a35c2` |
-| **VPC ID** | `vpc-0192e8fa37b12d59c` (`inventory-vpc`) |
+| **Group ID** | `sg-0f5e8348f198a9f97` |
+| **VPC ID** | `vpc-08899e1e1656f5f73` (`inventory-vpc`) |
 | **Tags** | `Project=inventory-app`, `Owner=Khanh-Quan`, `Name=inventory-db-sg` |
 
 #### B. Áp dụng kỹ thuật Security Group Chaining cho Inbound Rule:
@@ -810,7 +810,7 @@ aws ec2 create-security-group \
 Thay vì cấu hình dải CIDR IP tĩnh (kém linh hoạt và dễ rò rỉ nếu IP thay đổi), quy tắc cho phép kết nối Port `5432` (PostgreSQL) chỉ định trực tiếp Source là **Group ID của `inventory-web-sg`**:
 
 ```bash
-DB_SG_ID="sg-0f72c4e9b1d8a35c2"
+DB_SG_ID="sg-0f5e8348f198a9f97"
 
 aws ec2 authorize-security-group-ingress \
   --group-id $DB_SG_ID \
@@ -882,8 +882,8 @@ aws iam get-instance-profile \
 
 | Hạng mục công việc | Trạng thái | Minh chứng / Ghi chú |
 | :--- | :---: | :--- |
-| Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0a81f3d2e4c7b91a0`, mở port 80, 5000, 443 |
-| Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f72c4e9b1d8a35c2`, Inbound TCP 5432 từ Web SG |
+| Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0bb46c5bbb3ba364b`, mở port 80, 5000, 443 |
+| Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f5e8348f198a9f97`, Inbound TCP 5432 từ Web SG |
 | Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, cô lập tuyệt đối RDS |
 | Kiểm thử an ninh luồng mạng | Đạt  | Chỉ cho phép Web Tier kết nối DB; chặn  Internet |
 | Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
@@ -955,7 +955,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 ##### 1. VPC `inventory-vpc` (`10.0.0.0/16`) đã tạo thành công:
 ![04_vpc_created.png](./screenshots/04_vpc_created.png)
-* *Xác minh:* VPC ID: `vpc-0192e8fa37b12d59c`, IPv4 CIDR `10.0.0.0/16`, trạng thái `Available`, đầy đủ Tag `Project=inventory-app`, `Owner=Khanh-Quan`.
+* *Xác minh:* VPC ID: `vpc-08899e1e1656f5f73`, IPv4 CIDR `10.0.0.0/16`, trạng thái `Available`, đầy đủ Tag `Project=inventory-app`, `Owner=Khanh-Quan`.
 
 ##### 2. Danh sách 4 Subnets phân vùng Multi-AZ (`us-east-1a` và `us-east-1b`):
 ![05_subnets_list.png](./screenshots/05_subnets_list.png)
