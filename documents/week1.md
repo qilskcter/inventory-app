@@ -462,6 +462,7 @@ aws sts get-caller-identity --no-cli-pager
     "Arn": "arn:aws:sts::041118630529:assumed-role/voclabs/user5470815=24110244@student.hcmute.edu.vn"
 }
 ```
+![Screenshot](./screenshots/01_aws_sts_identity.png)
 
 > **Nhận xét:** Session sử dụng role `voclabs` — đây là role mặc định của Learner Lab, cho phép thao tác AWS thông qua credentials tạm thời được cấp tự động mỗi khi khởi động Lab.
 
@@ -491,6 +492,7 @@ Role `LabRole` được cấu hình với **Trust Policy** cho phép nhiều d�
 ```bash
 aws iam list-attached-role-policies --role-name LabRole --no-cli-pager
 ```
+![Screenshot](./screenshots/02_labrole_policies.png)
 
 **Kết quả:**
 
@@ -562,6 +564,8 @@ aws s3api get-bucket-tagging \
     ]
 }
 ```
+
+![Screenshot](./screenshots/03_s3_bucket_created.png)
 
 ---
 
