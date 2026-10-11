@@ -578,9 +578,6 @@ aws s3api get-bucket-tagging \
 ---
 
 ## 9. CẤU HÌNH THỰC TẾ SECURITY GROUPS VÀ XÁC MINH IAM INSTANCE PROFILE TRÊN AWS LEARNER LAB
-
-* **Người thực hiện:** Võ Minh Quân (MSSV: 24110312)
-* **Thời gian thực hiện:** 14:00 - 16:30, Thứ Bảy (2.5 giờ)
 * **Môi trường thao tác:** AWS Management Console & AWS CLI – Region `us-east-1` (N. Virginia) trên AWS Learner Lab
 
 ---
