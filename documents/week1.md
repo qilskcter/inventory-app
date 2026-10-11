@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # BÁO CÁO KỸ THUẬT VÀ KẾT QUẢ TRIỂN KHAI - TUẦN 1
 
 ---
@@ -32,12 +31,12 @@ Do dự án được triển khai trên môi trường học tập **AWS Academy
 
 | Tài nguyên / Giới hạn | Ràng buộc của Learner Lab | Giải pháp thiết kế cho dự án |
 | :--- | :--- | :--- |
-| **Ngân sách (Budget)** | Cấp tối đa **$100 USD** credit. Nếu cạn kiệt, tài khoản bị khoá vĩnh viễn và mất dữ liệu. | Tối ưu kích cỡ máy chủ, tắt/dừng các instance khi không thao tác, kiểm tra chi phí sau mỗi buổi lab. |
-| **Vùng (Region)** | Chỉ cho phép `us-east-1` hoặc `us-west-2`. | Cố định 100% tài nguyên tại vùng **`us-east-1` (N. Virginia)**. |
+| **Ngân sách (Budget)** | Cấp tối đa **$50 USD** credit. Nếu cạn kiệt, tài khoản bị khoá vĩnh viễn và mất dữ liệu. | Tối ưu kích cỡ máy chủ, tắt/dừng các instance khi không thao tác, kiểm tra chi phí sau mỗi buổi lab. |
+| **Vùng (Region)** | Chỉ cho phép `us-east-1` hoặc `us-west-2`. | Cố định 50% tài nguyên tại vùng **`us-east-1` (N. Virginia)**. |
 | **IAM Permission** | Không thể tạo User/Role mới; không được sửa Policy. Bắt buộc dùng `LabRole`. | Toàn bộ ứng dụng và Lambda đều tận dụng **`LabRole`** và **`LabInstanceProfile`**. |
 | **Quy định Tagging** | Bắt buộc gắn thẻ định danh để kiểm soát tài nguyên. | Mọi tài nguyên khởi tạo đều gắn: `Project=inventory-app`, `Owner=Khanh-Quan`. |
 | **Compute (EC2)** | Giới hạn $\le 9$ instance và $\le 32$ vCPU; loại instance từ nano $\rightarrow$ large. | Chỉ sử dụng `t2.micro` hoặc `t3.micro` (1 vCPU, 1 GiB RAM). |
-| **Lưu trữ (EBS)** | Tổng dung lượng EBS $\le 100$ GB (gp2 hoặc gp3). | Khởi tạo ổ đĩa hệ thống 20GB - 30GB gp3. |
+| **Lưu trữ (EBS)** | Tổng dung lượng EBS $\le 50$ GB (gp2 hoặc gp3). | Khởi tạo ổ đĩa hệ thống 20GB - 30GB gp3. |
 | **Amazon RDS** | Hỗ trợ `db.t2.micro` / `db.t3.micro`. | Sử dụng RDS PostgreSQL `db.t3.micro` (Single-AZ, 20GB gp2/gp3). |
 
 ---
@@ -82,7 +81,7 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 1. **Bảng `products`:** Quản lý thông tin và số lượng mặt hàng
    * `id`: SERIAL PRIMARY KEY
    * `sku`: VARCHAR(50) UNIQUE NOT NULL (Mã sản phẩm)
-   * `name`: VARCHAR(100) NOT NULL (Tên sản phẩm)
+   * `name`: VARCHAR(50) NOT NULL (Tên sản phẩm)
    * `quantity`: INT NOT NULL DEFAULT 0 (Số lượng tồn thực tế)
    * `min_threshold`: INT NOT NULL DEFAULT 5 (Định mức tồn tối thiểu để kích hoạt cảnh báo)
 2. **Bảng `transactions`:** Lưu trữ toàn bộ lịch sử xuất/nhập kho
@@ -111,13 +110,13 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 
 | Tiêu chí yêu cầu của GVHD | Hiện trạng triển khai của nhóm | Minh chứng kiểm tra |
 | :--- | :--- | :--- |
-| **Kế hoạch thời gian** | Đạt **28.0 giờ** toàn nhóm (Khanh: 14.0h, Quân: 14.0h $\ge 8$h/SV). | Chi tiết tại [logs/week1.md](file:///c:/Users/ASUS/Downloads/AWSS/inventory-app/logs/week1.md). |
+| **Kế hoạch thời gian** | Đạt **28.0 giờ** toàn nhóm (Khanh: 14.0h, Quân: 14.0h (8h/SV)). | Chi tiết tại logs/week1.md. |
 | **Môi trường & Vùng** | Triển khai trên AWS Learner Lab tại vùng `us-east-1`. | Console / AWS CLI output Region `us-east-1`. |
 | **Quyền IAM** | Sử dụng `LabRole` & `LabInstanceProfile`. | Không tạo mới bất kỳ IAM Role/User nào. |
-| **Quy chuẩn Tagging** | 100% tài nguyên có `Project=inventory-app`, `Owner=Khanh-Quan`. | Thể hiện trên VPC, Subnet, SG, S3 Bucket. |
+| **Quy chuẩn Tagging** | 50% tài nguyên có `Project=inventory-app`, `Owner=Khanh-Quan`. | Thể hiện trên VPC, Subnet, SG, S3 Bucket. |
 | **Minh chứng mã nguồn** | Toàn bộ mã nguồn, SQL script, tài liệu trên GitHub. | GitHub Repo: `qilskcter/inventory-app`. |
 | **Báo cáo sử dụng AI** | Ghi rõ phạm vi hỗ trợ của ChatGPT, Claude, Amazon Q, Antigravity. | Trình bày tại Mục IV trong Worklog Tuần 1. |
-=======
+
 # BÁO CÁO - TUẦN 1
 ## HỆ THỐNG QUẢN LÝ KHO HÀNG & CẢNH BÁO TỒN KHO (`inventory-app`)
 
@@ -133,8 +132,8 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 
 | Tiêu chí / Tài nguyên | Quy định & Giới hạn của AWS Learner Lab | Giải pháp & Ứng dụng cho dự án Inventory App |
 | :--- | :--- | :--- |
-| **Budget / Chi phí** | Cấp tối đa **$100 USD** credit cho cả học kỳ. Nếu hết budget, Lab sẽ bị khóa vĩnh viễn. | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
-| **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). | Nhóm thống nhất cố định 100% tài nguyên ở Region **`us-east-1`**. |
+| **Budget / Chi phí** | Cấp tối đa **$50 USD** credit cho cả học kỳ. Nếu hết budget, Lab sẽ bị khóa vĩnh viễn. | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
+| **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). | Nhóm thống nhất cố định 50% tài nguyên ở Region **`us-east-1`**. |
 | **Quyền hạn IAM** | • **Không có quyền** tạo IAM User, IAM Role mới, hoặc chỉnh sửa IAM Policy.<br>• Phải dùng IAM Role tạo sẵn: **`LabRole`**.<br>• EC2/Beanstalk chỉ được dùng **`LabInstanceProfile`**. | Mọi cấu hình kết nối giữa EC2/Beanstalk với RDS/S3/SNS đều tận dụng trực tiếp `LabRole` & `LabInstanceProfile`. |
 | **Quy định Tagging** | Bắt buộc phải gắn thẻ (Tags) tài nguyên theo hướng dẫn của môn học để kiểm soát chi phí và điểm danh. | Đính kèm đồng bộ 2 Tag bắt buộc cho mọi tài nguyên:<br>• `Project`: `inventory-app`<br>• `Owner`: `Khanh-Quan` |
 | **Compute (EC2 / Beanstalk)** | • Tối đa 9 EC2 instances chạy đồng thời (vCPU limits).<br>• Instance type hỗ trợ: **t2.micro**, **t3.micro**, **t2.small**, **t3.small**.<br>• EBS Volume tối đa 30GB/volume. | Triển khai Backend Web trên **t2.micro** hoặc Elastic Beanstalk (cấu hình Single Instance) để tiết kiệm chi phí. |
@@ -204,7 +203,7 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 ### 3.6. AWS CloudFormation (Tự động hóa Quản lý Hạ tầng bằng Mã - IaC)
 - **Tổng quan:** Dịch vụ Hạ tầng dưới dạng Mã (Infrastructure as Code - IaC) cho phép định nghĩa, triển khai và quản lý toàn bộ tài nguyên AWS tự động thông qua file cấu hình mẫu (Template dạng YAML/JSON).
 - **Thành phần chính:** CloudFormation Template (Mẫu cấu hình YAML), Stack (Tập hợp tài nguyên AWS được tạo đồng bộ).
-- **Vai trò trong dự án:** Tự động hóa quá trình dựng lại toàn bộ hạ tầng (VPC, Subnet, RDS, Elastic Beanstalk, S3, SNS, EventBridge) chỉ bằng 1 thao tác hoặc 1 câu lệnh CLI. Giúp tiết kiệm ngân sách `$100 USD` trên AWS Learner Lab bằng cách dễ dàng xóa Stack khi dừng làm việc và dựng lại Stack trong 5 phút khi tiếp tục đồ án.
+- **Vai trò trong dự án:** Tự động hóa quá trình dựng lại toàn bộ hạ tầng (VPC, Subnet, RDS, Elastic Beanstalk, S3, SNS, EventBridge) chỉ bằng 1 thao tác hoặc 1 câu lệnh CLI. Giúp tiết kiệm ngân sách `$50 USD` trên AWS Learner Lab bằng cách dễ dàng xóa Stack khi dừng làm việc và dựng lại Stack trong 5 phút khi tiếp tục đồ án.
 
 ---
 
@@ -546,7 +545,7 @@ Môi trường phát triển gồm Flask, `psycopg2-binary` và PostgreSQL local
      * **Subnet Associations:** Liên kết với `private-db-subnet-1` và `private-db-subnet-2`.
 
 ### 7.5 Thực thi quy định gắn thẻ (Resource Tagging):
-   * Kiểm tra toàn bộ 100% tài nguyên mạng vừa khởi tạo (VPC, 4 Subnets, IGW, 2 Route Tables).
+   * Kiểm tra toàn bộ 50% tài nguyên mạng vừa khởi tạo (VPC, 4 Subnets, IGW, 2 Route Tables).
    * Đảm bảo đính kèm đầy đủ cặp Tag chuẩn:
      * `Project`: `inventory-app`
      * `Owner`: `Khanh-Quan`
@@ -872,9 +871,9 @@ aws iam get-instance-profile \
 }
 ```
 
-> **Nhận xét quan trọng:**
-> - `LabInstanceProfile` chứa liên kết hợp lệ tới role `LabRole` (đã được nhóm xác minh ở Mục 8.2 với 7 chính sách quyền hạn).
-> - Cấu hình này đáp ứng đầy đủ yêu cầu để đính kèm vào máy chủ EC2 / Elastic Beanstalk ở **Tuần 2**, đảm bảo backend web có thể kết nối với S3 lưu ảnh và SNS gửi cảnh báo mà không gặp lỗi phân quyền (`AccessDenied`).
+ **Nhận xét quan trọng:**
+ - `LabInstanceProfile` chứa liên kết hợp lệ tới role `LabRole` (đã được nhóm xác minh ở Mục 8.2 với 7 chính sách quyền hạn).
+ - Cấu hình này đáp ứng đầy đủ yêu cầu để đính kèm vào máy chủ EC2 / Elastic Beanstalk ở **Tuần 2**, đảm bảo backend web có thể kết nối với S3 lưu ảnh và SNS gửi cảnh báo mà không gặp lỗi phân quyền (`AccessDenied`).
 
 ---
 
@@ -885,8 +884,8 @@ aws iam get-instance-profile \
 | Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0a81f3d2e4c7b91a0`, mở port 80, 5000, 443 |
 | Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f72c4e9b1d8a35c2`, Inbound TCP 5432 từ Web SG |
 | Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, cô lập tuyệt đối RDS |
-| Kiểm thử an ninh luồng mạng | Đạt 100% | Chỉ cho phép Web Tier kết nối DB; chặn hoàn toàn Internet |
+| Kiểm thử an ninh luồng mạng | Đạt  | Chỉ cho phép Web Tier kết nối DB; chặn hoàn toàn Internet |
 | Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
 | Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
 
->>>>>>> 1f0702d2097577cf5bbe08f466230d497637e557
+
