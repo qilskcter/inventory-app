@@ -943,7 +943,8 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 ### 10.4. Tổng hợp Báo cáo Hạ tầng Tuần 1 & Họp Giao ban với Nhóm trưởng
 
-Vào cuối buổi sáng Chủ Nhật, Võ Minh Quân đã họp trao đổi với Nguyễn Đình Khanh để tổng kết Tuần 1:
+Tổng kết tuần 1
+
 1. **Khớp nối kết quả:** Hạ tầng mạng nền tảng (VPC, Subnet, Route Table, Security Groups) của Võ Minh Quân đã hoàn toàn tương thích với mã nguồn ứng dụng Flask + PostgreSQL do Nguyễn Đình Khanh xây dựng.
 2. **Kế hoạch phối hợp Tuần 2:**
    * Nguyễn Đình Khanh phụ trách cấu hình tạo DB Subnet Group và khởi tạo instance Amazon RDS PostgreSQL (`db.t3.micro`) trong 2 Private Subnet.
