@@ -3,6 +3,26 @@
 Ứng dụng quản lý kho hàng cloud-native được xây dựng cho đồ án môn học Điện toán đám mây (Cloud Computing), hỗ trợ quản lý sản phẩm, theo dõi lịch sử xuất/nhập kho và tự động cảnh báo khi tồn kho chạm ngưỡng tối thiểu.
 
 ---
+# Phân công công việc
+
+| Tuần | Phân Công |
+| --- | --- |
+| Tuần 1 | [week1.md](./logs/week1.md) |
+| Tuần 2 | [week2.md](./logs/week2.md) |
+| Tuần 3 | |
+| Tuần 4 | |
+---
+
+# Báo cáo tuần
+
+| Tuần | Báo cáo |
+| --- | --- |
+| Tuần 1 | [week1.md](./documents/week_1/week1.md) |
+| Tuần 2 | |
+| Tuần 3 | |
+| Tuần 4 | |
+
+---
 
 ## Tính năng chính
 * **Quản lý sản phẩm (CRUD):** Thêm mới, cập nhật thông tin, theo dõi số lượng tồn kho và thiết lập định mức cảnh báo tối thiểu cho từng sản phẩm (SKU).
