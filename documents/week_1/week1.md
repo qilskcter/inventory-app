@@ -2,6 +2,12 @@
 
 ---
 
+# Phân công công việc
+
+[Bảng phân công công việc](../../logs/week1.md)
+
+---
+
 ## I. TỔNG QUAN ĐỀ TÀI & KIẾN TRÚC HỆ THỐNG
 
 ### 1. Thông tin đồ án:
