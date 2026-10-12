@@ -1,129 +1,4 @@
 # BÁO CÁO KỸ THUẬT VÀ KẾT QUẢ TRIỂN KHAI - TUẦN 1
-
----
-
-# Phân công công việc
-
-[Bảng phân công công việc](../../logs/week1.md)
-
----
-
-## I. TỔNG QUAN ĐỀ TÀI & KIẾN TRÚC HỆ THỐNG
-
-### 1. Thông tin đồ án:
-* **Tên đề tài:** Xây dựng hệ thống quản lý nhập/xuất kho, cảnh báo tồn kho thấp và báo cáo định kỳ
-* **Môn học:** Cloud Computing (Điện toán đám mây - Đợt 1, 2026 - 2027)
-* **Giảng viên hướng dẫn (GVHD):** ThS. Huỳnh Xuân Phụng
-* **Nhóm thực hiện (2 sinh viên):**
-  * **Nguyễn Đình Khanh** - MSSV: `24110244` (Nhóm trưởng / Phụ trách Backend & Database)
-  * **Võ Minh Quân** - MSSV: `24110312` (Thành viên / Phụ trách Network & Infrastructure)
-
-### 2. Mô hình kiến trúc tổng thể (Architecture Overview):
-Hệ thống được thiết kế theo mô hình Cloud-Native 2-Tier kết hợp kiến trúc hướng sự kiện (Event-Driven Architecture):
-1. **Web Tier:** Ứng dụng Flask Web App chạy trên AWS Elastic Beanstalk (hoặc EC2) đặt trong **Public Subnets**, phục vụ người dùng quản lý sản phẩm và thao tác nhập/xuất kho.
-2. **Database Tier:** Cơ sở dữ liệu quan hệ **Amazon RDS PostgreSQL** (Single-AZ, `db.t3.micro`) nằm ẩn trong **Private Subnets**, chỉ cho phép truy cập từ Web Tier thông qua Security Group.
-3. **Cảnh báo tồn kho tự động (Alerting):**
-   * Cơ chế sự kiện thời gian thực / định kỳ: **Amazon EventBridge** kích hoạt **AWS Lambda function** quét các mặt hàng có số lượng $\le$ `min_threshold`.
-   * Gửi cảnh báo: Lambda đẩy thông điệp cảnh báo qua **Amazon SNS Topic**, gửi email trực tiếp tới quản lý kho.
-4. **Báo cáo định kỳ (Reporting):** AWS Lambda định kỳ hàng tuần tổng hợp dữ liệu giao dịch thành file **PDF / CSV** và lưu trữ an toàn trong **Amazon S3 Bucket**.
-5. **Tự động hóa hạ tầng (IaC):** Toàn bộ tài nguyên (VPC, Subnets, SG, S3, RDS, Lambda, SNS, EventBridge) sẽ được mã hóa và triển khai tự động qua **AWS CloudFormation template**.
-
----
-
-## II. BÁO CÁO CÔNG VIỆC CHI TIẾT - VÕ MINH QUÂN (MSSV: 24110312)
-
-### 1. Phân tích & Tổng hợp Giới hạn của AWS Learner Lab:
-Do dự án được triển khai trên môi trường học tập **AWS Academy Learner Lab**, nhóm đã rà soát nghiêm ngặt các điều kiện biên nhằm đảm bảo tài nguyên hoạt động liên tục mà không vi phạm chính sách lab:
-
-| Tài nguyên / Giới hạn | Ràng buộc của Learner Lab | Giải pháp thiết kế cho dự án |
-| :--- | :--- | :--- |
-| **Ngân sách (Budget)** | Cấp tối đa **$50 USD** credit. Nếu cạn kiệt, tài khoản bị khoá vĩnh viễn và mất dữ liệu. | Tối ưu kích cỡ máy chủ, tắt/dừng các instance khi không thao tác, kiểm tra chi phí sau mỗi buổi lab. |
-| **Vùng (Region)** | Chỉ cho phép `us-east-1` hoặc `us-west-2`. | Cố định Toàn bộ tài nguyên triển khai tại us-east-1 tại vùng **`us-east-1` (N. Virginia)**. |
-| **IAM Permission** | Không thể tạo User/Role mới; không được sửa Policy. Bắt buộc dùng `LabRole`. | Toàn bộ ứng dụng và Lambda đều tận dụng **`LabRole`** và **`LabInstanceProfile`**. |
-| **Quy định Tagging** | Bắt buộc gắn thẻ định danh để kiểm soát tài nguyên. | Mọi tài nguyên khởi tạo đều gắn: `Project=inventory-app`, `Owner=Khanh-Quan`. |
-| **Compute (EC2)** | Giới hạn $\le 9$ instance và $\le 32$ vCPU; loại instance từ nano $\rightarrow$ large. | Chỉ sử dụng `t2.micro` hoặc `t3.micro` (1 vCPU, 1 GiB RAM). |
-| **Lưu trữ (EBS)** | Tổng dung lượng EBS $\le 50$ GB (gp2 hoặc gp3). | Khởi tạo ổ đĩa hệ thống 20GB - 30GB gp3. |
-| **Amazon RDS** | Hỗ trợ `db.t2.micro` / `db.t3.micro`. | Sử dụng RDS PostgreSQL `db.t3.micro` (Single-AZ, 20GB gp2/gp3). |
-
----
-
-### 2. Thiết kế Hạ tầng Mạng & Bảo mật (Network & Security Design):
-
-#### A. Sơ đồ phân vùng VPC và Subnets:
-* **VPC Name:** `inventory-vpc`
-* **CIDR Block:** `10.0.0.0/16`
-* **Multi-AZ Configuration:** Phân bổ đều trên 2 Availability Zones (`us-east-1a` và `us-east-1b`) nhằm thỏa mãn yêu cầu DB Subnet Group của RDS:
-  * `inventory-public-subnet-1`: `10.0.1.0/24` (AZ: `us-east-1a`) $\rightarrow$ Dành cho Web Tier (Public)
-  * `inventory-public-subnet-2`: `10.0.2.0/24` (AZ: `us-east-1b`) $\rightarrow$ Dành cho Web Tier (Public)
-  * `inventory-private-subnet-1`: `10.0.11.0/24` (AZ: `us-east-1a`) $\rightarrow$ Dành cho Database Tier (Private)
-  * `inventory-private-subnet-2`: `10.0.12.0/24` (AZ: `us-east-1b`) $\rightarrow$ Dành cho Database Tier (Private)
-
-#### B. Định tuyến (Route Tables) & Gateways:
-* **Internet Gateway (IGW):** `inventory-igw` được đính kèm trực tiếp vào `inventory-vpc`.
-* **Public Route Table (`inventory-public-rt`):**
-  * Route: `0.0.0.0/0` trỏ tới `inventory-igw`.
-  * Liên kết Subnet: Gắn với `inventory-public-subnet-1` và `inventory-public-subnet-2`.
-* **Private Route Table (`inventory-private-rt`):**
-  * Route: Chỉ chứa route nội bộ `10.0.0.0/16 local`, không có đường dẫn trực tiếp ra ngoài Internet nhằm bảo vệ an toàn cho RDS PostgreSQL.
-  * Liên kết Subnet: Gắn với `inventory-private-subnet-1` và `inventory-private-subnet-2`.
-
-#### C. Chiến lược kiểm soát truy cập (Security Groups 2-Tier):
-1. **`inventory-web-sg` (Web Application Security Group):**
-   * **Inbound:**
-     * Port `80` (HTTP) từ `0.0.0.0/0` (Truy cập Web cho người dùng)
-     * Port `5000` (Custom TCP) từ `0.0.0.0/0` (Kiểm thử Flask dev server)
-   * **Outbound:** All Traffic (hoặc TCP port 5432 đến DB SG)
-2. **`inventory-db-sg` (Database Security Group):**
-   * **Inbound:**
-     * Port `5432` (PostgreSQL) chỉ chấp nhận nguồn là Security Group ID của `inventory-web-sg` (`source: sg-xxxxxx`). Tuyệt đối không mở IP public hoặc `0.0.0.0/0`.
-   * **Outbound:** Mặc định.
-
----
-
-## III. BÁO CÁO CÔNG VIỆC CHI TIẾT - NGUYỄN ĐÌNH KHANH (MSSV: 24110244)
-
-### 1. Thiết kế Cơ sở dữ liệu quan hệ (PostgreSQL Database Schema):
-Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
-1. **Bảng `products`:** Quản lý thông tin và số lượng mặt hàng
-   * `id`: SERIAL PRIMARY KEY
-   * `sku`: VARCHAR(50) UNIQUE NOT NULL (Mã sản phẩm)
-   * `name`: VARCHAR(50) NOT NULL (Tên sản phẩm)
-   * `quantity`: INT NOT NULL DEFAULT 0 (Số lượng tồn thực tế)
-   * `min_threshold`: INT NOT NULL DEFAULT 5 (Định mức tồn tối thiểu để kích hoạt cảnh báo)
-2. **Bảng `transactions`:** Lưu trữ toàn bộ lịch sử xuất/nhập kho
-   * `id`: SERIAL PRIMARY KEY
-   * `product_id`: INT REFERENCES products(id) (Khóa ngoại)
-   * `type`: VARCHAR(10) NOT NULL ('IN' - Nhập kho, 'OUT' - Xuất kho)
-   * `quantity`: INT NOT NULL (Số lượng giao dịch)
-   * `created_at`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP (Thời gian thực hiện)
-
-### 2. Xây dựng Ứng dụng Backend & Giao diện Local:
-* Khởi tạo ứng dụng Flask (`app.py`), kết nối PostgreSQL qua thư viện `psycopg2-binary`.
-* Cài đặt các API xử lý:
-  * Xem danh sách hàng tồn (`/`).
-  * Thêm mới mặt hàng với mức cảnh báo tối thiểu (`/add`).
-  * Thực hiện giao dịch nhập/xuất kho (`/transaction`), có cơ chế ngăn chặn việc xuất hàng vượt quá số lượng tồn hiện có (`current_qty < trans_qty`).
-  * Tự động hiển thị Flash Warning khi `quantity <= min_threshold`.
-
-### 3. Khởi tạo Amazon S3 Bucket lưu trữ báo cáo:
-* Tạo thành công S3 Bucket: `inventory-reports-us-east-1-24110244` tại vùng `us-east-1`.
-* Cấu hình chế độ Private (Block all public access).
-* Gán Tagging đầy đủ: `Project=inventory-app`, `Owner=Khanh-Quan`.
-
----
-
-## IV. BẢNG TỔNG HỢP MINH CHỨNG & TIÊU CHÍ ĐÁNH GIÁ TUẦN 1
-
-| Tiêu chí yêu cầu của GVHD | Hiện trạng triển khai của nhóm | Minh chứng kiểm tra |
-| :--- | :--- | :--- |
-| **Kế hoạch thời gian** | Đạt **28.0 giờ** toàn nhóm (Khanh: 14.0h, Quân: 14.0h (8h/SV)). | Chi tiết tại logs/week1.md. |
-| **Môi trường & Vùng** | Triển khai trên AWS Learner Lab tại vùng `us-east-1`. | Console / AWS CLI output Region `us-east-1`. |
-| **Quyền IAM** | Sử dụng `LabRole` & `LabInstanceProfile`. | Không tạo mới bất kỳ IAM Role/User nào. |
-| **Quy chuẩn Tagging** | Toàn bộ tài nguyên triển khai tại us-east-1 có `Project=inventory-app`, `Owner=Khanh-Quan`. | Thể hiện trên VPC, Subnet, SG, S3 Bucket. |
-| **Minh chứng mã nguồn** | Toàn bộ mã nguồn, SQL script, tài liệu trên GitHub. | GitHub Repo: `qilskcter/inventory-app`. |
-| **Báo cáo sử dụng AI** | Ghi rõ phạm vi hỗ trợ của ChatGPT, Claude, Amazon Q, Antigravity. | Trình bày tại Mục IV trong Worklog Tuần 1. |
-
-# BÁO CÁO - TUẦN 1
 ## HỆ THỐNG QUẢN LÝ KHO HÀNG & CẢNH BÁO TỒN KHO (`inventory-app`)
 
 **Môn học:** Điện toán đám mây (Cloud Computing)  
@@ -134,35 +9,41 @@ Cơ sở dữ liệu gồm 2 bảng nghiệp vụ cốt lõi:
 
 ---
 
+> **Phạm vi báo cáo:** Tuần 1 đã hoàn thành ứng dụng Flask/API ở mức mã nguồn và tạo một số tài nguyên nền tảng trên AWS. Amazon RDS, EC2/Elastic Beanstalk, Lambda, SNS, EventBridge và CloudFormation vẫn là kiến trúc/kế hoạch cho tuần tiếp theo, chưa được xác nhận là đã triển khai. Các kết quả kiểm thử mạng và chi phí chỉ được kết luận khi có minh chứng tương ứng.
+
+[Bảng phân công công việc](../../logs/week1.md)
+
+---
+
 ## 1. BẢNG TỔNG HỢP GIỚI HẠN & QUY ĐỊNH HẠ TẦNG TRÊN AWS LEARNER LAB
 
 | Tiêu chí / Tài nguyên | Quy định & Giới hạn của AWS Learner Lab | Giải pháp & Ứng dụng cho dự án Inventory App |
 | :--- | :--- | :--- |
-| **Budget / Chi phí** | Cấp tối đa **$50 USD** credit cho cả học kỳ.  | Dùng gói nhỏ nhất (t2.micro / db.t3.micro). Dùng CloudFormation để xóa/khôi phục Stack tiết kiệm chi phí. |
-| **Region cho phép** | Chỉ được hoạt động trên **`us-east-1` (N. Virginia)** hoặc **`us-west-2` (Oregon)**. Các region khác bị chặn (Access Denied). |  Toàn bộ tài nguyên triển khai tại us-east-1 ở Region **`us-east-1`**. |
-| **Quyền hạn IAM** | • **Không có quyền** tạo IAM User, IAM Role mới, hoặc chỉnh sửa IAM Policy.<br>• Phải dùng IAM Role tạo sẵn: **`LabRole`**.<br>• EC2/Beanstalk chỉ được dùng **`LabInstanceProfile`**. | Mọi cấu hình kết nối giữa EC2/Beanstalk với RDS/S3/SNS đều tận dụng trực tiếp `LabRole` & `LabInstanceProfile`. |
+| **Budget / Chi phí** | Learner Lab cấp credit theo cấu hình của lớp; số dư cần kiểm tra trực tiếp trong giao diện Lab. | Ưu tiên cấu hình nhỏ, dừng/xóa tài nguyên tính phí khi không dùng và theo dõi Billing/Cost Explorer. |
+| **Region cho phép** | Các Region được phép phụ thuộc cấu hình Learner Lab của lớp. | Các lệnh và tài nguyên trong báo cáo này sử dụng `us-east-1` (N. Virginia). |
+| **Quyền hạn IAM** | Session xác minh được sử dụng role `voclabs`; `LabRole` và `LabInstanceProfile` có sẵn trong tài khoản. | EC2/Elastic Beanstalk dự kiến gắn `LabInstanceProfile`; Lambda cần execution role phù hợp. Quyền thực tế phải được kiểm tra khi triển khai từng dịch vụ. |
 | **Quy định Tagging** | Bắt buộc phải gắn thẻ (Tags) tài nguyên theo hướng dẫn của môn học để kiểm soát chi phí và điểm danh. | Đính kèm đồng bộ 2 Tag bắt buộc cho mọi tài nguyên:<br>• `Project`: `inventory-app`<br>• `Owner`: `Khanh-Quan` |
-| **Compute (EC2 / Beanstalk)** | • Tối đa 9 EC2 instances chạy đồng thời (vCPU limits).<br>• Instance type hỗ trợ: **t2.micro**, **t3.micro**, **t2.small**, **t3.small**.<br>• EBS Volume tối đa 30GB/volume. | Triển khai Backend Web trên **t2.micro** hoặc Elastic Beanstalk (cấu hình Single Instance) để tiết kiệm chi phí. |
-| **Database (Amazon RDS)** | • Chỉ hỗ trợ các instance type: **db.t3.micro**, **db.t2.micro**.<br>• Hỗ trợ Multi-AZ nhưng tốn chi phí gấp đôi. | Sử dụng **RDS PostgreSQL** phiên bản mới nhất, cấu hình Single-AZ, instance type `db.t3.micro`, Storage 20GB gp2/gp3. |
-| **Storage (Amazon S3)** | Hỗ trợ đầy đủ chức năng S3 Standard. Không giới hạn số bucket nhưng cần đặt tên duy nhất trên toàn cầu. | Tạo bucket riêng tư lưu báo cáo: `inventory-reports-us-east-1-24110244`. |
-| **Hạ tầng dưới dạng Mã (IaC)** | **AWS CloudFormation** hỗ trợ đầy đủ việc tạo Stack trong Learner Lab. | Dùng CloudFormation Kịch bản YAML (`template.yaml`) để tự động hóa khởi tạo toàn bộ hạ tầng chỉ trong 1 bấm nút. |
+| **Compute (EC2 / Beanstalk)** | Instance type, vCPU quota và giới hạn EBS phụ thuộc hạn mức đang áp dụng cho tài khoản/Region; xác minh trong Service Quotas và Learner Lab trước khi tạo. | Ưu tiên EC2 nhỏ hoặc Elastic Beanstalk Single Instance nếu được cấp phép; chưa triển khai trong tuần 1. |
+| **Database (Amazon RDS)** | Loại instance và storage được phép phụ thuộc Region, engine, cấu hình lớp học và hạn mức tài khoản; cần xác minh trước khi tạo. | Dự kiến dùng PostgreSQL Single-AZ, `db.t3.micro` nếu Learner Lab cho phép; chưa tạo DB trong tuần 1. |
+| **Storage (Amazon S3)** | Bucket name phải duy nhất toàn cầu; cấu hình bảo mật và chi phí cần được xác minh riêng. | Đã tạo bucket `inventory-reports-us-east-1-24110244` và gắn tags; trạng thái Block Public Access cần xác minh. |
+| **Hạ tầng dưới dạng Mã (IaC)** | Khả năng tạo tài nguyên qua CloudFormation phụ thuộc quyền IAM của Learner Lab. | CloudFormation là phương án dự kiến; tuần 1 chưa ghi nhận việc tạo Stack hoặc template triển khai. |
 
 ---
 
 ## 2. THỐNG NHẤT SƠ ĐỒ PHÂN VÙNG MẠNG VỚI SV1 (VPC & SUBNETS ARCHITECTURE)
 
-Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã thống nhất mô hình mạng phân tầng (2-Tier Architecture) bảo mật cao như sau:
+Sau khi thảo luận cùng Nguyễn Đình Khanh, hai thành viên thống nhất thiết kế mạng phân tầng như sau. Đây là thiết kế mục tiêu; trạng thái triển khai được ghi riêng ở các mục kết quả.
 
 ### A. Quy hoạch địa chỉ IP (CIDR Block):
 * **VPC CIDR:** `10.0.0.0/16` (Tên: `inventory-vpc`)
-* **Số lượng Availability Zones (AZ):** Sử dụng tối thiểu 2 AZs (`us-east-1a` và `us-east-1b`) để đáp ứng điều kiện tạo DB Subnet Group cho Amazon RDS:
+* **Availability Zones (AZ):** DB Subnet Group cần các subnet ở ít nhất hai AZ. Điều này không đồng nghĩa DB Single-AZ có standby instance hoặc tự động có tính sẵn sàng cao.
 
 | Tên Subnet | CIDR Block | Availability Zone | Phân loại | Mục đích sử dụng |
 | :--- | :---: | :---: | :---: | :--- |
 | `public-subnet-1` | `10.0.1.0/24` | `us-east-1a` | Public | Triển khai Web App / Elastic Beanstalk (có Internet Gateway) |
-| `public-subnet-2` | `10.0.2.0/24` | `us-east-1b` | Public | Dự phòng mở rộng / Multi-AZ Web Tier |
-| `private-db-subnet-1` | `10.0.11.0/24` | `us-east-1a` | Private | Chứa RDS PostgreSQL Instance (không có Public IP) |
-| `private-db-subnet-2` | `10.0.12.0/24` | `us-east-1b` | Private | Cung cấp AZ thứ 2 bắt buộc cho RDS DB Subnet Group |
+| `public-subnet-2` | `10.0.2.0/24` | `us-east-1b` | Public | Subnet thứ hai để có thể phân bố Web Tier đa AZ khi cấu hình triển khai hỗ trợ |
+| `private-db-subnet-1` | `10.0.11.0/24` | `us-east-1a` | Private | Subnet dự kiến đặt RDS PostgreSQL, không có public IPv4 |
+| `private-db-subnet-2` | `10.0.12.0/24` | `us-east-1b` | Private | Subnet ở AZ thứ hai cho DB Subnet Group; không phải standby instance |
 
 ### B. Định tuyến (Routing Table) & Cổng kết nối (Gateway):
 * **Internet Gateway (IGW):** `inventory-igw` đính kèm vào `inventory-vpc`.
@@ -171,70 +52,71 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh (SV1), hai thành viên đã t
 
 ### C. Chiến lược Security Groups (Nhóm bảo mật):
 1. **`inventory-web-sg` (Dành cho Web Tier):**
-   * Inbound: Cho phép Port `80` (HTTP), Port `5000` (Flask) từ mọi nguồn (`0.0.0.0/0`).
-   * Outbound: Toàn quyền truy cập.
+   * Inbound dự kiến: Chỉ mở cổng cần thiết cho người dùng. Cổng `5000` là cổng development của Flask, không nên mở ra Internet trong môi trường triển khai.
+   * Outbound hiện theo mặc định AWS là cho phép toàn bộ; nên thu hẹp khi xác định được các luồng cần thiết và cách truy cập AWS APIs.
 2. **`inventory-db-sg` (Dành cho Database Tier):**
    * Inbound: Chỉ cho phép Port `5432` (PostgreSQL) với Source là Security Group ID của `inventory-web-sg` (Không mở public IP).
    * Outbound: Mặc định.
 
 ---
 
-## 3. NGHIÊN CỨU TÀI LIỆU CÁC DỊCH VỤ AWS
+## 3. KIẾN TRÚC DỰ KIẾN VÀ VAI TRÒ CÁC DỊCH VỤ AWS
 
 ### 3.1. AWS Elastic Beanstalk (Máy chủ ứng dụng Web)
 - **Tổng quan:** Dịch vụ đám mây giúp triển khai và vận hành ứng dụng web (Flask Python) tự động trên mây mà không cần quản lý máy chủ thủ công.
 - **Thành phần chính:** Application (Ứng dụng), Application Version (Mã nguồn Flask), Environment (Môi trường chạy web).
-- **Vai trò trong dự án:** Nơi chứa và chạy mã nguồn chính của ứng dụng web `inventory-app`, tự động cân bằng tải và tự động mở rộng khi số lượng người truy cập tăng cao.
+- **Vai trò dự kiến:** Nền tảng triển khai ứng dụng web `inventory-app`. Cân bằng tải và tự động mở rộng phụ thuộc cấu hình Environment; chưa triển khai trong tuần 1.
 
 ### 3.2. Amazon RDS (Cơ sở dữ liệu quan hệ PostgreSQL)
-- **Tổng quan:** Dịch vụ quản lý cơ sở dữ liệu quan hệ hoàn toàn tự động trên Cloud, hỗ trợ bảo mật cao và tự động sao lưu dữ liệu.
+- **Tổng quan:** Dịch vụ quản lý cơ sở dữ liệu quan hệ; các tùy chọn bảo mật, backup và retention cần được cấu hình/xác minh.
 - **Thành phần chính:** DB Instance (Máy chủ database), Automated Backups (Sao lưu tự động).
-- **Vai trò trong dự án:** Thay thế cho cơ sở dữ liệu chạy trên máy cá nhân (`localhost`). Lưu trữ danh mục sản phẩm, số lượng tồn kho và nhật ký chi tiết các giao dịch nhập/xuất kho.
+- **Vai trò dự kiến:** Thay thế cơ sở dữ liệu cục bộ khi triển khai; lưu danh mục sản phẩm, tồn kho và lịch sử nhập/xuất. Chưa tạo DB instance trong tuần 1.
 
 ### 3.3. Amazon S3 (Kho lưu trữ tệp tin)
-- **Tổng quan:** Dịch vụ lưu trữ đối tượng (Object Storage) an toàn với dung lượng không giới hạn và độ tin cậy dữ liệu cực cao.
+- **Tổng quan:** Dịch vụ lưu trữ đối tượng (Object Storage) có khả năng mở rộng; cần cấu hình kiểm soát truy cập phù hợp.
 - **Thành phần chính:** Bucket (Thùng chứa file), Object (Các tệp tin ảnh, tài liệu).
-- **Vai trò trong dự án:** Cất giữ hình ảnh thực tế của từng sản phẩm và lưu trữ các tệp hóa đơn, chứng từ nhập/xuất kho dưới dạng PDF.
+- **Vai trò dự kiến:** Lưu trữ báo cáo xuất ra (CSV/PDF). Tuần 1 đã tạo bucket; chưa có minh chứng trong báo cáo rằng ứng dụng đã tải báo cáo hoặc ảnh sản phẩm lên bucket.
 
 ### 3.4. Amazon SNS (Hệ thống phát thông báo tự động)
 - **Tổng quan:** Dịch vụ phát tin nhắn và thông báo theo thời gian thực (Pub/Sub Notification).
-- **Thành phần chính:** Topic (Kênh phát thông báo), Subscriber (Người nhận tin nhắn via Email/SMS).
-- **Vai trò trong dự án:** Tự động gửi tin nhắn **Email / SMS cảnh báo** tức thì tới Quản lý kho ngay khi phát hiện số lượng sản phẩm trong kho giảm xuống dưới ngưỡng an toàn (`quantity <= min_threshold`).
+- **Thành phần chính:** Topic (kênh phát thông báo), Subscriber (người nhận thông báo qua email/SMS).
+- **Vai trò dự kiến:** Nhận thông báo từ Lambda và phân phối tới người quản lý khi tồn kho chạm ngưỡng (`quantity <= min_threshold`). Chưa tạo Topic/Subscription trong tuần 1.
 
 ### 3.5. Amazon EventBridge (Bộ hẹn giờ & Quản lý sự kiện)
 - **Tổng quan:** Dịch vụ kết nối sự kiện và lập lịch tự động chạy công việc (Scheduler).
 - **Thành phần chính:** EventBridge Scheduler (Bộ đặt lịch Cron).
-- **Vai trò trong dự án:** Đặt lịch tự động **08:00 AM mỗi ngày** để hệ thống tự động kiểm tra toàn bộ dữ liệu kho và phát báo cáo danh sách các mặt hàng sắp hết về cho ban quản lý.
+- **Vai trò dự kiến:** Lập lịch gọi Lambda quét tồn kho và gửi thông báo/báo cáo. Giờ chạy và múi giờ cần được cấu hình rõ trong Scheduler; EventBridge không tự quét DB hoặc gửi email nếu chưa có target và quyền cần thiết.
 
 ### 3.6. AWS CloudFormation (Tự động hóa Quản lý Hạ tầng bằng Mã - IaC)
 - **Tổng quan:** Dịch vụ Hạ tầng dưới dạng Mã (Infrastructure as Code - IaC) cho phép định nghĩa, triển khai và quản lý toàn bộ tài nguyên AWS tự động thông qua file cấu hình mẫu (Template dạng YAML/JSON).
 - **Thành phần chính:** CloudFormation Template (Mẫu cấu hình YAML), Stack (Tập hợp tài nguyên AWS được tạo đồng bộ).
-- **Vai trò trong dự án:** Tự động hóa quá trình dựng lại toàn bộ hạ tầng (VPC, Subnet, RDS, Elastic Beanstalk, S3, SNS, EventBridge) chỉ bằng 1 thao tác hoặc 1 câu lệnh CLI. Giúp tiết kiệm ngân sách `$50 USD` trên AWS Learner Lab bằng cách dễ dàng xóa Stack khi dừng làm việc.
+- **Vai trò dự kiến:** Quản lý hạ tầng bằng template nếu quyền Learner Lab cho phép. Chưa có template/Stack CloudFormation nào được xác nhận trong tuần 1; xóa Stack cũng không đảm bảo xóa các tài nguyên giữ lại hoặc không thuộc Stack.
 ---
 
-## 4. SƠ ĐỒ KIẾN TRÚC TỔNG THỂ HỆ THỐNG (ARCHITECTURE DIAGRAM)
+## 4. SƠ ĐỒ KIẾN TRÚC DỰ KIẾN (ARCHITECTURE DIAGRAM)
 
 ### 4.1. Sơ đồ Trực quan Mermaid
 
 ```mermaid
 flowchart TD
-    CFN["AWS CloudFormation\n(Tự động hóa triển khai Hạ tầng IaC)"] -->|Khởi tạo & Quản lý toàn bộ Hạ tầng| Core_Services
-
-    User["Người dùng / Quản lý Kho hàng"] -->|1. Truy cập Web| EB["AWS Elastic Beanstalk\n(Ứng dụng Web Flask)"]
+    CFN["CloudFormation (dự kiến)\nQuản lý hạ tầng"] -.->|Triển khai khi được cấp quyền| Core_Services
+    User["Người dùng / Quản lý kho"] -->|HTTPS sau khi cấu hình TLS| EB["Elastic Beanstalk\n(Ứng dụng Flask, dự kiến)"]
 
     subgraph Core_Services["Các Dịch vụ Cloud AWS"]
         EB
-        RDS[("Amazon RDS\n(Cơ sở dữ liệu PostgreSQL)")]
-        S3["Amazon S3\n(Lưu ảnh sản phẩm & Hóa đơn)"]
-        SNS["Amazon SNS\n(Gửi Email / SMS Cảnh báo)"]
-        EventBridge["Amazon EventBridge\n(Hẹn giờ quét kho 08:00 AM)"]
+        RDS[("Amazon RDS PostgreSQL\n(Single-AZ, dự kiến)")]
+        S3["Amazon S3\n(Lưu báo cáo CSV/PDF)"]
+        SNS["Amazon SNS\n(Thông báo, dự kiến)"]
+        EventBridge["EventBridge Scheduler\n(Lịch chạy cần cấu hình)"]
+        Lambda["AWS Lambda\n(Quét tồn kho / tạo báo cáo)"]
     end
 
-    EB -->|2. Lưu danh mục & Giao dịch| RDS
-    EB -->|3. Tải lên / Lấy file ảnh| S3
-    EB -->|4. Phát thông báo khi hết hàng| SNS
-    EventBridge -->|5. Kích hoạt báo cáo ngày| SNS
-    SNS -->|6. Gửi tin nhắn| Admin["Quản lý Kho hàng"]
+    EB -->|Đọc/ghi sản phẩm và giao dịch| RDS
+    EventBridge -->|Kích hoạt theo lịch| Lambda
+    Lambda -->|Đọc dữ liệu tồn kho| RDS
+    Lambda -->|Gửi cảnh báo| SNS
+    Lambda -->|Ghi báo cáo| S3
+    SNS -->|Email/SMS sau khi xác nhận subscription| Admin["Quản lý kho"]
 ```
 
 ---
@@ -243,8 +125,8 @@ flowchart TD
 
 ```text
                +-------------------------------------------------------+
-               |   AWS CloudFormation (Template YAML / IaC Automation)  |
-               | (Tự động hóa dựng & quản lý toàn bộ các dịch vụ dưới)  |
+               | CloudFormation (dự kiến, nếu đủ IAM permissions)       |
+               |        Quản lý tài nguyên hạ tầng                     |
                +---------------------------+---------------------------+
                                            |
                                            v
@@ -255,23 +137,37 @@ flowchart TD
                               (Gửi yêu cầu)
                                    v
                  +-----------------------------------+
-                 |    AWS Elastic Beanstalk (Flask)  |
-                 |         (Web Server chính)        |
-                 +----+------------+------------+----+
-                      |            |            |
-     (Đọc/Ghi dữ liệu)|            |            | (Gửi cảnh báo tồn kho)
-                      v            v            v
-             +----------------+  +------------+  +----------------+
-             |   Amazon RDS   |  |   AWS S3   |  |   Amazon SNS   | ➔   Email/SMS
-             | (PostgreSQL DB)|  | (Lưu Ảnh   |  | (Gửi Cảnh Báo) |    cho Quản lý
-             +----------------+  |  & PDF)    |  +----------------+
-                                 +------------+          ^
-                                                         | (Tự động nhắc mỗi sáng)
-                                                 +-------+--------+
-                                                 |   EventBridge  |
-                                                 | (Đồng Hồ Hẹn)  |
-                                                 +----------------+
+                 | Elastic Beanstalk (Flask)      |
+                 |       (dự kiến)                |
+                 +---------------+----------------+
+                                 |
+                                 v
+                       +--------------------+
+                       | Amazon RDS         |
+                       | PostgreSQL (dự kiến)|
+                       +--------------------+
+
+             +-----------------------+
+             | EventBridge Scheduler |
+             |      (dự kiến)        |
+             +-----------+-----------+
+                         | kích hoạt
+                         v
+                  +--------------+
+                  | AWS Lambda   |
+                  |  (dự kiến)   |
+                  +---+------+---+
+                      |      |
+             cảnh báo |      | lưu báo cáo
+                      v      v
+               +---------+  +---------+
+               |   SNS   |  |   S3    |
+               +----+----+  +---------+
+                    |
+                 Email/SMS
 ```
+
+Ở thiết kế đầy đủ, Lambda cũng cần đọc dữ liệu từ RDS. Luồng này chỉ hoạt động khi cấu hình VPC/subnet, Security Group và network path tới các dịch vụ AWS phù hợp.
 
 ---
 
@@ -279,12 +175,12 @@ flowchart TD
 
 | Dịch vụ AWS | Chức năng trong ứng dụng | Ý nghĩa đơn giản |
 | :--- | :--- | :--- |
-| **CloudFormation** | Tự động hóa hạ tầng (IaC) | Bản thiết kế tự động dựng và xóa toàn bộ hệ thống bằng 1 click. |
-| **Elastic Beanstalk** | Hosting ứng dụng web Flask | Bộ nào vận hành trang web quản lý kho. |
-| **Amazon RDS** | Cơ sở dữ liệu PostgreSQL | Nơi lưu danh sách hàng hóa và lịch sử nhập/xuất. |
-| **Amazon S3** | Lưu trữ tệp tin | Nơi cất giữ hình ảnh sản phẩm và tệp hóa đơn PDF. |
-| **Amazon SNS** | Gửi thông báo tự động | Gửi Email / SMS thông báo khi hàng hóa sắp hết. |
-| **Amazon EventBridge**| Lập lịch tự động | Đặt lịch quét kho tự động vào 08:00 sáng mỗi ngày. |
+| **CloudFormation** | Quản lý hạ tầng dưới dạng mã, nếu quyền cho phép | Template mô tả tài nguyên; chưa triển khai trong tuần 1. |
+| **Elastic Beanstalk** | Dự kiến hosting ứng dụng Flask | Môi trường triển khai ứng dụng; chưa tạo trong tuần 1. |
+| **Amazon RDS** | Dự kiến lưu dữ liệu PostgreSQL | DB cho sản phẩm và giao dịch; chưa tạo instance trong tuần 1. |
+| **Amazon S3** | Lưu trữ object | Đã tạo bucket; cần xác minh Block Public Access và chưa có minh chứng ứng dụng đã ghi file. |
+| **Amazon SNS** | Phân phối thông báo | Dự kiến gửi email/SMS sau khi tạo Topic và xác nhận Subscriber. |
+| **Amazon EventBridge** | Lập lịch gọi tác vụ | Dự kiến kích hoạt Lambda; lịch và múi giờ chưa được cấu hình. |
 
 ---
 
@@ -292,8 +188,8 @@ flowchart TD
 
 ### 5.1. Mục tiêu & Yêu cầu Kỹ thuật
 
-- **Phân tách ranh giới an toàn (Network Isolation):** Tầng Web/App giao tiếp với Internet được đặt ở Public Subnets; Tầng Database lưu trữ dữ liệu nhạy cảm được cô lập tuyệt đối ở Private Subnets.
-- **Tuân thủ quy chuẩn Amazon RDS:** Cơ sở dữ liệu RDS PostgreSQL yêu cầu một DB Subnet Group chứa tối thiểu 2 Availability Zones (AZ) khác nhau để đảm bảo dự phòng và tương thích cấu hình AWS.
+- **Phân tách ranh giới an toàn (Network Isolation):** Web/App được đặt theo cấu hình triển khai phù hợp; Database nằm trong Private Subnets và chỉ nhận kết nối từ các Security Group được cho phép.
+- **Yêu cầu Amazon RDS:** DB Subnet Group phải bao phủ tối thiểu 2 Availability Zones. Yêu cầu này không tự bật chế độ Multi-AZ hay tạo standby instance cho DB Single-AZ.
 - **Nguyên tắc đặc quyền tối thiểu (Least Privilege):** Thiết kế Security Group kiểm soát chặt chẽ từng cổng giao tiếp (port), hạn chế tối đa rủi ro quét cổng hoặc tấn công trái phép.
 
 ---
@@ -304,7 +200,7 @@ flowchart TD
 * **Tên VPC:** `inventory-vpc`
 * **VPC CIDR Block:** `10.0.0.0/16`
 * **Tổng số địa chỉ IP:** $2^{16} = 65,536$ IP.
-* **DNS Hostnames / DNS Resolution:** Kích hoạt `enableDnsHostnames = true` và `enableDnsSupport = true` nhằm hỗ trợ sinh tên miền công khai cho các dịch vụ web và phân giải tên miền nội bộ của RDS PostgreSQL.
+* **DNS Hostnames / DNS Resolution:** Bật `enableDnsHostnames` và `enableDnsSupport` để hỗ trợ phân giải DNS trong VPC; public DNS của EC2 còn phụ thuộc cấu hình địa chỉ IP công khai.
 
 #### B. Bảng Phân bổ Dải Mạng con (Subnet IP Allocation Table):
 Mỗi Subnet được cấp phát dải CIDR `/24` cung cấp 256 địa chỉ IP, trong đó:
@@ -320,8 +216,8 @@ Mỗi Subnet được cấp phát dải CIDR `/24` cung cấp 256 địa chỉ I
 | :-: | :--- | :---: | :---: | :---: | :-: | :---: | :--- |
 | 1 | `public-subnet-1` | `10.0.1.0/24` | `us-east-1a` | Public | 251 | `10.0.1.4` – `10.0.1.254` | Máy chủ Web Flask / Elastic Beanstalk (có gán Public IPv4) |
 | 2 | `public-subnet-2` | `10.0.2.0/24` | `us-east-1b` | Public | 251 | `10.0.2.4` – `10.0.2.254` | Subnet công khai dự phòng mở rộng đa vùng cho Web Tier |
-| 3 | `private-db-subnet-1` | `10.0.11.0/24` | `us-east-1a` | Private | 251 | `10.0.11.4` – `10.0.11.254` | Chứa Amazon RDS PostgreSQL Instance (chỉ dùng Private IP) |
-| 4 | `private-db-subnet-2` | `10.0.12.0/24` | `us-east-1b` | Private | 251 | `10.0.12.4` – `10.0.12.254` | Đáp ứng điều kiện bắt buộc đa AZ cho RDS DB Subnet Group |
+| 3 | `private-db-subnet-1` | `10.0.11.0/24` | `us-east-1a` | Private | 251 | `10.0.11.4` – `10.0.11.254` | Subnet dự kiến đặt RDS PostgreSQL, không gán public IPv4 |
+| 4 | `private-db-subnet-2` | `10.0.12.0/24` | `us-east-1b` | Private | 251 | `10.0.12.4` – `10.0.12.254` | Subnet ở AZ thứ hai cho DB Subnet Group; không phải standby instance |
 
 ---
 
@@ -329,7 +225,7 @@ Mỗi Subnet được cấp phát dải CIDR `/24` cung cấp 256 địa chỉ I
 
 #### A. Cổng Internet Gateway (IGW):
 * **Tên tài nguyên:** `inventory-igw`
-* **Cơ chế hoạt động:** Đính kèm trực tiếp vào `inventory-vpc`, cho phép phiên dịch địa chỉ mạng (1-to-1 NAT) giữa địa chỉ Public IPv4 và Private IPv4 của máy chủ trong Public Subnets.
+* **Cơ chế hoạt động:** Đính kèm vào `inventory-vpc`; để instance truy cập Internet cần route tới IGW và địa chỉ IPv4 công khai phù hợp. Chỉ có route tới IGW không tự cấp public IPv4 cho instance.
 
 #### B. Cấu hình Bảng Định tuyến (Route Table Configuration):
 
@@ -347,7 +243,7 @@ Mỗi Subnet được cấp phát dải CIDR `/24` cung cấp 256 địa chỉ I
      | Destination | Target | Mục đích |
      | :--- | :--- | :--- |
      | `10.0.0.0/16` | `local` | Chỉ cho phép lưu lượng mạng luân chuyển nội bộ trong VPC |
-   * **Đặc tính an toàn:** Hoàn toàn **không** có dòng định tuyến `0.0.0.0/0` đi ra Internet. Do đó, các tài nguyên nằm trong Subnet này (RDS Database) không thể bị dò quét hay truy cập trái phép từ Internet.
+   * **Đặc tính:** Không có route `0.0.0.0/0` tới Internet Gateway/NAT Gateway. RDS cũng cần đặt `PubliclyAccessible=false` và được bảo vệ bằng Security Group; route table riêng tư một mình không thay thế các cấu hình này.
 
 ---
 
@@ -360,18 +256,16 @@ Hệ thống bảo mật tường lửa ảo (Security Group) hoạt động the
 * **Quy tắc Inbound (Chiều vào):**
   | Type | Protocol | Port Range | Source | Mô tả chi tiết |
   | :--- | :---: | :---: | :--- | :--- |
-  | **HTTP** | TCP | `80` | `0.0.0.0/0` | Cho phép người dùng truy cập giao diện web chuẩn HTTP |
-  | **Custom TCP** | TCP | `5000` | `0.0.0.0/0` | Hỗ trợ truy cập trực tiếp cổng phát triển mặc định của Flask App |
-  | **HTTPS** | TCP | `443` | `0.0.0.0/0` | Dự phòng cho việc cấu hình bảo mật SSL/TLS trong tương lai |
+  | **HTTP** | TCP | `80` | Chỉ nguồn cần thiết (ví dụ `0.0.0.0/0` cho ứng dụng public) | HTTP không mã hóa; chỉ dùng khi phù hợp với thiết kế triển khai. |
+  | **HTTPS** | TCP | `443` | Chỉ nguồn cần thiết (ví dụ `0.0.0.0/0` cho endpoint public) | Chỉ mở khi đã cấu hình TLS/HTTPS tại load balancer hoặc web server. |
+  | **Flask development** | TCP | `5000` | Không mở cho Internet | Flask development server không phù hợp để public; dùng web server/reverse proxy ở môi trường triển khai. |
 * **Quy tắc Outbound (Chiều ra):**
   | Type | Protocol | Port Range | Destination | Mô tả chi tiết |
   | :--- | :---: | :---: | :--- | :--- |
-  | **PostgreSQL**| TCP | `5432` | `inventory-db-sg` | Gửi truy vấn đọc/ghi dữ liệu tới Database Tier |
-  | **HTTPS** | TCP | `443` | `0.0.0.0/0` | Kết nối tới các AWS API Endpoints (S3 lưu ảnh, SNS gửi tin) |
-  | **All traffic**| ALL | ALL | `0.0.0.0/0` | Mặc định cho phép các gói tin phản hồi và cập nhật hệ điều hành |
+  | **Egress** | Theo cấu hình | Theo cấu hình | Chỉ các đích cần thiết | Security Group mới mặc định cho phép outbound all; nếu áp dụng least privilege, chỉ khai báo các luồng thực sự cần dùng. Security Group có tính stateful nên không cần mở rule riêng chỉ để nhận gói phản hồi của kết nối hợp lệ. |
 
 #### B. `inventory-db-sg` (Dành cho Database Tier):
-* **Mô tả:** Bảo vệ cơ sở dữ liệu Amazon RDS PostgreSQL, chỉ tiếp nhận kết nối nội bộ từ Web Tier.
+* **Mô tả:** Bảo vệ Amazon RDS PostgreSQL khi được tạo; hiện mới cấu hình rule từ Web Tier.
 * **Quy tắc Inbound (Chiều vào):**
   | Type | Protocol | Port Range | Source | Mô tả chi tiết |
   | :--- | :---: | :---: | :--- | :--- |
@@ -379,7 +273,9 @@ Hệ thống bảo mật tường lửa ảo (Security Group) hoạt động the
 * **Quy tắc Outbound (Chiều ra):**
   | Type | Protocol | Port Range | Destination | Mô tả chi tiết |
   | :--- | :---: | :---: | :--- | :--- |
-  | **All traffic**| ALL | ALL | `0.0.0.0/0` | Mặc định phản hồi các kết nối hợp lệ |
+  | **Egress** | Theo cấu hình | Theo cấu hình | Chỉ các đích cần thiết | Rule mặc định của Security Group cho phép outbound; cân nhắc thu hẹp theo nhu cầu thực tế. |
+
+> Nếu Lambda được dùng để quét RDS hoặc tạo báo cáo, cần đặt Lambda trong VPC khi phù hợp và bổ sung quyền inbound PostgreSQL từ Security Group của Lambda vào `inventory-db-sg`. Rule chỉ cho Web SG hiện tại chưa cho phép Lambda truy cập DB. Lambda trong subnet riêng cũng cần network path tới dịch vụ AWS (ví dụ VPC endpoint hoặc NAT Gateway phù hợp) để gọi S3/SNS; NAT Gateway có thể phát sinh chi phí.
 
 ---
 
@@ -394,10 +290,10 @@ flowchart TB
 
         subgraph PublicZone ["Public Subnets (Có kết nối Internet)"]
             subgraph PubSubnet1 ["public-subnet-1 (10.0.1.0/24) | us-east-1a"]
-                WebApp1["Web App / Beanstalk\n(Flask Port 80/5000)"]
+                WebApp1["Web App / Beanstalk\n(HTTP/HTTPS listener; Flask behind web server)"]
             end
             subgraph PubSubnet2 ["public-subnet-2 (10.0.2.0/24) | us-east-1b"]
-                WebApp2["Web App Backup Tier\n(Mở rộng dự phòng)"]
+                WebApp2["Web App ở AZ thứ hai\n(nếu cấu hình triển khai hỗ trợ)"]
             end
         end
 
@@ -408,20 +304,19 @@ flowchart TB
 
         subgraph PrivateZone ["Private Subnets (Cô lập hoàn toàn khỏi Internet)"]
             subgraph PrivSubnet1 ["private-db-subnet-1 (10.0.11.0/24) | us-east-1a"]
-                RDSMaster[("Amazon RDS PostgreSQL\nMaster Instance\n(Port 5432)")]
+                RDSMaster[("Amazon RDS PostgreSQL\n(Single-AZ DB instance, Port 5432)")]
             end
             subgraph PrivSubnet2 ["private-db-subnet-2 (10.0.12.0/24) | us-east-1b"]
-                RDSStandby[("RDS DB Subnet Group\n(AZ Standby Area)")]
+                DBSubnetAZ2["Subnet đủ điều kiện cho DB Subnet Group\n(không phải standby instance)"]
             end
         end
 
         subgraph SecurityGroupDB ["Security Group: inventory-db-sg"]
             RDSMaster
-            RDSStandby
         end
     end
 
-    Internet <==>|Inbound HTTP :80, :5000| IGW
+    Internet <==>|Inbound theo các listener đã cấu hình| IGW
     IGW <==> PublicZone
 
     SecurityGroupWeb ==>|Chỉ cho phép TCP :5432\ntruy cập nội bộ| SecurityGroupDB
@@ -433,17 +328,17 @@ flowchart TB
 
 | Chiều giao tiếp | Nguồn (Source) | Đích (Destination) | Cổng & Giao thức | Trạng thái | Đánh giá & Cơ chế Bảo vệ |
 | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Internet ➔ Web** | `0.0.0.0/0` | `inventory-web-sg` | TCP `80`, `5000` | **Cho phép** (ALLOW) | Người dùng truy cập dịch vụ quản lý kho bình thường. |
-| **Internet ➔ Database** | `0.0.0.0/0` | `inventory-db-sg` | Bất kỳ cổng nào | **CHẶN** (DENY) | RDS nằm ở Private Subnet, không có Public IP và không có Route ra IGW. |
-| **Web ➔ Database** | `inventory-web-sg` | `inventory-db-sg` | TCP `5432` | **Cho phép** (ALLOW) | Web App đọc/ghi danh mục sản phẩm và lịch sử giao dịch kho. |
-| **Nguồn lạ trong VPC ➔ DB** | Dải IP khác / SG khác | `inventory-db-sg` | TCP `5432` | **CHẶN** (DENY) | `inventory-db-sg` chỉ cấp quyền cho nguồn có nhãn `inventory-web-sg`. |
-| **Web Tier ➔ AWS Services** | `inventory-web-sg` | S3, SNS, EventBridge | TCP `443` (HTTPS) | **Cho phép** (ALLOW) | Tải ảnh lên S3 Bucket và gửi email cảnh báo tồn kho qua SNS Topic. |
+| **Internet ➔ Web** | `0.0.0.0/0` | `inventory-web-sg` | TCP `80`, `5000`, `443` (theo rule đã cấu hình) | **Rule đang cho phép** | Rule đã mở trên SG; cổng 5000 là development và 443 chỉ dùng được khi TLS đã cấu hình. Chưa kiểm thử truy cập ứng dụng. |
+| **Internet ➔ Database** | `0.0.0.0/0` | `inventory-db-sg` | TCP `5432` | **Không có rule cho phép** | DB chưa được tạo. Khi tạo, đặt `PubliclyAccessible=false`, dùng subnet riêng và kiểm chứng SG. |
+| **Web ➔ Database** | `inventory-web-sg` | `inventory-db-sg` | TCP `5432` | **Đã cấu hình rule; chưa kiểm thử** | RDS/Web chưa triển khai nên chưa thể xác nhận kết nối thực tế. |
+| **Nguồn khác ➔ Database** | Security Group khác | `inventory-db-sg` | TCP `5432` | **Không có rule cho phép** | Security Group không có rule cho phép luồng này; gói tin không khớp rule sẽ bị loại bỏ. |
+| **Ứng dụng ➔ AWS APIs** | Web/Lambda role phù hợp | S3, SNS, dịch vụ cần dùng | HTTPS `443` | **Chưa xác minh** | Cần egress, IAM permission và endpoint/network path phù hợp; S3/SNS chưa được tích hợp trong ứng dụng hiện tại. |
 
 ---
 
-## 6. CẬP NHẬT TRIỂN KHAI BACKEND FLASK API
+## 6. ỨNG DỤNG BACKEND FLASK VÀ API
 
-Backend được xây dựng bằng Flask, kết nối PostgreSQL qua `psycopg2` và phục vụ các chức năng quản lý sản phẩm, theo dõi tồn kho, ghi nhận giao dịch nhập/xuất. Cấu trúc cơ sở dữ liệu gồm hai bảng `products` và `transactions`, được định nghĩa trong `database/schema.sql`; thông tin kết nối được thiết lập trong `init_db.py` và có thể cấu hình bằng các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`.
+Backend được xây dựng bằng Flask, kết nối PostgreSQL qua `psycopg2` và phục vụ các chức năng quản lý sản phẩm, theo dõi tồn kho, ghi nhận giao dịch nhập/xuất. Schema trong `database/schema.sql` định nghĩa hai bảng `products` và `transactions`, có ràng buộc số lượng không âm/dương, loại giao dịch `IN`/`OUT`, khóa ngoại xóa cascade và thời gian `TIMESTAMP WITH TIME ZONE`. Cấu hình kết nối trong `init_db.py` nhận các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`.
 
 Các route giao diện hiện có vẫn được duy trì: `/` hiển thị danh sách tồn kho, `/add` thêm sản phẩm và `/transaction` xử lý giao dịch nhập/xuất. Giao diện HTML5/Bootstrap 5 hỗ trợ nhập thông tin sản phẩm, cập nhật số lượng, hiển thị cảnh báo khi tồn kho chạm ngưỡng `min_threshold` và thông báo kết quả giao dịch.
 
@@ -455,7 +350,7 @@ Bên cạnh giao diện, Flask cung cấp API JSON để quản lý sản phẩm
 | **Giao dịch kho** | `GET /api/transactions` xem lịch sử; `POST /api/transactions` ghi nhận giao dịch `IN` hoặc `OUT`, cập nhật tồn kho và lưu lịch sử giao dịch. |
 | **Kiểm tra nghiệp vụ** | Kiểm tra dữ liệu JSON, trường bắt buộc, SKU, số lượng và loại giao dịch; không cho phép xuất vượt tồn kho hoặc cập nhật tồn kho trực tiếp qua API sản phẩm. |
 
-Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng tồn đủ; việc cập nhật tồn kho và ghi lịch sử được thực hiện trong cùng transaction PostgreSQL. API trả mã `400` khi dữ liệu không hợp lệ, `404` khi không tìm thấy sản phẩm, `409` khi SKU bị trùng hoặc tồn kho không đủ và `201` khi tạo sản phẩm/giao dịch thành công. Bộ kiểm thử tự động tại `tests/test_app.py` đạt **12/12 trường hợp**, bao gồm các luồng giao diện, CRUD sản phẩm, kiểm tra dữ liệu và giao dịch nhập/xuất.
+Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng tồn đủ; việc cập nhật tồn kho và ghi lịch sử được thực hiện trong cùng transaction PostgreSQL. API trả mã `400` khi dữ liệu không hợp lệ, `404` khi không tìm thấy sản phẩm, `409` khi SKU bị trùng hoặc tồn kho không đủ và `201` khi tạo sản phẩm/giao dịch thành công. `tests/test_app.py` hiện có 12 test case bao gồm giao diện, CRUD sản phẩm, kiểm tra dữ liệu và giao dịch nhập/xuất; báo cáo tuần 1 chưa ghi nhận kết quả chạy test có thể đối chiếu.
 
 ---
 ##  7. KHỞI TẠO HẠ TẦNG MẠNG NỀN TẢNG (VPC, SUBNETS, IGW, ROUTE TABLES) VÀ THỰC THI QUY ĐỊNH TAGGING TRÊN AWS CONSOLE
@@ -500,15 +395,15 @@ Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng
      * **Subnet Associations:** Liên kết với `private-db-subnet-1` và `private-db-subnet-2`.
 
 ### 7.5 Thực thi quy định gắn thẻ (Resource Tagging):
-   * Kiểm tra toàn bộ toàn bộ tài nguyên triển khai tại us-east-1 mạng vừa khởi tạo (VPC, 4 Subnets, IGW, 2 Route Tables).
+   * Kiểm tra toàn bộ tài nguyên mạng đã tạo tại `us-east-1` (VPC, 4 Subnets, IGW, 2 Route Tables).
    * Đảm bảo đính kèm đầy đủ cặp Tag chuẩn:
      * `Project`: `inventory-app`
      * `Owner`: `Khanh-Quan`
 
 #### 7.6 Kết quả & Minh chứng đạt được:
-* Toàn bộ hạ tầng mạng phân tầng 2-Tier trên AWS Learner Lab (`us-east-1`) đã sẵn sàng.
-* Sẵn sàng các dải Subnet cô lập để bước tiếp theo (Thứ Bảy) thiết lập Security Groups và triển khai RDS Database Group.
-* Ảnh chụp minh chứng trên AWS Management Console hiển thị rõ `VPC ID`, bảng Subnet list, Route Table associations cùng thông tin User/Account ID và Region `us-east-1`.
+* Các tài nguyên mạng nền tảng được ghi nhận đã tạo trong Learner Lab (`us-east-1`); chưa có RDS/Web Tier để xác nhận tích hợp đầu cuối.
+* Các subnet riêng được quy hoạch cho DB Subnet Group; DB Subnet Group và RDS chưa được tạo trong tuần 1.
+* Ảnh chụp minh chứng được lưu trong `screenshots/`; cần đối chiếu từng ảnh để xác nhận ID, Region, tags và associations.
 
 
 ---
@@ -559,7 +454,7 @@ aws iam get-role --role-name LabRole --no-cli-pager
 | **ARN** | `arn:aws:iam::041118630529:role/LabRole` |
 | **CreateDate** | `2026-10-10T11:35:11+00:00` |
 
-Role `LabRole` được cấu hình với **Trust Policy** cho phép nhiều dịch vụ AWS giả định role này, bao gồm: `s3`, `lambda`, `rds`, `dynamodb`, `eks`, `ecs`, `sagemaker`, `sns`, `apigateway`, `cloudformation`, `codedeploy`, `secretsmanager`, v.v.
+Trust Policy xác định principal nào được phép giả định role. Báo cáo chưa kèm nội dung Trust Policy, vì vậy chưa thể kết luận những dịch vụ nào được phép dùng role này; cần kiểm tra chính sách và quyền hiệu lực trước khi triển khai từng dịch vụ.
 
 #### B. Các Policy gắn với LabRole
 
@@ -580,7 +475,7 @@ aws iam list-attached-role-policies --role-name LabRole --no-cli-pager
 | 6 | `AmazonEC2ContainerRegistryReadOnly` | AWS Managed |
 | 7 | `AmazonEKSWorkerNodePolicy` | AWS Managed |
 
-> **Nhận xét:** Ba `VocLabPolicy` tùy chỉnh chứa toàn bộ quyền hạn thực tế cho các dịch vụ như S3, Lambda, RDS, SNS, EventBridge, Beanstalk, CloudFormation, v.v. — đủ để triển khai toàn bộ hạ tầng của dự án `inventory-app`.
+> **Nhận xét:** Danh sách có ba policy tùy chỉnh `VocLab` và bốn AWS managed policies. Chỉ tên policy và số lượng policy không chứng minh quyền hiệu lực cho từng dịch vụ; cần kiểm tra quyền cụ thể và thử triển khai khi thực hiện tuần 2.
 
 ---
 
@@ -609,7 +504,7 @@ aws s3api create-bucket \
 | **Bucket Name** | `inventory-reports-us-east-1-24110244` |
 | **Region** | `us-east-1` |
 | **ARN** | `arn:aws:s3:::inventory-reports-us-east-1-24110244` |
-| **Account ID** | `523156739905` |
+| **Account ID** | `041118630529` |
 
 #### B. Gắn Tag chuẩn cho Bucket
 
@@ -617,6 +512,7 @@ aws s3api create-bucket \
 aws s3api put-bucket-tagging \
   --bucket inventory-reports-us-east-1-24110244 \
   --tagging 'TagSet=[{Key=Project,Value=inventory-app},{Key=Owner,Value=Khanh-Quan}]' \
+  --region us-east-1 \
   --no-cli-pager
 ```
 
@@ -625,6 +521,7 @@ aws s3api put-bucket-tagging \
 ```bash
 aws s3api get-bucket-tagging \
   --bucket inventory-reports-us-east-1-24110244 \
+  --region us-east-1 \
   --no-cli-pager
 ```
 
@@ -639,6 +536,26 @@ aws s3api get-bucket-tagging \
 }
 ```
 
+#### D. Cấu hình và xác minh Block Public Access
+
+Kết quả `get-bucket-tagging` chỉ xác minh tags, không chứng minh bucket đã chặn truy cập công khai. Cấu hình và kiểm tra riêng:
+
+```bash
+aws s3api put-public-access-block \
+  --bucket inventory-reports-us-east-1-24110244 \
+  --public-access-block-configuration \
+  BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true \
+  --region us-east-1 \
+  --no-cli-pager
+
+aws s3api get-public-access-block \
+  --bucket inventory-reports-us-east-1-24110244 \
+  --region us-east-1 \
+  --no-cli-pager
+```
+
+Chỉ đánh dấu đã bật sau khi kết quả `get-public-access-block` xác nhận cả bốn giá trị là `true`.
+
 ![Screenshot](./screenshots/03_s3_bucket_created.png)
 
 ---
@@ -647,8 +564,8 @@ aws s3api get-bucket-tagging \
 
 | Hạng mục | Trạng thái | Chi tiết |
 | :--- | :---: | :--- |
-| Đăng nhập AWS Learner Lab | Hoàn thành | Session `voclabs`, Account `523156739905` |
-| Xác minh IAM Role LabRole | Hoàn thành | 7 policies, đủ quyền triển khai hạ tầng |
+| Đăng nhập AWS Learner Lab | Hoàn thành | Session `voclabs`, Account `041118630529` |
+| Xác minh IAM Role LabRole | Hoàn thành | Xác nhận role và 7 policy đính kèm; quyền thực tế từng dịch vụ chưa được kiểm chứng |
 | Tạo S3 Bucket báo cáo | Hoàn thành | `inventory-reports-us-east-1-24110244` |
 | Gắn Tag `Project=inventory-app` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
 | Gắn Tag `Owner=Khanh-Quan` | Hoàn thành | Xác minh qua `get-bucket-tagging` |
@@ -665,6 +582,7 @@ aws s3api get-bucket-tagging \
 #### A. Tạo Security Group trên `inventory-vpc`:
 
 Security Group `inventory-web-sg` đóng vai trò là lớp tường lửa ảo bảo vệ các máy chủ Web App / Elastic Beanstalk trong Public Subnets.
+Security Group mới thường có outbound mặc định cho phép toàn bộ lưu lượng; các lệnh trong mục này không thu hẹp egress. Cần rà soát rule thực tế và chỉ hạn chế khi đã xác định các luồng cần thiết.
 
 ```bash
 # 1. Lấy VPC ID của inventory-vpc
@@ -701,7 +619,7 @@ aws ec2 create-security-group \
 
 #### B. Cấu hình Quy tắc Inbound (Chiều vào):
 
-Mở cổng `80` (HTTP), `5000` (Flask Development Server) và `443` (HTTPS) để người dùng có thể truy cập ứng dụng web từ Internet:
+Các lệnh dưới đây ghi lại rule đã mở trong tuần 1. Lưu ý: cổng `5000` là Flask development server, không nên để mở từ Internet; cổng `443` chỉ có ý nghĩa khi đã cấu hình TLS. Chưa có Web App chạy trên AWS để xác minh truy cập.
 
 ```bash
 WEB_SG_ID="sg-0bb46c5bbb3ba364b"
@@ -725,13 +643,24 @@ aws ec2 authorize-security-group-ingress \
   --region us-east-1 --no-cli-pager
 ```
 
+Trước khi triển khai, thu hồi rule public của cổng development. Chỉ giữ cổng 443 nếu TLS đã được cấu hình; nếu chưa dùng HTTPS, không công bố listener này:
+
+```bash
+aws ec2 revoke-security-group-ingress \
+  --group-id "$WEB_SG_ID" \
+  --protocol tcp --port 5000 --cidr 0.0.0.0/0 \
+  --region us-east-1 \
+  --no-cli-pager
+```
+
 ---
 
 ### 9.2. Khởi tạo Security Group cho Database Tier (`inventory-db-sg`) với Security Group Chaining
 
 #### A. Tạo Security Group trên `inventory-vpc`:
 
-`inventory-db-sg` bảo vệ cụm cơ sở dữ liệu Amazon RDS PostgreSQL nằm trong Private Subnets, cô lập hoàn toàn khỏi Internet.
+`inventory-db-sg` được chuẩn bị để bảo vệ Amazon RDS PostgreSQL khi DB được tạo trong Private Subnets. Tuần 1 chưa có RDS instance.
+Security Group này cũng giữ outbound mặc định nếu chưa được sửa; rule đó không chứng minh rằng DB đã kết nối ra ngoài.
 
 ```bash
 # Tạo Security Group inventory-db-sg
@@ -773,26 +702,26 @@ aws ec2 authorize-security-group-ingress \
   --region us-east-1 --no-cli-pager
 ```
 
-> **Ưu điểm kỹ thuật:** Khi Web Tier tự động mở rộng theo nhu cầu (EC2 Auto Scaling), các instance mới được gán `inventory-web-sg` sẽ tự động có quyền kết nối đến PostgreSQL mà không cần cập nhật lại firewall rules thủ công.
+> **Ưu điểm kỹ thuật:** Khi Web Tier được cấu hình Auto Scaling, các instance gắn `inventory-web-sg` sẽ khớp rule nguồn của DB SG mà không cần cập nhật rule cho từng IP. Tính năng Auto Scaling chưa được triển khai trong tuần 1.
 
 ---
 
 ### 9.3. Thử nghiệm Kiểm chứng Luồng Truy cập & An ninh Mạng (Security Testing)
 
-Thực hiện thử nghiệm và đánh giá kịch bản kết nối giữa các tầng:
+Các luồng dưới đây là kế hoạch kiểm thử. Do RDS và Web Tier chưa được triển khai, chưa có kết quả kiểm thử kết nối thực tế trong tuần 1.
 
 | Kịch bản thử nghiệm | Nguồn (Source) | Đích (Destination) | Cổng & Giao thức | Kỳ vọng | Kết quả thực nghiệm | Đánh giá |
 | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **1** | Người dùng Internet | `inventory-web-sg` | TCP `80`, `5000` | Cho phép kết nối | Chưa kiểm thử thực tế — thực hiện tuần 2 | Web App tiếp nhận HTTP traffic bình thường. |
-| **2** | Web Server (`inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Cho phép kết nối nội bộ | **Thành công (Connected)** | Web App đọc/ghi dữ liệu kho vào RDS. |
-| **3** | Internet bên ngoài | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Chặn kết nối | **Bị từ chối / Timeout** | RDS nằm ở Private Subnet & không mở port cho IP công cộng. |
-| **4** | Tài nguyên khác trong VPC (không mang `inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Chặn kết nối | **Bị từ chối (Connection Refused)** | Rule Inbound từ chối vì không khớp Source SG ID. |
+| **1** | Người dùng Internet | `inventory-web-sg` | TCP `80`, `5000`, `443` (rule hiện tại) | Chỉ mở listener cần thiết; không public port `5000` | Chưa kiểm thử — chưa triển khai Web Tier | Port `5000` đang mở trên SG nhưng cần thu hồi; port `443` chỉ dùng sau khi cấu hình TLS. |
+| **2** | Web Server (`inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Dự kiến cho phép nội bộ | Chưa kiểm thử — RDS/Web Tier chưa được triển khai | Rule SG đã cấu hình, nhưng chưa chứng minh được kết nối. |
+| **3** | Internet bên ngoài | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Dự kiến không cho phép | Chưa kiểm thử — chưa có RDS instance | Khi tạo DB cần đặt `PubliclyAccessible=false` và kiểm tra subnet/SG. |
+| **4** | Tài nguyên khác trong VPC (không mang `inventory-web-sg`) | RDS PostgreSQL (`inventory-db-sg`) | TCP `5432` | Dự kiến không cho phép | Chưa kiểm thử — chưa có RDS instance | Không có inbound rule phù hợp; chưa xác nhận bằng runtime test. |
 
 ---
 
 ### 9.4. Xác minh IAM Instance Profile `LabInstanceProfile`
 
-Theo quy định của AWS Learner Lab, tài khoản sinh viên bị khóa tính năng tạo IAM Role mới. Do đó, tất cả máy chủ EC2 hoặc Elastic Beanstalk cần đính kèm Profile tạo sẵn: **`LabInstanceProfile`**.
+Learner Lab cung cấp profile có sẵn **`LabInstanceProfile`** liên kết với `LabRole`. Dùng profile này cho EC2/Elastic Beanstalk nếu được phép; khả năng tạo hoặc sửa IAM role phụ thuộc policy của lớp.
 
 #### A. Lệnh kiểm tra cấu hình Instance Profile:
 
@@ -808,31 +737,31 @@ aws iam get-instance-profile \
 ```json
 {
   "ProfileName": "LabInstanceProfile",
-  "ProfileArn": "arn:aws:iam::523156739905:instance-profile/LabInstanceProfile",
+  "ProfileArn": "arn:aws:iam::041118630529:instance-profile/LabInstanceProfile",
   "Roles": [
     {
       "RoleName": "LabRole",
-      "RoleArn": "arn:aws:iam::523156739905:role/LabRole"
+      "RoleArn": "arn:aws:iam::041118630529:role/LabRole"
     }
   ]
 }
 ```
 
- **Nhận xét quan trọng:**
- - `LabInstanceProfile` chứa liên kết hợp lệ tới role `LabRole` (đã được nhóm xác minh ở Mục 8.2 với 7 chính sách quyền hạn).
- - Cấu hình này đáp ứng đầy đủ yêu cầu để đính kèm vào máy chủ EC2 / Elastic Beanstalk ở **Tuần 2**. Đã xác minh LabInstanceProfile chứa LabRole. Quyền truy cập từng dịch vụ sẽ được kiểm tra khi triển khai tuần 2.
+**Nhận xét:**
+- `LabInstanceProfile` liên kết với role `LabRole`.
+- Có thể gắn profile này vào EC2/Elastic Beanstalk nếu dịch vụ cho phép; quyền hiệu lực cần được xác minh khi triển khai.
 ---
 
 ### 9.5. Tổng kết Kết quả Công việc Thứ Bảy của Võ Minh Quân
 
 | Hạng mục công việc | Trạng thái | Minh chứng / Ghi chú |
 | :--- | :---: | :--- |
-| Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0bb46c5bbb3ba364b`, mở port 80, 5000, 443 |
+| Khởi tạo `inventory-web-sg` | Hoàn thành | ID: `sg-0bb46c5bbb3ba364b`; hiện có rule public cho 80, 5000, 443; cần thu hồi 5000 trước khi triển khai |
 | Khởi tạo `inventory-db-sg` | Hoàn thành | ID: `sg-0f5e8348f198a9f97`, Inbound TCP 5432 từ Web SG |
 | Kỹ thuật Security Group Chaining | Hoàn thành | Tham chiếu trực tiếp SG ID, đã cấu hình cổng 5432 tham chiếu Web SG|
-| Kiểm thử an ninh luồng mạng | Chờ kiểm thử tuần 2  | Chỉ cho phép Web Tier kết nối DB; chặn  Internet |
-| Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::523156739905:instance-profile/LabInstanceProfile` |
-| Tuân thủ quy định Tagging | Hoàn thành | Đính kèm `Project=inventory-app` và `Owner=Khanh-Quan` |
+| Kiểm thử an ninh luồng mạng | Chưa thực hiện | RDS/Web Tier chưa triển khai; các luồng mới được đối chiếu theo rule |
+| Xác minh `LabInstanceProfile` | Hoàn thành | ARN: `arn:aws:iam::041118630529:instance-profile/LabInstanceProfile` |
+| Gắn Tag cho tài nguyên | Đã gắn trên các tài nguyên được báo cáo | `Project=inventory-app`, `Owner=Khanh-Quan`; cần kiểm tra từng tài nguyên để xác nhận không còn thiếu |
 
 ---
 
@@ -841,23 +770,21 @@ aws iam get-instance-profile \
 
 ---
 
-### 10.1. Kiểm tra, Dọn dẹp Tài nguyên & Bảo tồn Budget $50 trên AWS Learner Lab
+### 10.1. Kiểm tra Tài nguyên và Theo dõi Chi phí trên AWS Learner Lab
 
-Theo chính sách nghiêm ngặt của AWS Academy Learner Lab:
-* Ngân sách cấp: Cố định **$50** cho toàn bộ học kỳ, hết ngân sách tài khoản sẽ bị đóng băng vĩnh viễn.
-* Sau mỗi buổi làm việc thực hành, sinh viên bắt buộc phải kiểm tra, dừng hoặc xóa các dịch vụ có phát sinh chi phí tính theo giờ chạy (Compute EC2, RDS Instance, NAT Gateway, v.v.).
+Learner Lab có thể giới hạn credit và quyền sử dụng theo cấu hình khóa học. Hãy kiểm tra số dư/hạn mức trong giao diện Lab; không suy ra số dư chỉ từ danh sách tài nguyên.
 
 #### A. Rà soát danh mục tài nguyên đang hoạt động trong Tuần 1:
 Thực hiện các câu lệnh kiểm tra trên AWS CLI (`us-east-1`):
 
 ```bash
-# 1. Kiểm tra trạng thái máy chủ EC2 (đảm bảo không có instance nào chạy ngầm)
+# 1. Liệt kê các EC2 instance đang chạy hoặc khởi động
 aws ec2 describe-instances \
   --filters "Name=instance-state-name,Values=running,pending" \
   --query "Reservations[*].Instances[*].[InstanceId,InstanceType,State.Name]" \
   --region us-east-1 --output table --no-cli-pager
 
-# 2. Kiểm tra cơ sở dữ liệu RDS (chưa khởi tạo instance trong Tuần 1, chuẩn bị cho Tuần 2)
+# 2. Liệt kê các RDS instance (tuần 1 chưa tạo DB cho dự án)
 aws rds describe-db-instances \
   --query "DBInstances[*].[DBInstanceIdentifier,DBInstanceClass,DBInstanceStatus]" \
   --region us-east-1 --output table --no-cli-pager
@@ -868,16 +795,14 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 ```
 
 #### B. Đánh giá phát sinh chi phí:
-* **Tài nguyên mạng nền tảng (VPC, 4 Subnets, Internet Gateway, 2 Route Tables, 2 Security Groups):** Hoàn toàn **miễn phí ($0.00/giờ)** trên AWS khi không dùng NAT Gateway. Nhóm giữ nguyên hạ tầng này để sẵn sàng gắn kết EC2/Beanstalk và RDS ở Tuần 2 mà không phải tạo lại.
-* **Lưu trữ S3 (`inventory-reports-us-east-1-24110244`):** Dung lượng hiện tại $< 1$ MB, chi phí lưu trữ $\approx \$0.0000$/tháng.
-* **Tổng chi phí tích lũy kết thúc Tuần 1:** **$0.00 USD**. Số dư tài khoản được bảo toàn nguyên vẹn **$50.00 / $50.00 USD**.
+Các lệnh trên chỉ liệt kê tài nguyên, không tính chi phí hoặc số dư. VPC, subnet, route table và Security Group không có phí giờ sử dụng riêng trong cấu hình thông thường, nhưng public IPv4, lưu trữ S3, truyền dữ liệu, log và các dịch vụ khác có thể phát sinh phí. Báo cáo tuần 1 chưa kèm hóa đơn/Cost Explorer hoặc ảnh số dư nên không kết luận tổng chi phí bằng 0 USD hay số dư còn nguyên. Kiểm tra Cost Explorer/Billing và giao diện Learner Lab để ghi số liệu có thời điểm và phạm vi rõ ràng.
 
 ---
 
 ### 10.2. Thu thập & Chuẩn hóa Bộ Ảnh Minh chứng (Screenshots) Tuần 1
 
-Để phục vụ báo cáo và bảo vệ đồ án trước Giảng viên hướng dẫn ThS. Huỳnh Xuân Phụng, mọi ảnh chụp màn hình đều tuân thủ 3 tiêu chí:
-1. Hiển thị rõ **AWS Account ID (`523156739905`)** hoặc User ARN góc trên cùng bên phải.
+Để phục vụ báo cáo và bảo vệ đồ án, bộ ảnh minh chứng cần được đối chiếu theo các tiêu chí sau:
+1. Hiển thị rõ **AWS Account ID (`041118630529`)** hoặc User ARN góc trên cùng bên phải.
 2. Hiển thị đúng **Region: `us-east-1` (N. Virginia)**.
 3. Tài nguyên có tiền tố chuẩn `inventory-*` và đầy đủ thẻ **Tag (`Project: inventory-app`, `Owner: Khanh-Quan`)**.
 
@@ -885,16 +810,16 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 | STT | Tên file ảnh | Dịch vụ AWS | Nội dung minh chứng | Sinh viên thực hiện | Trạng thái file |
 | :-: | :--- | :---: | :--- | :---: | :---: |
-| 1 | `01_aws_sts_identity.png` | AWS STS | Caller Identity, Account ID `523156739905`, ARN sinh viên | Nguyễn Đình Khanh | Đã lưu trữ |
+| 1 | `01_aws_sts_identity.png` | AWS STS | Caller Identity, Account ID `041118630529`, ARN sinh viên | Nguyễn Đình Khanh | Đã lưu trữ |
 | 2 | `02_labrole_policies.png` | AWS IAM | 7 Policies đính kèm vào `LabRole` | Nguyễn Đình Khanh | Đã lưu trữ |
 | 3 | `03_s3_bucket_created.png` | Amazon S3 | Bucket `inventory-reports-us-east-1-24110244` & Tagging | Nguyễn Đình Khanh | Đã lưu trữ |
 | 4 | `04_vpc_created.png` | Amazon VPC | VPC `inventory-vpc` (`10.0.0.0/16`), DNS resolution & hostnames | Võ Minh Quân | Đã lưu trữ |
-| 5 | `05_subnets_list.png` | Amazon VPC | 4 Subnets (2 Public, 2 Private) Multi-AZ `us-east-1a` & `us-east-1b` | Võ Minh Quân | Đã lưu trữ |
+| 5 | `05_subnets_list.png` | Amazon VPC | 4 subnet ở hai AZ (`us-east-1a`, `us-east-1b`); DB Subnet Group đa AZ không đồng nghĩa RDS Multi-AZ | Võ Minh Quân | Đã lưu trữ |
 | 6 | `06_a_route_tables.png`<br>`06_b_route_tables.png`<br>`06_c_route_tables.png`<br>`06_d_route_tables.png` | Amazon VPC | Bảng định tuyến chi tiết: Public RT (trỏ ra `inventory-igw`) & Private RT (local) | Võ Minh Quân | Đã lưu trữ |
 | 7 | `07_internet_gateway.png` | Amazon VPC | Internet Gateway `inventory-igw` đã attach vào `inventory-vpc` | Võ Minh Quân | Đã lưu trữ |
 | 8 | `08_security_group_web.png` | EC2 / SG | `inventory-web-sg` với Inbound Rules (Port 80, 5000, 443) | Võ Minh Quân | Đã lưu trữ |
 | 9 | `09_security_group_db.png` | EC2 / SG | `inventory-db-sg` Inbound Port 5432 tham chiếu Web SG ID | Võ Minh Quân | Đã lưu trữ |
-| 10 | `10_lab_instance_profile.png`| AWS IAM | Xác minh `LabInstanceProfile` liên kết hợp lệ với `LabRole` | Võ Minh Quân | Đã lưu trữ |
+| 10 | `10_lab_instance_profile.png` | AWS IAM | Xác minh `LabInstanceProfile` liên kết với `LabRole` | Võ Minh Quân | Đã lưu trữ |
 
 #### Hình ảnh minh chứng thực tế do Võ Minh Quân thu thập & chụp từ AWS Console:
 
@@ -902,9 +827,9 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 ![04_vpc_created.png](./screenshots/04_vpc_created.png)
 * *Xác minh:* VPC ID: `vpc-08899e1e1656f5f73`, IPv4 CIDR `10.0.0.0/16`, trạng thái `Available`, đầy đủ Tag `Project=inventory-app`, `Owner=Khanh-Quan`.
 
-##### 2. Danh sách 4 Subnets phân vùng Multi-AZ (`us-east-1a` và `us-east-1b`):
+##### 2. Danh sách 4 Subnets ở hai Availability Zones:
 ![05_subnets_list.png](./screenshots/05_subnets_list.png)
-* *Xác minh:* 2 Public Subnets (`10.0.1.0/24`, `10.0.2.0/24`) và 2 Private DB Subnets (`10.0.11.0/24`, `10.0.12.0/24`) trên 2 Availability Zones khác nhau.
+* *Xác minh:* Hai Public Subnets (`10.0.1.0/24`, `10.0.2.0/24`) và hai Private DB Subnets (`10.0.11.0/24`, `10.0.12.0/24`) nằm ở hai Availability Zones. Chưa có RDS instance hay cấu hình RDS Multi-AZ.
 
 ##### 3. Bảng định tuyến Route Tables (Public RT & Private RT):
 ![06_a_route_tables.png](./screenshots/06_a_route_tables.png)
@@ -919,7 +844,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 ##### 5. Security Group Web Tier (`inventory-web-sg`):
 ![08_security_group_web.png](./screenshots/08_security_group_web.png)
-* *Xác minh:* Inbound Rules cho phép Port 80 (HTTP), 5000 (Flask), 443 (HTTPS) từ `0.0.0.0/0`.
+* *Xác minh:* SG có rule inbound public cho port 80, 5000, 443. Port 5000 không an toàn để public; port 443 không bảo đảm HTTPS nếu chưa cấu hình TLS.
 
 ##### 6. Security Group Database Tier (`inventory-db-sg`):
 ![09_security_group_db.png](./screenshots/09_security_group_db.png)
@@ -927,7 +852,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 ##### 7. Xác minh IAM Instance Profile (`LabInstanceProfile`):
 ![10_lab_instance_profile.png](./screenshots/10_lab_instance_profile.png)
-* *Xác minh:* `LabInstanceProfile` liên kết hợp lệ với `LabRole`, sẵn sàng gán cho EC2 / Elastic Beanstalk ở Tuần 2.
+* *Xác minh:* `LabInstanceProfile` liên kết với `LabRole`; quyền sử dụng cần kiểm tra khi triển khai EC2/Elastic Beanstalk.
 
 ---
 
@@ -940,7 +865,7 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 **Các chức năng chính của script:**
 1. Tự động kiểm tra identity AWS Learner Lab (`sts get-caller-identity`).
 2. Tự động truy vấn tìm `VpcId` của `inventory-vpc`.
-3. Khởi tạo `inventory-web-sg` và mở các cổng `80`, `5000`, `443` cho `0.0.0.0/0`.
+3. Khởi tạo `inventory-web-sg` và thêm rule public cho các cổng `80`, `5000`, `443`. Đây là cấu hình hiện tại trong script, không phải khuyến nghị production; cần bỏ public access trên port `5000` và chỉ giữ `443` khi đã cấu hình TLS.
 4. Khởi tạo `inventory-db-sg` và thiết lập **Security Group Chaining**: chỉ mở cổng `5432` cho Source là `WebSgId`.
 5. Tự động gán nhãn `Project=inventory-app` và `Owner=Khanh-Quan`.
 6. Xác minh liên kết `LabInstanceProfile`.
@@ -951,11 +876,12 @@ aws ec2 describe-security-groups --filters "Name=tag:Project,Values=inventory-ap
 
 Tổng kết tuần 1
 
-1. **Khớp nối kết quả:** Hạ tầng mạng nền tảng (VPC, Subnet, Route Table, Security Groups) của Võ Minh Quân đã hoàn toàn tương thích với mã nguồn ứng dụng Flask + PostgreSQL do Nguyễn Đình Khanh xây dựng.
+1. **Khớp nối thiết kế:** Hạ tầng mạng được thiết kế để phục vụ ứng dụng Flask và PostgreSQL. Tích hợp thực tế với RDS/Web Tier chưa được kiểm thử vì các dịch vụ này chưa triển khai.
 2. **Kế hoạch phối hợp Tuần 2:**
-   * Nguyễn Đình Khanh phụ trách cấu hình tạo DB Subnet Group và khởi tạo instance Amazon RDS PostgreSQL (`db.t3.micro`) trong 2 Private Subnet.
+   * Nguyễn Đình Khanh phụ trách cấu hình DB Subnet Group trải trên hai AZ và khởi tạo RDS PostgreSQL Single-AZ (`db.t3.micro`, nếu hạn mức cho phép) trong subnet riêng.
    * Võ Minh Quân phụ trách triển khai môi trường Web App (AWS Elastic Beanstalk hoặc EC2) đặt trong Public Subnet, đính kèm `inventory-web-sg` và `LabInstanceProfile`.
    * Cả hai cùng kiểm thử luồng kết nối từ Web App sang RDS PostgreSQL qua Security Group Chaining.
+   * Trước khi bật cảnh báo/báo cáo tự động, cần xác nhận IAM execution role, network path tới RDS/S3/SNS, lịch và múi giờ EventBridge, đồng thời hoàn thiện kiểm thử đầu cuối.
 
 ---
 
@@ -963,7 +889,7 @@ Tổng kết tuần 1
 
 | Tiêu chí | Kết quả đạt được | Đánh giá |
 | :--- | :--- | :---: |
-| **Bảo tồn ngân sách** | Kiểm tra toàn bộ tài nguyên, chi phí phát sinh giữ ở mức $0.00 USD | Xuất sắc |
-| **Bộ ảnh minh chứng** | Danh mục ảnh minh chứng được chuẩn hóa, đáp ứng yêu cầu Account ID & Region | Hoàn chỉnh |
+| **Theo dõi ngân sách** | Đã liệt kê một số tài nguyên; chưa có chứng từ Cost Explorer/Billing để xác nhận tổng chi phí hoặc số dư | Cần kiểm tra lại |
+| **Bộ ảnh minh chứng** | Các file ảnh đã được lưu; cần đối chiếu nội dung từng ảnh với Account ID, Region, tags và trạng thái tài nguyên | Đã lưu, chờ rà soát |
 | **Kịch bản tự động hóa** | Đóng gói script PowerShell/Bash cho hạ tầng Security Groups | Sẵn sàng tái sử dụng |
 | **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng  |
