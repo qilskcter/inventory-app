@@ -23,7 +23,7 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
   1. Tìm hiểu các dịch vụ AWS bắt buộc: AWS Elastic Beanstalk / Lambda, Amazon RDS PostgreSQL, Amazon S3, Amazon EventBridge, AWS SNS, AWS CloudFormation.
   2. Thiết kế kiến trúc tổng thể hệ thống (Cloud Architecture Diagram) và mô hình Cơ sở dữ liệu quan hệ (ERD).
   3. Dựng hạ tầng mạng nền tảng trên AWS Learner Lab: VPC, Subnets (Public/Private), Internet Gateway, Route Tables, Security Groups.
-  4. Tuân thủ 50% quy định AWS Learner Lab: Region `us-east-1`, sử dụng `LabRole` / `LabInstanceProfile`, gắn Tag chuẩn (`Project=inventory-app`, `Owner=Khanh-Quan`).
+  4. Tuân thủ quy định AWS Learner Lab: Region `us-east-1`, sử dụng `LabRole` / `LabInstanceProfile`, gắn Tag chuẩn (`Project=inventory-app`, `Owner=Khanh-Quan`).
   5. Xây dựng môi trường ứng dụng nền tảng (Flask API CRUD sản phẩm, nhập/xuất kho) và tạo S3 Bucket lưu trữ báo cáo.
 
 ---
@@ -42,7 +42,7 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
 | **Chủ Nhật** | 14:00 - 16:30 | • Soạn thảo tài liệu `README.md` hướng dẫn chạy ứng dụng và tài liệu kiến trúc Tuần 1.<br>• Rà soát mã nguồn, commit và push toàn bộ source code sạch lên GitHub repository.<br>• Họp nhóm tổng kết kết quả Tuần 1 và lập kế hoạch Tuần 2. | Git, GitHub, Markdown | 2.5h | • Repository GitHub được cập nhật đầy đủ mã nguồn & tài liệu.<br>• Biên bản họp nhóm Tuần 1. |
 
 
-* **Tổng số giờ làm việc của Nguyễn Đình Khanh:** **14.0 giờ** (Đạt yêu cầu quy định $\ge 8$ giờ/tuần).
+* **Tổng số giờ làm việc của Nguyễn Đình Khanh:** **14.0 giờ**.
 
 ---
 
@@ -57,7 +57,7 @@ Bám sát lộ trình Kế hoạch 4 tuần của đồ án môn học:
 | **Thứ Bảy** | 14:00 - 16:30 | • Cấu hình và kiểm thử Security Groups: Tạo `inventory-web-sg` và `inventory-db-sg`, gắn rule tham chiếu SG ID bảo mật giữa Web Tier và DB Tier.<br>• Kiểm tra và xác minh quyền đính kèm IAM Instance Profile (`LabInstanceProfile`) phục vụ việc cấp quyền cho EC2/Beanstalk truy cập AWS S3/RDS sau này. | AWS Console & AWS CLI | 2.5h | Bảng Security Group được cấu hình chặt chẽ, kiểm tra tính tương thích với `LabInstanceProfile`. |
 | **Chủ Nhật** | 09:00 - 11:30 | • Kiểm tra dọn dẹp, dừng các dịch vụ thử nghiệm nhằm bảo toàn budget $50 của Learner Lab.<br>• Chụp ảnh minh chứng Console và AWS CLI (thể hiện rõ Account ID, Region `us-east-1`, thời gian).<br>• Tổng hợp dữ liệu kỹ thuật hạ tầng vào báo cáo Tuần 1. | AWS CLI, Screenshot tool | 2.5h | • Bộ ảnh minh chứng Console/CLI đạt chuẩn yêu cầu GVHD.<br>• Báo cáo hạ tầng mạng hoàn thiện. |
 
-* **Tổng số giờ làm việc của Võ Minh Quân:** **14.0 giờ** (Đạt yêu cầu quy định $\ge 8$ giờ/tuần).
+* **Tổng số giờ làm việc của Võ Minh Quân:** **14.0 giờ**.
 
 ---
 
@@ -71,14 +71,12 @@ Tuân thủ quy định cho phép sử dụng LLM/AI của giảng viên hướn
 | **Backend Flask & Web UI** | Antigravity / Claude | Sinh mã boilerplate khung xử lý route, form nhập/xuất và flash message giao diện. | SV trực tiếp kiểm thử, viết logic nghiệp vụ kiểm tra xuất vượt tồn kho và cảnh báo mức tối thiểu. |
 | **Hạ tầng Mạng & Security** | ChatGPT / Amazon Q | Kiểm tra tính đúng đắn của dải CIDR Subnet và cú pháp tham chiếu Source SG. | SV trực tiếp thao tác tạo VPC, Subnet, Route Table trên AWS Console và gán Tagging bằng tay. |
 
-* **Cam kết của sinh viên:** Toàn bộ tài nguyên đều được triển khai, kiểm thử thực tế trên AWS Learner Lab (`us-east-1`). Nhóm hiểu rõ bản chất từng dịch vụ và sẵn sàng trả lời vấn đáp trực tiếp với GVHD.
-
 ---
 
 ## V. TUÂN THỦ QUY ĐỊNH AWS LEARNER LAB
 * **Region hoạt động:** Cố định **`us-east-1` (N. Virginia)** cho toàn bộ tài nguyên của nhóm.
 * **Quyền IAM:** Sử dụng nghiêm ngặt **`LabRole`** và **`LabInstanceProfile`** sẵn có, không tạo IAM User / IAM Role mới.
-* **Quy chuẩn Tagging (Bắt buộc):** 50% tài nguyên đã khởi tạo (VPC, Subnets, Internet Gateway, Security Groups, S3 Bucket) đều được gắn 2 Tag:
+* **Quy chuẩn Tagging (Bắt buộc):** tài nguyên đã khởi tạo (VPC, Subnets, Internet Gateway, Security Groups, S3 Bucket) đều được gắn 2 Tag:
   * `Project`: `inventory-app`
   * `Owner`: `Khanh-Quan`
 * **Hạn mức tài nguyên & Quản lý ngân sách:**
@@ -92,8 +90,8 @@ Tuân thủ quy định cho phép sử dụng LLM/AI của giảng viên hướn
 ## VI. ĐÁNH GIÁ KẾT QUẢ TUẦN 1 VÀ KẾ HOẠCH TUẦN 2
 
 ### 1. Đánh giá kết quả Tuần 1:
-* **Mức độ hoàn thành:** **50%** khối lượng công việc đặt ra cho Tuần 1.
-* **Tổng số giờ làm việc:** **28.0 giờ** (Nguyễn Đình Khanh: 14.0h | Võ Minh Quân: 14.0h $\rightarrow$ Đạt yêu cầu $\ge 8$ giờ/SV/tuần).
+* **Mức độ hoàn thành:** Hoàn thành công việc đặt ra cho Tuần 1.
+* **Tổng số giờ làm việc:** **28.0 giờ** (Nguyễn Đình Khanh: 14.0h | Võ Minh Quân: 14.0h.
 * **Kết quả bàn giao:**
   * Ứng dụng Flask CRUD và xử lý nhập/xuất kho chạy hoàn chỉnh trên local.
   * Hạ tầng VPC, Subnet Multi-AZ, Route Table và Security Groups 2-Tier dựng thành công trên AWS Learner Lab.
