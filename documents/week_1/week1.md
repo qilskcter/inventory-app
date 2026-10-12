@@ -856,23 +856,7 @@ Các lệnh trên chỉ liệt kê tài nguyên, không tính chi phí hoặc s�
 
 ---
 
-### 10.3. Xây dựng Script Tự động hóa Khởi tạo & Kiểm thử Security Groups
-
-Để hỗ trợ nhóm tái lập cấu hình nhanh chóng hoặc kiểm tra đối soát mà không cần bấm thủ công trên Console, Võ Minh Quân đã phát triển và hoàn thiện script tự động hóa:
-* **Script PowerShell:** [`scripts/setup_security_groups.ps1`](../../scripts/setup_security_groups.ps1) (dành cho Windows).
-* **Script Bash Shell:** [`scripts/setup_security_groups.sh`](../../scripts/setup_security_groups.sh) (dành cho Linux / macOS).
-
-**Các chức năng chính của script:**
-1. Tự động kiểm tra identity AWS Learner Lab (`sts get-caller-identity`).
-2. Tự động truy vấn tìm `VpcId` của `inventory-vpc`.
-3. Khởi tạo `inventory-web-sg` và thêm rule public cho các cổng `80`, `5000`, `443`. Đây là cấu hình hiện tại trong script, không phải khuyến nghị production; cần bỏ public access trên port `5000` và chỉ giữ `443` khi đã cấu hình TLS.
-4. Khởi tạo `inventory-db-sg` và thiết lập **Security Group Chaining**: chỉ mở cổng `5432` cho Source là `WebSgId`.
-5. Tự động gán nhãn `Project=inventory-app` và `Owner=Khanh-Quan`.
-6. Xác minh liên kết `LabInstanceProfile`.
-
----
-
-### 10.4. Tổng hợp Báo cáo Hạ tầng Tuần 1 & Họp Giao ban với Nhóm trưởng
+### 10.3. Tổng hợp Báo cáo Hạ tầng Tuần 1 & Họp Giao ban với Nhóm trưởng
 
 Tổng kết tuần 1
 
@@ -885,7 +869,7 @@ Tổng kết tuần 1
 
 ---
 
-### 10.5. Đánh giá Kết quả Thực hiện 
+### 10.4. Đánh giá Kết quả Thực hiện 
 
 | Tiêu chí | Kết quả đạt được | Đánh giá |
 | :--- | :--- | :---: |
