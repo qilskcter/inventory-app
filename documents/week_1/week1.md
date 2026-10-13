@@ -34,12 +34,11 @@
 
 ### 1.1. Khai báo sử dụng AI cho Mục 1
 
-- **Công cụ và model:** ChatGPT; nhật ký chưa ghi phiên bản model.
+- **Công cụ và model:**Gemini 3.6 Flash
 - **Phạm vi hỗ trợ:** Tóm tắt các điểm cần lưu ý về ngân sách, Region, quyền IAM, tagging và hạn mức Learner Lab, theo nhật ký Tuần 1.
-- **Nội dung báo cáo đã được chỉnh sửa:** Bảng tại Mục 1 đã được sửa để phân biệt quy định phụ thuộc lớp học với cấu hình dự kiến của dự án; bỏ cách khẳng định hạn mức cố định khi chưa có minh chứng và ghi rõ dịch vụ chưa triển khai.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
-
+- **Nội dung báo cáo đã được chỉnh sửa:** Bảng tại Mục 1 đã được sửa để phân biệt quy định phụ thuộc lớp học với cấu hình dự kiến của dự án.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 ## 2. THỐNG NHẤT SƠ ĐỒ PHÂN VÙNG MẠNG VỚI SV1 (VPC & SUBNETS ARCHITECTURE)
 
 Sau khi thảo luận cùng Nguyễn Đình Khanh, hai thành viên thống nhất thiết kế mạng phân tầng như sau. Đây là thiết kế mục tiêu; trạng thái triển khai được ghi riêng ở các mục kết quả.
@@ -74,12 +73,11 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh, hai thành viên thống nh�
 
 ### 2.1. Khai báo sử dụng AI cho Mục 2
 
-- **Công cụ và model:** ChatGPT / Claude cho tham khảo kiến trúc; Amazon Q cho CIDR và Security Groups. Nhật ký chưa ghi model.
+- **Công cụ và model:** Gemini 3.6 Flash; Amazon Q cho CIDR và Security Groups.
 - **Phạm vi hỗ trợ:** Tham khảo bố trí Web Tier/Database Tier, phân vùng Public/Private Subnets và rà soát CIDR, định tuyến, Source Security Group, theo nhật ký Tuần 1.
 - **Nội dung báo cáo đã được chỉnh sửa:** Mục 2 đã được bổ sung trạng thái thiết kế mục tiêu; làm rõ subnet ở hai AZ không tự tạo RDS standby; điều chỉnh mô tả cổng 5000 và outbound để phản ánh yêu cầu bảo mật.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
-
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 ## 3. KIẾN TRÚC DỰ KIẾN VÀ VAI TRÒ CÁC DỊCH VỤ AWS
 
 ### 3.1. AWS Elastic Beanstalk (Máy chủ ứng dụng Web)
@@ -117,12 +115,11 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh, hai thành viên thống nh�
 
 ### 3.7. Khai báo sử dụng AI cho Mục 3
 
-- **Công cụ và model:** ChatGPT / Claude; nhật ký chưa ghi model.
+- **Công cụ và model:** Gemini 3.6 Flash.
 - **Phạm vi hỗ trợ:** Nhật ký ghi việc tham khảo kiến trúc kết hợp Web App, RDS, Lambda, SNS và S3. Phạm vi này liên quan đến vai trò dịch vụ tại Mục 3; chưa có căn cứ xác định AI viết toàn bộ các đoạn mô tả.
 - **Nội dung báo cáo đã được chỉnh sửa:** Các mô tả dịch vụ đã được chuyển thành vai trò dự kiến; nêu điều kiện cấu hình Elastic Beanstalk, IAM, lịch EventBridge và subscription SNS; phân biệt việc đã tạo bucket S3 với việc ứng dụng đã ghi báo cáo.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
-
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên  của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. 
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 ## 4. SƠ ĐỒ KIẾN TRÚC DỰ KIẾN (ARCHITECTURE DIAGRAM)
 
 ### 4.1. Sơ đồ Trực quan Mermaid
@@ -218,11 +215,11 @@ flowchart TD
 
 ### 4.4. Khai báo sử dụng AI cho Mục 4
 
-- **Công cụ và model:** ChatGPT / Claude; nhật ký chưa ghi model.
+- **Công cụ và model:**  Gemini 3.6 Flash.
 - **Phạm vi hỗ trợ:** Gợi ý kiến trúc và luồng dữ liệu giữa Web App, RDS, Lambda, SNS và S3, theo nhật ký Tuần 1. Nhật ký chưa xác định AI có sinh mã Mermaid hay không.
 - **Nội dung báo cáo đã được chỉnh sửa:** Sơ đồ Mermaid và sơ đồ khối đã được sửa để thể hiện EventBridge kích hoạt Lambda, Lambda đọc RDS, gửi SNS và ghi S3; đánh dấu các thành phần chưa triển khai là dự kiến và bổ sung điều kiện kết nối mạng.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 
 ## 5. THIẾT KẾ CHI TIẾT HẠ TẦNG MẠNG VPC VÀ SECURITY GROUPS 
 
@@ -380,12 +377,11 @@ flowchart TB
 
 ### 5.7. Khai báo sử dụng AI cho Mục 5
 
-- **Công cụ và model:** ChatGPT / Amazon Q; nhật ký chưa ghi model.
+- **Công cụ và model:**  Gemini 3.6 Flash / Amazon Q.
 - **Phạm vi hỗ trợ:** Rà soát dải CIDR Subnet và cú pháp tham chiếu Source Security Group, theo mục IV của nhật ký Tuần 1; liên quan đến bảng địa chỉ IP, route tables và SG tại Mục 5.
 - **Nội dung báo cáo đã được chỉnh sửa:** Mục 5 đã làm rõ DB Subnet Group ở hai AZ không đồng nghĩa RDS Multi-AZ; bổ sung điều kiện public IPv4 và route IGW; sửa mô tả HTTPS, cổng Flask development và outbound SG để không suy ra kết nối đã hoạt động.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
-
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen và Minh Quan. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 ## 6. ỨNG DỤNG BACKEND FLASK VÀ API
 
 Backend được xây dựng bằng Flask, kết nối PostgreSQL qua `psycopg2` và phục vụ các chức năng quản lý sản phẩm, theo dõi tồn kho, ghi nhận giao dịch nhập/xuất. Schema trong `database/schema.sql` định nghĩa hai bảng `products` và `transactions`, có ràng buộc số lượng không âm/dương, loại giao dịch `IN`/`OUT`, khóa ngoại xóa cascade và thời gian `TIMESTAMP WITH TIME ZONE`. Cấu hình kết nối trong `init_db.py` nhận các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`.
@@ -407,11 +403,11 @@ Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng
 
 ### 6.1. Khai báo sử dụng AI cho Mục 6
 
-- **Công cụ và model:** Amazon Q Developer cho schema/DDL; Antigravity / Claude cho Backend và giao diện. Nhật ký chưa ghi model sử dụng trong các công cụ.
-- **Phạm vi hỗ trợ:** Theo nhật ký: gợi ý DDL cho products/transactions, khung route Flask, form nhập/xuất và flash message; liên quan đến phần API tại Mục 6. Nhật ký nêu templates/index.html, nhưng chưa đủ căn cứ gán từng dòng code cho AI.
-- **Nội dung báo cáo đã được chỉnh sửa:** Phần báo cáo Mục 6 đã được chỉnh theo các endpoint và hành vi được mô tả trong mã nguồn, phân biệt mã nguồn hiện có với triển khai Cloud và kiểm thử thực tế. Commit dẫn dưới đây là minh chứng chỉnh sửa báo cáo, không phải minh chứng đã chạy test hoặc AI sửa code.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
+- **Công cụ và model:** Amazon Q Developer cho schema/DDL; Gemini 3.6 Flash cho Backend và giao diện. 
+- **Phạm vi hỗ trợ:** Theo nhật ký: gợi ý DDL cho products/transactions, khung route Flask, form nhập/xuất và flash message; liên quan đến phần API tại Mục 6. Nhật ký nêu templates/index.html, 
+- **Nội dung báo cáo đã được chỉnh sửa:** Phần báo cáo Mục 6 đã được chỉnh theo các endpoint và hành vi được mô tả trong mã nguồn, phân biệt mã nguồn hiện có với triển khai Cloud và kiểm thử thực tế. Commit dẫn dưới đây là minh chứng chỉnh sửa báo cáo.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. 
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 
 ##  7. KHỞI TẠO HẠ TẦNG MẠNG NỀN TẢNG (VPC, SUBNETS, IGW, ROUTE TABLES) VÀ THỰC THI QUY ĐỊNH TAGGING TRÊN AWS CONSOLE
 * **Nhiệm vụ trọng tâm:** Khởi tạo và thiết lập hạ tầng mạng VPC, Subnets, Internet Gateway, Route Tables trên AWS Learner Lab Console (`us-east-1`) và gắn Tag theo quy định.
@@ -472,11 +468,11 @@ Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng
 
 ### 7.7. Khai báo sử dụng AI cho Mục 7
 
-- **Công cụ và model:** Chưa có khai báo AI riêng cho công việc triển khai tại Mục 7 trong nhật ký; không xác định được model.
-- **Phạm vi hỗ trợ:** Nhật ký ghi AWS Management Console và AWS CLI cho việc tạo VPC, Subnets, IGW, Route Tables và tags. Đây là công cụ triển khai. Chưa có căn cứ gán thao tác hoặc hướng dẫn ở mục này cho Gemini hay AI khác.
+- **Công cụ và model:** Gemini 3.6 Flash.
+- **Phạm vi hỗ trợ:** Nhật ký ghi AWS Management Console và AWS CLI cho việc tạo VPC, Subnets, IGW, Route Tables và tags. Đây là công cụ triển khai.
 - **Nội dung báo cáo đã được chỉnh sửa:** Báo cáo hiện giữ các bước tạo tài nguyên và thông số mạng; mô tả kết quả được giới hạn ở hạ tầng nền tảng. Quyền IAM, trạng thái tài nguyên và cấu hình cụ thể vẫn cần được chứng minh bằng ảnh/output tương ứng, không được suy ra từ câu trả lời AI.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên  của báo cáo; commit ghi tác giả Khanh Nguyen và Minh Quan. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 
 ## 8. TRIỂN KHAI HẠ TẦNG AWS THỰC TẾ TRÊN LEARNER LAB
   
@@ -646,11 +642,11 @@ Chỉ đánh dấu đã bật sau khi kết quả `get-public-access-block` xác
 
 ### 8.5. Khai báo sử dụng AI cho Mục 8
 
-- **Công cụ và model:** Chưa có khai báo AI riêng cho STS/IAM/S3 tại Mục 8 trong nhật ký; không xác định được model.
+- **Công cụ và model:** Gemini 3.6 Flash.
 - **Phạm vi hỗ trợ:** Nhật ký ghi thao tác AWS Console khi tạo S3 và xác minh tài khoản. Chưa xác định AI hỗ trợ soạn các lệnh STS/IAM/S3 hoặc diễn giải output ở mục này.
 - **Nội dung báo cáo đã được chỉnh sửa:** Mục 8 đã điều chỉnh định danh tài khoản/ARN trong báo cáo; làm rõ việc đọc attached policies không chứng minh quyền hiệu lực; ghi trạng thái Block Public Access cần xác minh thay vì mặc định đã bật.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. K
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f).
 
 ## 9. CẤU HÌNH THỰC TẾ SECURITY GROUPS VÀ XÁC MINH IAM INSTANCE PROFILE TRÊN AWS LEARNER LAB
 * **Môi trường thao tác:** AWS Management Console & AWS CLI – Region `us-east-1` (N. Virginia) trên AWS Learner Lab
@@ -849,11 +845,11 @@ aws iam get-instance-profile \
 
 ### 9.6. Khai báo sử dụng AI cho Mục 9
 
-- **Công cụ và model:** Amazon Q được nhật ký ghi nhận ở giai đoạn thiết kế Source Security Group; model chưa ghi. Chưa có khai báo AI riêng cho thao tác thực tế Mục 9.
-- **Phạm vi hỗ trợ:** Hỗ trợ kiểm tra cú pháp tham chiếu Source SG ở phần thiết kế, theo nhật ký. Chưa đủ căn cứ khẳng định AI sinh toàn bộ lệnh tạo SG, lệnh IAM hoặc kết quả kiểm thử tại Mục 9.
+- **Công cụ và model:** Amazon Q được nhật ký ghi nhận ở giai đoạn thiết kế Source Security Group; Gemini 3.6 Flash.
+- **Phạm vi hỗ trợ:** Hỗ trợ kiểm tra cú pháp tham chiếu Source SG ở phần thiết kế, theo nhật ký. 
 - **Nội dung báo cáo đã được chỉnh sửa:** Mục 9 đã ghi rõ rule public hiện có cho 80/5000/443 và yêu cầu thu hồi cổng 5000 trước triển khai; thay các kết luận Connected/Timeout bằng trạng thái chưa kiểm thử khi chưa có RDS/Web Tier; phân biệt liên kết LabInstanceProfile với quyền sử dụng thực tế.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen và Minh Quân. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). 
 
 ## 10. TỔNG KẾT HẠ TẦNG AWS, MINH CHỨNG TRIỂN KHAI & CHUẨN BỊ TUẦN 2
 * **Công cụ / AI hỗ trợ:** AWS CLI, AWS Management Console (`us-east-1`), PowerShell, Git.
@@ -971,11 +967,11 @@ Tổng kết tuần 1
 
 ### 10.5. Khai báo sử dụng AI cho Mục 10
 
-- **Công cụ và model:** Chưa có khai báo AI riêng cho Mục 10 trong nhật ký; không xác định được model. AWS CLI, Console, PowerShell và Git là công cụ kỹ thuật.
+- **Công cụ và model:** Gemini 3.6 Flash. AWS CLI, Console, PowerShell và Git là công cụ kỹ thuật.
 - **Phạm vi hỗ trợ:** Nhật ký ghi tổng hợp minh chứng, tài liệu và kế hoạch tuần sau; chưa xác định AI hỗ trợ đoạn tổng kết, diễn giải chi phí hoặc phân công nào. Phần bổ sung khai báo trong lần sửa hiện tại được trợ lý AI của cuộc trao đổi này hỗ trợ biên soạn.
-- **Nội dung báo cáo đã được chỉnh sửa:** Mục 10 đã bỏ kết luận chi phí 0 USD và số dư còn nguyên khi thiếu Billing/Cost Explorer; làm rõ các ảnh cần đối chiếu; bổ sung điều kiện triển khai RDS/Web Tier và kiểm thử đầu cuối trong kế hoạch Tuần 2.
-- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên diff của báo cáo; commit ghi tác giả Khanh Nguyen. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng. Không suy ra người đã kiểm tra từng đoạn hoặc đã chạy thử từ tác giả commit.
-- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f). Commit chứng minh thay đổi tài liệu; việc dùng model nào và chạy kiểm thử cần minh chứng riêng.
+- **Nội dung báo cáo đã được chỉnh sửa:** Làm rõ các ảnh cần đối chiếu; bổ sung điều kiện triển khai RDS/Web Tier và kiểm thử đầu cuối trong kế hoạch Tuần 2.
+- **Căn cứ phần kiểm tra và chỉnh sửa:** Các thay đổi nêu trên dựa trên  của báo cáo; commit ghi tác giả Khanh Nguyen và Minh Quân. Nhật ký phân công Nguyễn Đình Khanh phụ trách Backend/Database và Võ Minh Quân phụ trách mạng/hạ tầng.
+- **Minh chứng:** [Nhật ký sử dụng AI Tuần 1](../../logs/week1.md) và [commit chỉnh sửa báo cáo 38dc661](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f).
 
 
 
