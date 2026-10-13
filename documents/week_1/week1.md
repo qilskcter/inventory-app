@@ -32,7 +32,7 @@
 
 
 
-### 1.AI. Khai báo sử dụng AI cho Mục 1
+### 1.1. Khai báo sử dụng AI cho Mục 1
 
 - **Công cụ và model:** ChatGPT; nhật ký chưa ghi phiên bản model.
 - **Phạm vi hỗ trợ:** Tóm tắt các điểm cần lưu ý về ngân sách, Region, quyền IAM, tagging và hạn mức Learner Lab, theo nhật ký Tuần 1.
@@ -72,7 +72,7 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh, hai thành viên thống nh�
 
 
 
-### 2.AI. Khai báo sử dụng AI cho Mục 2
+### 2.1. Khai báo sử dụng AI cho Mục 2
 
 - **Công cụ và model:** ChatGPT / Claude cho tham khảo kiến trúc; Amazon Q cho CIDR và Security Groups. Nhật ký chưa ghi model.
 - **Phạm vi hỗ trợ:** Tham khảo bố trí Web Tier/Database Tier, phân vùng Public/Private Subnets và rà soát CIDR, định tuyến, Source Security Group, theo nhật ký Tuần 1.
@@ -115,7 +115,7 @@ Sau khi thảo luận cùng Nguyễn Đình Khanh, hai thành viên thống nh�
 
 
 
-### 3.AI. Khai báo sử dụng AI cho Mục 3
+### 3.7. Khai báo sử dụng AI cho Mục 3
 
 - **Công cụ và model:** ChatGPT / Claude; nhật ký chưa ghi model.
 - **Phạm vi hỗ trợ:** Nhật ký ghi việc tham khảo kiến trúc kết hợp Web App, RDS, Lambda, SNS và S3. Phạm vi này liên quan đến vai trò dịch vụ tại Mục 3; chưa có căn cứ xác định AI viết toàn bộ các đoạn mô tả.
@@ -216,7 +216,7 @@ flowchart TD
 
 
 
-### 4.AI. Khai báo sử dụng AI cho Mục 4
+### 4.4. Khai báo sử dụng AI cho Mục 4
 
 - **Công cụ và model:** ChatGPT / Claude; nhật ký chưa ghi model.
 - **Phạm vi hỗ trợ:** Gợi ý kiến trúc và luồng dữ liệu giữa Web App, RDS, Lambda, SNS và S3, theo nhật ký Tuần 1. Nhật ký chưa xác định AI có sinh mã Mermaid hay không.
@@ -378,7 +378,7 @@ flowchart TB
 
 
 
-### 5.AI. Khai báo sử dụng AI cho Mục 5
+### 5.7. Khai báo sử dụng AI cho Mục 5
 
 - **Công cụ và model:** ChatGPT / Amazon Q; nhật ký chưa ghi model.
 - **Phạm vi hỗ trợ:** Rà soát dải CIDR Subnet và cú pháp tham chiếu Source Security Group, theo mục IV của nhật ký Tuần 1; liên quan đến bảng địa chỉ IP, route tables và SG tại Mục 5.
@@ -405,7 +405,7 @@ Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng
 ---
 
 
-### 6.AI. Khai báo sử dụng AI cho Mục 6
+### 6.1. Khai báo sử dụng AI cho Mục 6
 
 - **Công cụ và model:** Amazon Q Developer cho schema/DDL; Antigravity / Claude cho Backend và giao diện. Nhật ký chưa ghi model sử dụng trong các công cụ.
 - **Phạm vi hỗ trợ:** Theo nhật ký: gợi ý DDL cho products/transactions, khung route Flask, form nhập/xuất và flash message; liên quan đến phần API tại Mục 6. Nhật ký nêu templates/index.html, nhưng chưa đủ căn cứ gán từng dòng code cho AI.
@@ -470,7 +470,7 @@ Khi xuất kho, ứng dụng chỉ cập nhật sản phẩm nếu số lượng
 
 
 
-### 7.AI. Khai báo sử dụng AI cho Mục 7
+### 7.7. Khai báo sử dụng AI cho Mục 7
 
 - **Công cụ và model:** Chưa có khai báo AI riêng cho công việc triển khai tại Mục 7 trong nhật ký; không xác định được model.
 - **Phạm vi hỗ trợ:** Nhật ký ghi AWS Management Console và AWS CLI cho việc tạo VPC, Subnets, IGW, Route Tables và tags. Đây là công cụ triển khai. Chưa có căn cứ gán thao tác hoặc hướng dẫn ở mục này cho Gemini hay AI khác.
@@ -644,7 +644,7 @@ Chỉ đánh dấu đã bật sau khi kết quả `get-public-access-block` xác
 
 
 
-### 8.AI. Khai báo sử dụng AI cho Mục 8
+### 8.5. Khai báo sử dụng AI cho Mục 8
 
 - **Công cụ và model:** Chưa có khai báo AI riêng cho STS/IAM/S3 tại Mục 8 trong nhật ký; không xác định được model.
 - **Phạm vi hỗ trợ:** Nhật ký ghi thao tác AWS Console khi tạo S3 và xác minh tài khoản. Chưa xác định AI hỗ trợ soạn các lệnh STS/IAM/S3 hoặc diễn giải output ở mục này.
@@ -847,7 +847,7 @@ aws iam get-instance-profile \
 
 
 
-### 9.AI. Khai báo sử dụng AI cho Mục 9
+### 9.6. Khai báo sử dụng AI cho Mục 9
 
 - **Công cụ và model:** Amazon Q được nhật ký ghi nhận ở giai đoạn thiết kế Source Security Group; model chưa ghi. Chưa có khai báo AI riêng cho thao tác thực tế Mục 9.
 - **Phạm vi hỗ trợ:** Hỗ trợ kiểm tra cú pháp tham chiếu Source SG ở phần thiết kế, theo nhật ký. Chưa đủ căn cứ khẳng định AI sinh toàn bộ lệnh tạo SG, lệnh IAM hoặc kết quả kiểm thử tại Mục 9.
@@ -969,7 +969,7 @@ Tổng kết tuần 1
 | **Bàn giao Tuần 2** | Hoàn thành họp giao ban, chuyển giao thông số VPC ID, Subnet IDs và SG IDs cho SV1 | Sẵn sàng  |
 
 
-### 10.AI. Khai báo sử dụng AI cho Mục 10
+### 10.5. Khai báo sử dụng AI cho Mục 10
 
 - **Công cụ và model:** Chưa có khai báo AI riêng cho Mục 10 trong nhật ký; không xác định được model. AWS CLI, Console, PowerShell và Git là công cụ kỹ thuật.
 - **Phạm vi hỗ trợ:** Nhật ký ghi tổng hợp minh chứng, tài liệu và kế hoạch tuần sau; chưa xác định AI hỗ trợ đoạn tổng kết, diễn giải chi phí hoặc phân công nào. Phần bổ sung khai báo trong lần sửa hiện tại được trợ lý AI của cuộc trao đổi này hỗ trợ biên soạn.
