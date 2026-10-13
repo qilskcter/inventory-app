@@ -979,21 +979,3 @@ Tổng kết tuần 1
 
 
 
----
-
-## 11. TỔNG HỢP KHAI BÁO SỬ DỤNG AI
-
-### 11.1. Căn cứ khai báo
-
-Theo [nhật ký Tuần 1](../../logs/week1.md), các công cụ hỗ trợ gồm ChatGPT, Claude, Amazon Q Developer và Antigravity. Phạm vi được ghi tại các mục khai báo bên trên. Nhật ký chưa ghi phiên bản model nên báo cáo không tự bổ sung tên phiên bản.
-
-Phản hồi của giảng viên ghi nhận **Gemini (Gemini 3.6 Flash)**. Tên này được dẫn theo phản hồi chấm; nhật ký hiện chưa ghi các đoạn báo cáo hoặc file/chức năng mã nguồn được Gemini hỗ trợ. Vì vậy chưa thể gán Gemini cho từng mục hoặc khẳng định Gemini thực hiện các thay đổi trong commit cụ thể. Phần này cần bổ sung từ lịch sử trao đổi Gemini thực tế để đáp ứng đầy đủ yêu cầu khai báo của giảng viên.
-
-### 11.2. Minh chứng quá trình chỉnh sửa
-
-[Commit 38dc661 — standardize the structure](https://github.com/qilskcter/inventory-app/commit/38dc6615ea369d73f81d381b094fe401c9c2ce9f) ghi nhận thay đổi báo cáo: sửa cấu trúc, tách kiến trúc dự kiến khỏi triển khai thực tế, điều chỉnh diễn giải mạng, IAM, kết quả kiểm thử và chi phí. Các thay đổi cụ thể được mô tả tại từng mục. Commit này không chứng minh AI tạo ra output AWS hoặc nhóm đã chạy các kiểm thử chưa có minh chứng.
-
-### 11.3. Hỗ trợ AI trong lần bổ sung khai báo
-
-Trợ lý AI trong cuộc trao đổi này hỗ trợ đọc phản hồi của giảng viên, đối chiếu báo cáo với nhật ký và commit GitHub, đồng thời biên soạn phần khai báo cho từng mục. Nội dung kỹ thuật đã có trong báo cáo được giữ nguyên. Bản bổ sung này hiện là file cục bộ; chưa có commit GitHub cho lần bổ sung khai báo.
-
