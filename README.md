@@ -18,7 +18,7 @@
 | Tuần | Báo cáo |
 | --- | --- |
 | Tuần 1 | [week1.md](./documents/week_1/week1.md) |
-| Tuần 2 | |
+| Tuần 2 | [week2.md](./documents/week_2/week2.md) |
 | Tuần 3 | |
 | Tuần 4 | |
 
