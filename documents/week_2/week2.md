@@ -1,5 +1,5 @@
 # BÁO CÁO KỸ THUẬT VÀ KẾT QUẢ TRIỂN KHAI - TUẦN 2
-## CHUẨN BỊ HẠ TẦNG MẠNG CHO AMAZON RDS
+## CHUẨN BỊ HẠ TẦNG MẠNG VÀ MÔI TRƯỜNG ỨNG DỤNG
 
 **Dự án:** Hệ thống quản lý kho hàng và cảnh báo tồn kho (`inventory-app`)  
 **Môn học:** Điện toán đám mây (Cloud Computing)  
@@ -11,7 +11,7 @@
 
 ---
 
-> **Phạm vi báo cáo:** Báo cáo tập trung vào việc khởi tạo DB Subnet Group `inventory-db-subnet-group` từ hai private subnets ở hai Availability Zones, đồng thời rà soát Route Tables và quy tắc bảo mật của `inventory-db-sg`.
+> **Phạm vi báo cáo:** Báo cáo ghi nhận việc chuẩn bị mạng cho Amazon RDS và tìm hiểu, thiết lập AWS Elastic Beanstalk trong VPC `inventory-vpc`. Phần Elastic Beanstalk tập trung vào Application, Environment và cấu hình Instance Profile, Security Group cho EC2 instance do Beanstalk quản lý.
 
 [Nhật ký công việc tuần 2](../../logs/week2.md)
 
@@ -19,11 +19,13 @@
 
 ## 1. MỤC TIÊU
 
-Tuần 2, nhóm thực hiện công tác chuẩn bị mạng cho tầng cơ sở dữ liệu của hệ thống. Các mục tiêu cụ thể gồm:
+Tuần 2, nhóm chuẩn bị hạ tầng mạng cho tầng cơ sở dữ liệu và thiết lập môi trường chạy ứng dụng. Các mục tiêu cụ thể gồm:
 
 1. Tạo DB Subnet Group `inventory-db-subnet-group` trong VPC dự án, kết hợp hai private subnets ở hai Availability Zones.
 2. Rà soát Route Tables đang áp dụng cho các private subnets.
 3. Rà soát quy tắc bảo mật của `inventory-db-sg` để kiểm soát nguồn được phép kết nối tới Database.
+4. Tìm hiểu và thiết lập Elastic Beanstalk Application và Environment cho ứng dụng trong VPC `inventory-vpc`.
+5. Cấu hình `LabInstanceProfile` và Security Group `inventory-web-sg` cho EC2 instance do Elastic Beanstalk quản lý.
 
 ---
 
@@ -76,6 +78,30 @@ Nhóm đã rà soát quy tắc bảo mật của `inventory-db-sg` theo phạm v
 
 ![Quy tắc bảo mật inventory-db-sg](./screenshots/13_inventory_db_sg.png)
 
+### 3.4. Thiết lập AWS Elastic Beanstalk
+
+Nhóm đã tạo Elastic Beanstalk Application `inventory-app` và Environment `inventory-env` trong VPC `inventory-vpc`. Environment dùng platform Python 3.14 trên Amazon Linux 2023 và triển khai **Sample application** để kiểm tra quá trình tạo môi trường; đây chưa phải phiên bản inventory-app của nhóm. Environment khởi chạy thành công với Health `Green`.
+
+Environment được cấu hình sử dụng Instance Profile `LabInstanceProfile` và VPC `inventory-vpc`. EC2 instance thực tế có IAM role `LabRole`, Security Group `inventory-web-sg` cùng Security Group do Elastic Beanstalk tạo. Instance chạy ở subnet `10.0.2.0/24` (`us-east-1b`) và có public IP. Inbound rules được kiểm tra trên EC2: HTTP TCP/80 cho phép từ `0.0.0.0/0`; HTTPS TCP/443 cho phép từ `171.243.49.11/32`.
+
+Lưu các ảnh minh chứng trong thư mục `documents/week_2/screenshots/` với tên và vị trí tương đối dưới đây:
+
+**Hình 4. Environment `inventory-env` khởi chạy thành công**
+
+![Environment inventory-env khởi chạy thành công](./screenshots/14_beanstalk_environment_health.png)
+
+**Hình 5. Cấu hình mạng của Elastic Beanstalk Environment**
+
+![Cấu hình mạng Environment trong inventory-vpc](./screenshots/16_beanstalk_networking.png)
+
+**Hình 6. Chi tiết EC2 instance do Elastic Beanstalk quản lý**
+
+![Chi tiết EC2 instance của inventory-env](./screenshots/17_beanstalk_ec2_instance.png)
+
+**Hình 7. IAM role, Security Groups và inbound rules của EC2 instance**
+
+![IAM role và Security Groups của EC2 instance](./screenshots/18_beanstalk_ec2_security.png)
+
 ---
 
 ## 4. KẾT QUẢ VÀ MINH CHỨNG
@@ -85,19 +111,22 @@ Nhóm đã rà soát quy tắc bảo mật của `inventory-db-sg` theo phạm v
 | `inventory-db-subnet-group` | Đã tạo thành công với hai private subnets thuộc `us-east-1a` và `us-east-1b`; sẵn sàng cung cấp hạ tầng mạng cho RDS. | Chèn tại Hình 1; tên file đề xuất `11_rds_subnet_group.png`. |
 | Route Tables | Đã rà soát theo yêu cầu công việc. | Chèn tại Hình 2; tên file đề xuất `12_private_route_tables.png`. |
 | `inventory-db-sg` | Đã rà soát theo yêu cầu công việc. | Chèn tại Hình 3; tên file đề xuất `13_inventory_db_sg.png`. |
+| Elastic Beanstalk Application và Environment | `inventory-app` / `inventory-env` khởi chạy thành công với Health `Green`; đang dùng Sample application. | Hình 4: `screenshots/14_beanstalk_environment_health.png`. |
+| VPC và subnet của Environment | Sử dụng `inventory-vpc`, hai subnet ứng dụng; EC2 instance được kiểm tra ở subnet `10.0.2.0/24` (`us-east-1b`). | Hình 5: `screenshots/16_beanstalk_networking.png`; Hình 6: `screenshots/17_beanstalk_ec2_instance.png`. |
+| Instance Profile và Security Group của EC2 | Environment dùng `LabInstanceProfile`; EC2 instance có role `LabRole` và Security Group `inventory-web-sg` cùng Security Group do Beanstalk tạo. | Hình 7: `screenshots/18_beanstalk_ec2_security.png`. |
 
 ---
 
 ## 5. KHAI BÁO SỬ DỤNG TRỢ LÝ AI
 
 - **Công cụ và model:** Trợ lý AI trong cuộc trao đổi này được sử dụng để biên soạn và rà soát nội dung báo cáo. Model cụ thể không được xác định trong thông tin phiên làm việc. AWS Console và AWS CLI là công cụ kỹ thuật, không phải công cụ AI.
-- **Phạm vi hỗ trợ:** Hỗ trợ sắp xếp nội dung báo cáo về DB Subnet Group, Route Tables và `inventory-db-sg`; làm rõ vai trò của DB Subnet Group và cách trình bày kết quả, minh chứng.
+- **Phạm vi hỗ trợ:** Hỗ trợ sắp xếp nội dung báo cáo về DB Subnet Group, Route Tables, `inventory-db-sg` và Elastic Beanstalk; làm rõ vai trò của các cấu hình và cách trình bày kết quả, minh chứng.
 - **Nội dung được hỗ trợ biên soạn:** Cấu trúc lại báo cáo theo các phần mục tiêu, thiết kế mạng, công việc đã thực hiện, kết quả/minh chứng và kết luận.
-- **Kiểm chứng:** AI không truy cập AWS account và không trực tiếp tạo tài nguyên hoặc xác minh cấu hình. Trạng thái triển khai được ghi theo thông tin người dùng/worklog cung cấp; các chi tiết cấu hình chưa có ảnh hoặc đầu ra AWS cần được nhóm đối chiếu thực tế.
+- **Kiểm chứng:** AI không truy cập AWS account và không trực tiếp tạo tài nguyên; nội dung Elastic Beanstalk được biên soạn dựa trên thông tin và ảnh chụp màn hình do người dùng cung cấp. Các ảnh minh chứng cần được lưu vào những đường dẫn đã nêu trong `documents/week_2/screenshots/`.
 - **Minh chứng tham chiếu:** [Nhật ký công việc tuần 2](../../logs/week2.md).
 
 ---
 
 ## 6. KẾT LUẬN
 
-DB Subnet Group `inventory-db-subnet-group` đã được tạo thành công, gồm `private-db-subnet-1` tại `us-east-1a` và `private-db-subnet-2` tại `us-east-1b`. Nhóm đã rà soát Route Tables và quy tắc bảo mật của `inventory-db-sg`. Kết quả này hoàn thành phần chuẩn bị mạng thuộc phạm vi báo cáo và sẵn sàng phục vụ bước cấu hình RDS tiếp theo. Để hồ sơ triển khai đầy đủ hơn, cần lưu minh chứng thể hiện chi tiết Route Tables và các rule thực tế của `inventory-db-sg`.
+DB Subnet Group `inventory-db-subnet-group` đã được tạo thành công, gồm `private-db-subnet-1` tại `us-east-1a` và `private-db-subnet-2` tại `us-east-1b`. Nhóm đã rà soát Route Tables và quy tắc bảo mật của `inventory-db-sg`, đồng thời tạo Elastic Beanstalk Application `inventory-app` và Environment `inventory-env` trong `inventory-vpc`. Environment dùng `LabInstanceProfile`; EC2 instance thực tế có role `LabRole` và Security Group `inventory-web-sg`. Environment đang chạy Sample application với Health `Green`; ứng dụng inventory-app chưa được triển khai trong bước này. Báo cáo cần kèm các ảnh minh chứng được lưu trong `documents/week_2/screenshots/`.
