@@ -81,29 +81,6 @@ Giao dịch xuất được cập nhật tồn kho bằng một câu lệnh SQL 
 
 RDS được đặt trong VPC và ứng dụng kết nối qua Security Group; chỉ cấp quyền PostgreSQL TCP/5432 từ Security Group của tầng Web. Environment properties được cấu hình trên Elastic Beanstalk (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`); không lưu mật khẩu trong repository. URL minh họa hiện dùng HTTP, không truyền dữ liệu nhạy cảm qua môi trường này.
 
-### Tạo gói triển khai Elastic Beanstalk
-
-Tạo source bundle từ thư mục gốc repository:
-
-```bash
-zip -r -X inventory-deployment.zip app.py init_db.py database templates requirements.txt Procfile
-```
-
-Gói cần có `app.py`, `init_db.py`, `database/schema.sql`, `templates/`, `requirements.txt` và `Procfile`; không đóng gói `venv/`, `.venv312/` hoặc `.git/`. Tải ZIP qua **Elastic Beanstalk → Environment → Upload and deploy**. Environment hiện sử dụng Python 3.12 do dependency `psycopg2-binary` phiên bản đang khóa cần tương thích với runtime.
-
-### Ảnh minh chứng triển khai tuần 2
-
-Ảnh lưu tại [`documents/week_2/screenshots/`](./documents/week_2/screenshots/):
-
-| Ảnh | Nội dung |
-| --- | --- |
-| [`19_rds_tables_created.png`](./documents/week_2/screenshots/19_rds_tables_created.png) | Chạy schema và truy vấn xác nhận bảng `products`, `transactions` trên RDS. |
-| [`20_beanstalk_env_py312_green.png`](./documents/week_2/screenshots/20_beanstalk_env_py312_green.png) | Environment `inventory-env-py312` đạt Health `Ok` trên Python 3.12. |
-| [`21_inventory_web_rds_integration.png`](./documents/week_2/screenshots/21_inventory_web_rds_integration.png) | Giao diện ứng dụng hiển thị dữ liệu sản phẩm. |
-| [`22_api_products_test.png`](./documents/week_2/screenshots/22_api_products_test.png) | `GET /api/products` trả `HTTP 200 OK` và JSON sản phẩm. |
-
-Báo cáo kỹ thuật chi tiết: [Báo cáo tuần 2](./documents/week_2/week2.md).
-
 ---
 
 ## Cấu trúc thư mục dự án
