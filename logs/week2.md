@@ -60,33 +60,18 @@ Theo lộ trình đồ án, mục tiêu cốt lõi của Tuần 2 là **"Triển
 ## IV. DANH SÁCH CÔNG VIỆC CẦN LÀM CHI TIẾT (TASK CHECKLIST)
 
 ### Giai đoạn 1: Triển khai CSDL Amazon RDS PostgreSQL (Võ Minh Quân chủ trì)
-- [ ] **Tạo DB Subnet Group:**
+- [x] **Tạo DB Subnet Group:**
   - Tên: `inventory-db-subnet-group`
   - VPC: `inventory-vpc`
   - Subnets: Chọn 2 Private Subnets ở 2 AZs khác nhau (`private-db-subnet-1`, `private-db-subnet-2`).
-- [ ] **Khởi tạo RDS Instance:**
-  - Engine: PostgreSQL (bản 15 hoặc 16)
-  - Template: Free Tier
-  - DB Instance Identifier: `inventory-db`
-  - Master Username: `postgres`
-  - Master Password: Đặt mật khẩu an toàn (lưu ý ghi nhớ biến môi trường)
-  - DB Instance Class: `db.t3.micro` (hoặc `db.t2.micro` để tuân thủ Learner Lab)
-  - Storage: 20 GiB gp3/gp2, tắt Autoscaling Storage (để tránh phát sinh phí)
-  - Virtual Private Cloud (VPC): `inventory-vpc`
-  - DB Subnet Group: `inventory-db-subnet-group`
-  - Public Access: **No** (Bảo mật tối đa, chỉ truy cập nội bộ từ Web Tier)
-  - Existing VPC Security Groups: Chọn `inventory-db-sg` (loại bỏ `default`)
-  - Initial Database Name: `inventory_db`
-  - Backup retention: 1 day hoặc tắt nếu không bắt buộc (tiết kiệm dung lượng)
-  - Tags: `Project=inventory-app`, `Owner=Khanh-Quan`
-- [ ] **Nạp Schema & Dữ liệu mẫu:**
-  - Kết nối và thực thi `database/schema.sql` để tạo bảng `products` và `transactions`.
-  - Nạp dữ liệu mẫu ban đầu để kiểm thử.
+- [x] **Khởi tạo RDS Instance:** Amazon RDS PostgreSQL `inventory-db` đã được tạo; thông số kết nối được tổng hợp trong [báo cáo tuần 2](../documents/week_2/week2.md). Không ghi mật khẩu vào nhật ký.
+- [x] **Nạp schema:** Thực thi `database/schema.sql` và truy vấn xác nhận hai bảng `products`, `transactions` trên `inventory_db` (ảnh `19_rds_tables_created.png`).
+- [ ] **Nạp dữ liệu mẫu bằng script/seed:** Schema chỉ tạo bảng và index; sản phẩm kiểm thử được thêm qua ứng dụng Web, không phải seed data.
 
 ---
 
 ### Giai đoạn 2: Chuẩn bị & Đóng gói Ứng dụng Flask (Nguyễn Đình Khanh chủ trì)
-- [ ] **Chuẩn hóa biến môi trường trong `app.py`:**
+- [x] **Cấu hình biến môi trường cho ứng dụng:**
   - Đảm bảo app đọc các biến:
     - `DB_HOST`: Endpoint của RDS
     - `DB_PORT`: `5432`
@@ -94,25 +79,25 @@ Theo lộ trình đồ án, mục tiêu cốt lõi của Tuần 2 là **"Triển
     - `DB_USER`: `postgres`
     - `DB_PASSWORD`: Mật khẩu CSDL
   - Giữ fallback về localhost khi chạy local để thuận tiện dev.
-- [ ] **Tạo file cấu hình Elastic Beanstalk:**
+- [x] **Tạo file cấu hình Elastic Beanstalk:**
   - `Procfile` (nếu dùng Beanstalk Amazon Linux 2023 / AL2):
     ```text
-    web: gunicorn --bind 0.0.0.0:5000 app:app
+    web: gunicorn --bind 0.0.0.0:8000 app:app
     ```
   - Hoặc tạo alias entrypoint `application.py` trỏ tới `app` của `app.py`.
   - Cập nhật `requirements.txt` đảm bảo có `gunicorn`, `psycopg2-binary`, `Flask`.
-- [ ] **Tạo gói triển khai (Deployment ZIP):**
+- [x] **Tạo gói triển khai (Deployment ZIP):**
   - Nén toàn bộ mã nguồn (`app.py`, `database/`, `templates/`, `requirements.txt`, `Procfile`, v.v.) ngoại trừ `venv/`, `.git/`, `__pycache__/`.
 
 ---
 
 ### Giai đoạn 3: Triển khai Ứng dụng lên Elastic Beanstalk (Nguyễn Đình Khanh chủ trì)
-- [ ] **Khởi tạo Elastic Beanstalk Application & Environment:**
+- [x] **Khởi tạo Elastic Beanstalk Application & Environment:**
   - Tên ứng dụng: `inventory-app`
-  - Tên môi trường: `inventory-app-env`
-  - Platform: Python (Amazon Linux 2023 hoặc AL2)
+  - Tên môi trường đang chạy ứng dụng: `inventory-env-py312`
+  - Platform: Python 3.12 trên Amazon Linux 2023
   - Application code: Upload gói ZIP đã chuẩn bị.
-- [ ] **Cấu hình Hạ tầng & Quyền hạn (Configuration Presets):**
+- [x] **Cấu hình Hạ tầng & Quyền hạn (Configuration Presets):**
   - **Service Role:** Dùng `LabRole` (bắt buộc trong Learner Lab).
   - **EC2 Instance Profile:** Chọn `LabInstanceProfile`.
   - **Network / VPC:** Chọn `inventory-vpc`.
@@ -121,26 +106,25 @@ Theo lộ trình đồ án, mục tiêu cốt lõi của Tuần 2 là **"Triển
   - **Security Group:** Gán `inventory-web-sg`.
   - **Instance Type:** `t2.micro` hoặc `t3.micro`.
   - **Environment Type:** Single Instance (không tạo Load Balancer để tiết kiệm chi phí).
-- [ ] **Cấu hình Environment Properties (Biến môi trường):**
+- [x] **Cấu hình Environment Properties (Biến môi trường):**
   - Thiết lập các key: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
   - Bấm Deploy và theo dõi quá trình build/launch instance.
 
 ---
 
 ### Giai đoạn 4: Kiểm thử End-to-End & Tích hợp (Cả hai thành viên)
-- [ ] **Kiểm tra trạng thái sức khỏe (Health Check):**
+- [x] **Kiểm tra trạng thái sức khỏe (Health Check):**
   - Trạng thái Beanstalk hiển thị màu Xanh lá (`Ok`).
-- [ ] **Kiểm thử Web Interface:**
-  - Truy cập URL Beanstalk (ví dụ: `http://inventory-app-env.eba-xxx.us-east-1.elasticbeanstalk.com` hoặc Public IP).
+- [x] **Kiểm thử Web Interface:**
+  - URL Beanstalk: `http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com`
   - Kiểm tra load trang chủ `index.html`, danh sách sản phẩm hiển thị đầy đủ.
-- [ ] **Kiểm thử CRUD & Transaction:**
+- [x] **Kiểm thử lưu sản phẩm và giao dịch tồn kho đã xác nhận:**
   - Thêm 1 sản phẩm mới qua Web UI.
   - Thực hiện giao dịch Nhập kho (Inbound) $\rightarrow$ số lượng tăng.
   - Thực hiện giao dịch Xuất kho (Outbound) $\rightarrow$ số lượng giảm.
-  - Thử nghiệm xuất kho vượt số lượng hiện có $\rightarrow$ hệ thống chặn và hiển thị thông báo lỗi chính xác.
-  - Thử nghiệm ngưỡng cảnh báo tồn kho tối thiểu (`min_threshold`).
-- [ ] **Kiểm thử trực tiếp API:**
-  - Kiểm tra mã phản hồi HTTP `200`, `201`, `400`, `404`, `409` theo đặc tả API trong README.
+  - Kiểm tra xuất kho vượt số lượng và ngưỡng cảnh báo tối thiểu chưa có minh chứng trong ảnh hiện lưu.
+- [x] **Kiểm thử trực tiếp API ở mức GET:**
+  - `GET /api/products` trả HTTP `200` và JSON sản phẩm; các mã `201`, `400`, `404`, `409` chưa được xác minh trong bộ minh chứng hiện có.
 
 ---
 
@@ -191,20 +175,21 @@ curl -X POST http://<BEANSTALK_URL>/api/transactions \
 
 ## VI. DANH SÁCH ẢNH MINH CHỨNG CẦN THU THẬP (TUẦN 2 SCREENSHOTS)
 
-| Mã ảnh | Tên file đề xuất | Nội dung minh chứng | Sinh viên thực hiện |
+| Mã ảnh | Tên file hiện có | Nội dung minh chứng | Sinh viên thực hiện |
 | :---: | :--- | :--- | :---: |
-| 1 | `11_rds_subnet_group.png` | DB Subnet Group gắn với 2 Private Subnets trên 2 AZs | Võ Minh Quân |
-| 2 | `12_rds_instance_created.png` | RDS PostgreSQL instance ở trạng thái `Available` (hiển thị Endpoint & Tagging) | Võ Minh Quân |
-| 3 | `13_rds_security_group.png` | Cấu hình Security Group của RDS trỏ tới `inventory-web-sg` | Võ Minh Quân |
-| 4 | `14_rds_tables_created.png` | Bảng `products` và `transactions` đã được tạo thành công trên RDS | Võ Minh Quân |
-| 5 | `15_beanstalk_env_ok.png` | Môi trường Elastic Beanstalk hiển thị Health: `Ok (Green)` | Nguyễn Đình Khanh |
-| 6 | `16_beanstalk_config_vpc.png` | Cấu hình Beanstalk nằm trong `inventory-vpc` và gắn `LabInstanceProfile` | Nguyễn Đình Khanh |
-| 7 | `17_beanstalk_env_properties.png` | Bảng các biến môi trường CSDL (`DB_HOST`, `DB_NAME`, ...) | Nguyễn Đình Khanh |
-| 8 | `18_web_app_live.png` | Giao diện web chạy trực tiếp trên domain công khai Beanstalk | Nguyễn Đình Khanh |
-| 9 | `19_api_test_results.png` | Kết quả gọi cURL/Postman thành công đến API trên Cloud | Nguyễn Đình Khanh |
-| 10 | `20_cloudwatch_metrics_rds_stop.png` | Giám sát CloudWatch và trạng thái Stop RDS để tiết kiệm credit | Võ Minh Quân |
+| 1 | `11_rds_subnet_group.png` | DB Subnet Group gắn với hai private subnets trên hai AZs | Võ Minh Quân |
+| 2 | `12_private_route_tables.png` | Route Tables của các private subnets | Võ Minh Quân |
+| 3 | `13_inventory_db_sg.png` | Security Group của RDS | Võ Minh Quân |
+| 4 | `14_beanstalk_environment_health.png` | Environment Beanstalk ban đầu dùng Sample application | Nguyễn Đình Khanh |
+| 5 | `16_beanstalk_networking.png` | Cấu hình mạng Beanstalk trong `inventory-vpc` | Nguyễn Đình Khanh |
+| 6 | `17_beanstalk_ec2_instance.png` | EC2 instance do Beanstalk quản lý | Nguyễn Đình Khanh |
+| 7 | `18_beanstalk_ec2_security.png` | IAM role, Security Groups và inbound rules của EC2 | Nguyễn Đình Khanh |
+| 8 | `19_rds_tables_created.png` | Thực thi schema và xác minh hai bảng trên RDS | Võ Minh Quân |
+| 9 | `20_beanstalk_env_py312_green.png` | Environment `inventory-env-py312` đạt Health `Ok` | Nguyễn Đình Khanh |
+| 10 | `21_inventory_web_rds_integration.png` | Giao diện Web hiển thị sản phẩm đã lưu | Nguyễn Đình Khanh |
+| 11 | `22_api_products_test.png` | `GET /api/products` trả HTTP `200` và JSON | Nguyễn Đình Khanh |
 
-*Lưu ý: Tất cả ảnh phải có thanh điều hướng AWS Console góc trên hiển thị Account ID `041118630529` và Region `us-east-1`.*
+*Lưu ý: Ảnh 21–22 là ảnh ứng dụng/API, không phải AWS Console. Chưa có ảnh minh chứng CloudWatch Logs/Metrics hoặc thao tác dừng RDS trong thư mục hiện tại.*
 
 ---
 

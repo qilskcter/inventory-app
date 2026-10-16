@@ -28,7 +28,7 @@
 * **Quản lý sản phẩm (CRUD):** Thêm mới, cập nhật thông tin, theo dõi số lượng tồn kho và thiết lập định mức cảnh báo tối thiểu cho từng sản phẩm (SKU).
 * **Quản lý Nhập/Xuất kho:** Ghi nhận các giao dịch nhập hàng (Inbound) và xuất hàng (Outbound) với cơ chế kiểm tra tồn kho theo thời gian thực để tránh tình trạng xuất quá số lượng hiện có.
 * **Cảnh báo tồn kho thấp:** Tự động phát hiện và hiển thị cảnh báo (trực quan trên giao diện và tích hợp AWS SNS) khi số lượng sản phẩm tụt xuống dưới ngưỡng an toàn.
-* **Nền tảng Cloud-Ready:** Thiết kế tương thích với các dịch vụ AWS (Elastic Beanstalk, RDS PostgreSQL, S3, EventBridge, SNS).
+* **Triển khai AWS:** Ứng dụng Flask được triển khai trên AWS Elastic Beanstalk và sử dụng Amazon RDS for PostgreSQL để lưu dữ liệu.
 
 ## Flask JSON API
 
@@ -61,7 +61,48 @@ Giao dịch xuất được cập nhật tồn kho bằng một câu lệnh SQL 
 * **Backend:** Python (Flask Framework)
 * **Database:** PostgreSQL / Amazon RDS PostgreSQL
 * **Frontend:** HTML5, Bootstrap 5, Jinja2 Templates
-* **Cloud & DevOps (Dự kiến):** AWS Elastic Beanstalk, AWS Lambda, Amazon S3, Amazon EventBridge, AWS SNS, CloudFormation.
+* **Cloud & DevOps:** AWS Elastic Beanstalk, Amazon RDS for PostgreSQL. AWS Lambda, Amazon S3, Amazon EventBridge, AWS SNS và CloudFormation là các dịch vụ dự kiến mở rộng, chưa thuộc luồng triển khai hiện tại.
+
+## Bản triển khai AWS
+
+Ứng dụng hiện được triển khai trong AWS Region `us-east-1` (N. Virginia):
+
+| Thành phần | Cấu hình |
+| --- | --- |
+| Elastic Beanstalk Application | `inventory-app` |
+| Environment đang chạy ứng dụng | `inventory-env-py312` |
+| Platform | Python 3.12 trên 64-bit Amazon Linux 2023 |
+| Environment type | Single instance |
+| Database | Amazon RDS for PostgreSQL |
+| Database name | `inventory_db` |
+| RDS endpoint | `inventory-db.c92a24squlld.us-east-1.rds.amazonaws.com` |
+| PostgreSQL port | `5432` |
+| Public application URL | [inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com](http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/) |
+
+RDS được đặt trong VPC và ứng dụng kết nối qua Security Group; chỉ cấp quyền PostgreSQL TCP/5432 từ Security Group của tầng Web. Environment properties được cấu hình trên Elastic Beanstalk (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`); không lưu mật khẩu trong repository. URL minh họa hiện dùng HTTP, không truyền dữ liệu nhạy cảm qua môi trường này.
+
+### Tạo gói triển khai Elastic Beanstalk
+
+Tạo source bundle từ thư mục gốc repository:
+
+```bash
+zip -r -X inventory-deployment.zip app.py init_db.py database templates requirements.txt Procfile
+```
+
+Gói cần có `app.py`, `init_db.py`, `database/schema.sql`, `templates/`, `requirements.txt` và `Procfile`; không đóng gói `venv/`, `.venv312/` hoặc `.git/`. Tải ZIP qua **Elastic Beanstalk → Environment → Upload and deploy**. Environment hiện sử dụng Python 3.12 do dependency `psycopg2-binary` phiên bản đang khóa cần tương thích với runtime.
+
+### Ảnh minh chứng triển khai tuần 2
+
+Ảnh lưu tại [`documents/week_2/screenshots/`](./documents/week_2/screenshots/):
+
+| Ảnh | Nội dung |
+| --- | --- |
+| [`19_rds_tables_created.png`](./documents/week_2/screenshots/19_rds_tables_created.png) | Chạy schema và truy vấn xác nhận bảng `products`, `transactions` trên RDS. |
+| [`20_beanstalk_env_py312_green.png`](./documents/week_2/screenshots/20_beanstalk_env_py312_green.png) | Environment `inventory-env-py312` đạt Health `Ok` trên Python 3.12. |
+| [`21_inventory_web_rds_integration.png`](./documents/week_2/screenshots/21_inventory_web_rds_integration.png) | Giao diện ứng dụng hiển thị dữ liệu sản phẩm. |
+| [`22_api_products_test.png`](./documents/week_2/screenshots/22_api_products_test.png) | `GET /api/products` trả `HTTP 200 OK` và JSON sản phẩm. |
+
+Báo cáo kỹ thuật chi tiết: [Báo cáo tuần 2](./documents/week_2/week2.md).
 
 ---
 
@@ -73,6 +114,7 @@ inventory-app/
 ├── init_db.py              # Script Python tự động đọc database/schema.sql và khởi tạo/cập nhật CSDL
 ├── database/               # Thư mục chứa cấu trúc CSDL
 │   └── schema.sql          # Script SQL DDL chứa cấu trúc 2 bảng products & transactions
+├── Procfile                # Lệnh khởi động Gunicorn trên Elastic Beanstalk
 ├── documents/              # Báo cáo chi tiết đồ án các tuần (week1.md)
 ├── logs/                   # Nhật ký phân công và tiến độ công việc (week1.md)
 ├── scripts/                # Kịch bản tự động hóa hạ tầng AWS (Security Groups, VPC, IAM)
@@ -89,7 +131,7 @@ inventory-app/
 
 ### 1. Yêu cầu hệ thống
 
-* Python 3.x đã được cài đặt trên máy tính.
+* Python 3.12 được khuyến nghị cho môi trường hiện tại.
 * PostgreSQL đã được cài đặt và khởi động (hoặc có thông tin kết nối AWS RDS PostgreSQL).
 
 ### 2. Các bước thực hiện
@@ -101,10 +143,10 @@ cd inventory-app
 ```
 
 2. **Tạo và kích hoạt môi trường ảo (Virtual Environment):**
-* *Trên macOS / Linux:*
+* *Trên macOS / Linux (Python 3.12):*
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3.12 -m venv .venv
+source .venv/bin/activate
 ```
 
 * *Trên Windows:*
@@ -119,13 +161,32 @@ pip install -r requirements.txt
 ```
 
 4. **Cấu hình kết nối cơ sở dữ liệu:**
-Mở file `init_db.py` (hoặc đặt các biến môi trường `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_PORT`) cho khớp với cấu hình PostgreSQL máy bạn:
-```python
-DB_HOST = "localhost"
-DB_NAME = "inventory_db"   # Đảm bảo bạn đã tạo database này trên PostgreSQL
-DB_USER = "postgres"
-DB_PASS = "123456"         # Mật khẩu database của bạn
-DB_PORT = "5432"
+Đặt các biến môi trường theo cấu hình PostgreSQL local. `DB_PASSWORD` là tên biến ưu tiên; `DB_PASS` vẫn được hỗ trợ để tương thích ngược. Trên macOS dùng zsh, nhập mật khẩu tương tác như sau:
+```bash
+export DB_HOST="localhost"
+export DB_PORT="5432"
+export DB_NAME="inventory_db"
+export DB_USER="postgres"
+```
+
+Không lưu mật khẩu thật trong mã nguồn.
+
+Trong zsh, nhập mật khẩu mà không echo ra terminal rồi export:
+```zsh
+read -s "DB_PASSWORD?Local PostgreSQL password: "
+export DB_PASSWORD
+```
+
+Không dùng mật khẩu RDS trừ khi đó cũng chính là mật khẩu của PostgreSQL local. Trên AWS, cấu hình các giá trị RDS trong Elastic Beanstalk Environment properties, không đưa chúng vào source bundle.
+
+Ví dụ kiểm thử API trên local:
+```bash
+curl -i "http://127.0.0.1:5000/api/products"
+```
+
+Ví dụ gọi API trên AWS:
+```bash
+curl -i "http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/products"
 ```
 
 5. **Khởi tạo / Cập nhật Cơ sở dữ liệu (Database Setup & Update):**
@@ -136,13 +197,14 @@ Bạn có thể chọn 1 trong 2 cách sau để khởi tạo hoặc cập nhậ
 ```bash
 python init_db.py
 ```
+Script đọc `database/schema.sql`, tạo các bảng và index nếu chưa có, và trả lỗi khác 0 nếu không kết nối hoặc thực thi schema thất bại.
 
 * **Cách 2: Chạy trực tiếp qua câu lệnh `psql`:**
 ```bash
 psql -h localhost -U postgres -d inventory_db -f database/schema.sql
 ```
 
-*(Lưu ý: Khi chạy ứng dụng `python app.py`, hệ thống cũng sẽ tự động gọi hàm khởi tạo CSDL từ `init_db.py` nếu các bảng chưa tồn tại).*
+*(Lưu ý: Khi chạy ứng dụng bằng `python app.py`, hệ thống cũng gọi hàm khởi tạo schema. Các lệnh `CREATE ... IF NOT EXISTS` cho phép chạy lại mà không tạo trùng bảng/index.)*
 
 6. **Chạy ứng dụng:**
 ```bash
