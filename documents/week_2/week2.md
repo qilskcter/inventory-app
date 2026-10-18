@@ -425,9 +425,9 @@ Em kiểm tra lại Storage autoscaling và xác nhận Disabled. Các ảnh đ�
 
 ---
 
-## 9. KHAI BÁO SỬ DỤNG TRỢ LÝ AI CỦA VÕ MINH QUÂN
+## 9. KHAI BÁO SỬ DỤNG TRỢ LÝ AI 
 
-- **Công cụ:** Trợ lý AI trong Codex, được sử dụng trong phiên trao đổi để hướng dẫn và biên soạn báo cáo. Không xác định model cụ thể trong báo cáo này.
+- **Công cụ:** Gemini 3.6 Flash
 - **Phạm vi hỗ trợ:** Hướng dẫn kiểm tra subnet, tạo DB Subnet Group, rà soát Route Table và Security Group, tạo RDS, cấu hình EC2 quản trị, kết nối PostgreSQL, thực thi schema, xem Metrics và bổ sung Tags.
 - **Hỗ trợ lệnh và tài liệu:** Gợi ý các lệnh `psql`, `curl`, truy vấn xác minh bảng và `Test-NetConnection`; hướng dẫn chọn ảnh minh chứng và tổng hợp báo cáo theo nhật ký.
 - **Cách kiểm chứng:** Sinh viên trực tiếp thao tác trong AWS Console và terminal, thực thi lệnh và cung cấp ảnh kết quả. Việc xác nhận tạo database, bảng và index dựa trên đầu ra PostgreSQL; kiểm tra cấu hình và giám sát dựa trên ảnh AWS Console.
