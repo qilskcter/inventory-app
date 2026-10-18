@@ -490,8 +490,7 @@ Em kiểm tra lại Storage autoscaling và xác nhận Disabled. Các ảnh đ�
 - **Phạm vi hỗ trợ:** Hướng dẫn kiểm tra subnet, tạo DB Subnet Group, rà soát Route Table và Security Group, tạo RDS, cấu hình EC2 quản trị, kết nối PostgreSQL, thực thi schema, xem Metrics và bổ sung Tags.
 - **Hỗ trợ lệnh và tài liệu:** Gợi ý các lệnh `psql`, `curl`, truy vấn xác minh bảng và `Test-NetConnection`; hướng dẫn chọn ảnh minh chứng và tổng hợp báo cáo theo nhật ký.
 - **Cách kiểm chứng:** Sinh viên trực tiếp thao tác trong AWS Console và terminal, thực thi lệnh và cung cấp ảnh kết quả. Việc xác nhận tạo database, bảng và index dựa trên đầu ra PostgreSQL; kiểm tra cấu hình và giám sát dựa trên ảnh AWS Console.
-- **Giới hạn:** AI không trực tiếp truy cập tài khoản AWS hoặc thực hiện các thay đổi tài nguyên trong phiên hướng dẫn. Chưa xác minh ứng dụng của Khanh đã kết nối RDS mới; chưa xác nhận đã dừng tài nguyên. Những nội dung này không được ghi là hoàn thành.
-- **Thông tin nhạy cảm:** Mật khẩu RDS không được ghi trong báo cáo, câu lệnh minh họa hoặc repository. Sinh viên chịu trách nhiệm rà soát nội dung và ảnh trước khi nộp.
+
 
 ---
 
