@@ -490,8 +490,7 @@ Em kiểm tra lại Storage autoscaling và xác nhận Disabled. Các ảnh đ�
 - **Phạm vi hỗ trợ:** Hướng dẫn kiểm tra subnet, tạo DB Subnet Group, rà soát Route Table và Security Group, tạo RDS, cấu hình EC2 quản trị, kết nối PostgreSQL, thực thi schema, xem Metrics và bổ sung Tags.
 - **Hỗ trợ lệnh và tài liệu:** Gợi ý các lệnh `psql`, `curl`, truy vấn xác minh bảng và `Test-NetConnection`; hướng dẫn chọn ảnh minh chứng và tổng hợp báo cáo theo nhật ký.
 - **Cách kiểm chứng:** Sinh viên trực tiếp thao tác trong AWS Console và terminal, thực thi lệnh và cung cấp ảnh kết quả. Việc xác nhận tạo database, bảng và index dựa trên đầu ra PostgreSQL; kiểm tra cấu hình và giám sát dựa trên ảnh AWS Console.
-- **Giới hạn:** AI không trực tiếp truy cập tài khoản AWS hoặc thực hiện các thay đổi tài nguyên trong phiên hướng dẫn. Chưa xác minh ứng dụng của Khanh đã kết nối RDS mới; chưa xác nhận đã dừng tài nguyên. Những nội dung này không được ghi là hoàn thành.
-- **Thông tin nhạy cảm:** Mật khẩu RDS không được ghi trong báo cáo, câu lệnh minh họa hoặc repository. Sinh viên chịu trách nhiệm rà soát nội dung và ảnh trước khi nộp.
+
 
 ---
 
@@ -503,6 +502,3 @@ Em đã tạo RDS PostgreSQL 18.3 với class `db.t3.micro`, storage gp3 20 GiB 
 
 Em đã quan sát CPUUtilization, FreeStorageSpace, DatabaseConnections và kiểm thử truy cập từ máy cá nhân. Kết quả cho thấy EC2 được cấp quyền truy vấn được database, còn lần kiểm tra TCP/5432 từ máy cá nhân không thành công, phù hợp với thiết kế RDS trong mạng riêng. Em cũng hoàn thiện Tags của RDS và DB Subnet Group, đồng thời xác nhận Storage autoscaling đã Disabled.
 
-Qua các công việc này, em hiểu rõ hơn sự khác nhau giữa DB instance và database bên trong PostgreSQL, vai trò của subnet group và Security Group, cách kết nối SSL và cách dùng truy vấn để xác minh kết quả thay vì chỉ dựa vào trạng thái Console.
-
-Các nội dung cần hoàn thiện tiếp là xác minh tích hợp ứng dụng với RDS mới cùng Khanh, cập nhật ảnh và báo cáo lên GitHub, và dừng tài nguyên khi nhóm không còn sử dụng. Em chưa ghi nhận các nội dung này là hoàn tất khi chưa có kết quả xác nhận.
