@@ -419,7 +419,7 @@ Em kiểm tra lại Storage autoscaling và xác nhận Disabled. Các ảnh đ�
 | Thứ Bảy | Kiểm thử từ máy cá nhân trả TcpTestSucceeded: False. | `35_rds_external_connection_test.png` |
 | Chủ nhật | Kiểm tra Tags RDS và bổ sung Tags Subnet Group. | `36_rds_tags.png`, `37_rds_subnet_group_tags.png` |
 | Chủ nhật | Đã xác nhận autoscaling Disabled. | Xác nhận kiểm tra lại của sinh viên; chưa có ảnh sau điều chỉnh trong bộ minh chứng trao đổi. |
-| Còn lại | Dừng tài nguyên khi dùng xong; đưa ảnh và báo cáo lên GitHub. | Chưa xác nhận hoàn tất. |
+
 
 **Quy ước lưu ảnh:** Các đường dẫn trên tính từ vị trí báo cáo `documents/week_2/week2.md`. Cần lưu ảnh đúng tên vào `documents/week_2/screenshots/`. Tên ảnh giữ theo các lần hướng dẫn và ảnh đã trao đổi; không sử dụng ảnh triển khai cũ của Khanh để thay minh chứng RDS mới của Quân.
 
