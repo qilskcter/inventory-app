@@ -201,11 +201,11 @@ Cả hai subnet ở trạng thái Available, thuộc cùng VPC và có Auto-assi
 
 **Minh chứng subnet thứ nhất:**
 
-![Chi tiết private-db-subnet-1](./screenshots/23_quan_private_db_subnet_1.png)
+![Chi tiết private-db-subnet-1](./screenshots/23_private_db_subnet_1.png)
 
 **Minh chứng subnet thứ hai:**
 
-![Chi tiết private-db-subnet-2](./screenshots/24_quan_private_db_subnet_2.png)
+![Chi tiết private-db-subnet-2](./screenshots/24_private_db_subnet_2.png)
 
 #### b. Tạo DB Subnet Group
 
@@ -213,19 +213,19 @@ Em tạo `inventory-db-subnet-group` trong VPC dự án, mô tả `Private subne
 
 DB Subnet Group chuẩn bị lựa chọn mạng cho RDS. Việc có hai AZ trong nhóm không đồng nghĩa đã bật Multi-AZ cho database; RDS thực tế trong lần triển khai này sử dụng Single-AZ.
 
-![DB Subnet Group và hai private subnets](./screenshots/25_quan_rds_subnet_group.png)
+![DB Subnet Group và hai private subnets](./screenshots/25_rds_subnet_group.png)
 
 #### c. Kiểm tra Route Table
 
 Em rà soát bảng định tuyến `inventory-private-rt`. Ảnh Routes ghi nhận một route `10.0.0.0/16` có Target `local`, Status Active và không có route mặc định `0.0.0.0/0` trong bảng được chụp. Hai trang chi tiết subnet ở trên cho thấy chúng sử dụng cùng Route Table này.
 
-![Route nội bộ của private Route Table](./screenshots/26_quan_private_route_table.png)
+![Route nội bộ của private Route Table](./screenshots/26_private_route_table.png)
 
 #### d. Kiểm tra Security Group database
 
 Security Group `inventory-db-sg`, ID `sg-0f5e8348f198a9f97`, thuộc VPC dự án. Inbound rules có một quy tắc PostgreSQL TCP/5432 với Source là Security Group `inventory-web-sg`, ID `sg-0bb46c5bb3bba364b`. Ảnh không ghi nhận rule mở cổng PostgreSQL cho toàn Internet.
 
-![Inbound rule PostgreSQL từ inventory-web-sg](./screenshots/27_quan_inventory_db_sg.png)
+![Inbound rule PostgreSQL từ inventory-web-sg](./screenshots/27_inventory_db_sg.png)
 
 **Kết quả thứ Tư:** Đã chuẩn bị DB Subnet Group, đối chiếu hai subnet, kiểm tra route nội bộ và quy tắc cho phép tầng Web kết nối PostgreSQL.
 
