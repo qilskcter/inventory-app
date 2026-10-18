@@ -132,7 +132,45 @@ Nhóm đóng gói source bundle gồm `app.py`, `init_db.py`, `database/`, `temp
 
 Sau triển khai, trang Inventory App tải thành công và hiển thị sản phẩm kiểm thử `test` lấy từ kho dữ liệu. Nhóm thao tác nhập/xuất trên giao diện và kiểm tra dữ liệu tồn kho được cập nhật. Ảnh chụp giao diện ghi nhận một sản phẩm với số lượng tồn là 10 tại thời điểm chụp.
 
-Nhóm kiểm tra endpoint `GET /api/products` trên domain Beanstalk. API trả HTTP `200 OK` và JSON chứa sản phẩm `test`; phản hồi tại thời điểm chụp ghi nhận số lượng là 11. Khác biệt số lượng giữa hai ảnh phản ánh thời điểm chụp sau các thao tác kiểm thử; cả hai minh chứng đều cho thấy ứng dụng đọc dữ liệu sản phẩm từ database.
+Ở lần kiểm tra ban đầu, `GET /api/products` trên domain Beanstalk trả HTTP `200 OK` và JSON chứa sản phẩm `test`. Ngày 18/10/2026, sau khi Environment có giai đoạn Health `Warning` và domain từ chối kết nối, ứng dụng truy cập lại được. Nhóm thực hiện kiểm thử API và Web UI trên Environment công khai; kết quả chi tiết được ghi ở phần dưới. Các số lượng trong ảnh chụp cũ là dữ liệu tại thời điểm chụp, không nhất thiết trùng với dữ liệu sau này.
+
+#### Kiểm thử lại API và Web UI ngày 18/10/2026
+
+Các yêu cầu được gửi tới `http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com`. Những endpoint đọc và trang chủ trả HTTP `200 OK`. Bộ kiểm thử API dùng SKU riêng, thực hiện tạo/đọc/cập nhật/xóa sản phẩm, giao dịch nhập/xuất, đọc lại tồn kho và lịch sử. Hình 12–14 là ảnh chụp các lệnh và phản hồi thực tế.
+
+| Thao tác | Kết quả |
+| :--- | :--- |
+| `GET /api/products`, `GET /api/transactions` | `200`; trả danh sách JSON. |
+| `POST /api/products` | `201`; tạo sản phẩm kiểm thử. |
+| `GET /api/products/<id>`, `PUT /api/products/<id>`, `PATCH /api/products/<id>` | `200`; đọc và cập nhật sản phẩm kiểm thử thành công. |
+| `POST /api/transactions` với `IN` và `OUT` | `201`; tồn kho được cập nhật và giao dịch được ghi vào lịch sử. |
+| Kiểm tra tồn kho và lịch sử sau giao dịch | Đọc lại sản phẩm xác nhận tồn kho; lịch sử có cả giao dịch `IN` và `OUT`. |
+| Trường hợp dữ liệu không hợp lệ, SKU trùng, xuất vượt tồn, sản phẩm không tồn tại | Lần lượt xác nhận các phản hồi `400`, `409`, `409` và `404` theo trường hợp. |
+| `DELETE /api/products/<id>` | `204`; sản phẩm kiểm thử được xóa, đọc lại trả `404`. |
+
+Trên Web UI, nhóm tạo sản phẩm `TEST2` với tồn ban đầu `4`, thực hiện nhập `7` và xác nhận tồn kho đổi thành `11`, sau đó xuất `3` và xác nhận tồn kho đổi thành `8` sau mỗi lần giao diện tải lại. Hai trạng thái giao diện được ghi lại ở Hình 15 và Hình 16.
+
+**Hình 12. Kiểm thử CRUD sản phẩm qua API trên Beanstalk**
+
+![Kết quả kiểm thử CRUD sản phẩm qua API](./screenshots/38_api_products_crud_test.png)
+
+**Hình 13. Kiểm thử giao dịch nhập và xuất qua API**
+
+![Kết quả giao dịch IN và OUT qua API](./screenshots/39_api_transactions_test.png)
+
+**Hình 14. Kiểm thử các phản hồi lỗi của API**
+
+![Kết quả kiểm thử các trường hợp lỗi của API](./screenshots/40_api_error_cases_test.png)
+
+**Hình 15. Web UI sau giao dịch nhập, tồn kho là 11**
+
+![Web UI hiển thị tồn kho 11 sau khi nhập 7](./screenshots/41_web_ui_inbound_stock.png)
+
+**Hình 16. Web UI sau giao dịch xuất, tồn kho là 8**
+
+![Web UI hiển thị tồn kho 8 sau khi xuất 3](./screenshots/42_web_ui_outbound_stock.png)
+
+**Trạng thái dữ liệu kiểm thử sau khi chụp ảnh:** Kiểm tra chỉ đọc API ngày 18/10/2026 cho thấy các sản phẩm `EVIDENCE-20261018154031` (id `6`), `EVIDENCE-20261018155328` (id `8`) và `TEST2` (id `10`) cùng các giao dịch liên quan vẫn còn trong database. Vì vậy, không khẳng định các bản ghi trong Hình 12–16 đã được dọn; chỉ xóa chúng sau khi chủ sở hữu xác nhận. Bản ghi `test` có sẵn cũng được giữ nguyên.
 
 **Hình 9. Environment `inventory-env-py312` hoạt động với Health `Ok`**
 
@@ -159,8 +197,8 @@ Nhóm kiểm tra endpoint `GET /api/products` trên domain Beanstalk. API trả 
 | `inventory-db-sg` | Đã rà soát theo yêu cầu công việc. | Hình 3: `screenshots/13_inventory_db_sg.png`. |
 | Elastic Beanstalk `inventory-env-py312` | Ứng dụng đã được triển khai trên Python 3.12 / Amazon Linux 2023; Health `Ok` (Green), Running version `1.0`. | Hình 9: `screenshots/20_beanstalk_env_py312_green.png`. |
 | Cấu hình VPC, subnet và IAM | Environment ở `inventory-vpc`, public subnets; sử dụng `LabRole`, `LabInstanceProfile` và `inventory-web-sg`. | Hình 5–7: `screenshots/16_beanstalk_networking.png`, `17_beanstalk_ec2_instance.png`, `18_beanstalk_ec2_security.png`. |
-| Tích hợp Web với RDS | Giao diện tải và hiển thị sản phẩm kiểm thử; dữ liệu được đọc từ kho dữ liệu. | Hình 10: `screenshots/21_inventory_web_rds_integration.png`. |
-| Kiểm thử REST API | `GET /api/products` trả HTTP `200 OK` và JSON sản phẩm. | Hình 11: `screenshots/22_api_products_test.png`. |
+| Tích hợp Web với RDS | Giao diện tải dữ liệu từ kho; kiểm thử ngày 18/10/2026 tạo sản phẩm, nhập `7` (tồn `4 → 11`) và xuất `3` (tồn `11 → 8`), xác nhận giao diện hiển thị tồn mới sau mỗi thao tác. | Hình 10 ghi nhận lần trước; Hình 15–16 ghi nhận kiểm thử lại tại Mục 3.6. |
+| Kiểm thử REST API | Ngày 18/10/2026, kiểm thử danh sách, CRUD sản phẩm, đọc lịch sử, giao dịch `IN`/`OUT`, tồn kho và các phản hồi lỗi; các mã nhận được phù hợp với kết quả nêu tại Mục 3.6. Các sản phẩm thử nghiệm trong ảnh còn tồn tại tại lần xác minh đọc sau đó. | Hình 11 ghi nhận lần trước; Hình 12–14 ghi nhận kiểm thử lại tại Mục 3.6. |
 
 ---
 
@@ -176,7 +214,7 @@ Nhóm kiểm tra endpoint `GET /api/products` trên domain Beanstalk. API trả 
 
 ## 6. KẾT LUẬN
 
-Trong tuần 2, nhóm đã chuẩn bị DB Subnet Group và Security Group cho tầng dữ liệu, tạo RDS PostgreSQL `inventory-db`, thực thi schema và xác nhận hai bảng `products`, `transactions`. Ứng dụng Flask đã được triển khai trên Elastic Beanstalk Environment `inventory-env-py312` dùng Python 3.12; Environment đạt Health `Ok` (Green). Kiểm thử giao diện xác nhận sản phẩm được hiển thị từ database; API `GET /api/products` trả `200 OK` cùng dữ liệu JSON. Các minh chứng tương ứng được trình bày tại Hình 8–11. Environment ban đầu `inventory-env` đã dùng Sample application và không phải Environment đang chạy ứng dụng Flask.
+Trong tuần 2, nhóm đã chuẩn bị DB Subnet Group và Security Group cho tầng dữ liệu, tạo RDS PostgreSQL `inventory-db`, thực thi schema và xác nhận hai bảng `products`, `transactions`. Ứng dụng Flask được triển khai trên Elastic Beanstalk Environment `inventory-env-py312` dùng Python 3.12. Ngày 18/10/2026, sau giai đoạn Environment từ chối kết nối, nhóm truy cập lại thành công; các API sản phẩm/giao dịch và luồng tạo sản phẩm, nhập/xuất trên Web UI đã được kiểm thử. Tồn kho trên UI đổi từ `4` lên `11` sau nhập và xuống `8` sau xuất. Các ảnh kiểm thử lại được trình bày tại Hình 12–16; một số dữ liệu kiểm thử còn lại sau khi chụp và được ghi rõ tại Mục 3.6. Kết quả triển khai và kiểm thử ban đầu được minh họa tại Hình 8–11. Environment ban đầu `inventory-env` đã dùng Sample application và không phải Environment đang chạy ứng dụng Flask.
 
 
 ---
@@ -447,4 +485,3 @@ Em đã quan sát CPUUtilization, FreeStorageSpace, DatabaseConnections và ki�
 Qua các công việc này, em hiểu rõ hơn sự khác nhau giữa DB instance và database bên trong PostgreSQL, vai trò của subnet group và Security Group, cách kết nối SSL và cách dùng truy vấn để xác minh kết quả thay vì chỉ dựa vào trạng thái Console.
 
 Các nội dung cần hoàn thiện tiếp là xác minh tích hợp ứng dụng với RDS mới cùng Khanh, cập nhật ảnh và báo cáo lên GitHub, và dừng tài nguyên khi nhóm không còn sử dụng. Em chưa ghi nhận các nội dung này là hoàn tất khi chưa có kết quả xác nhận.
-
