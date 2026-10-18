@@ -132,8 +132,6 @@ Nhóm đóng gói source bundle gồm `app.py`, `init_db.py`, `database/`, `temp
 
 Sau triển khai, trang Inventory App tải thành công và hiển thị sản phẩm kiểm thử `test` lấy từ kho dữ liệu. Nhóm thao tác nhập/xuất trên giao diện và kiểm tra dữ liệu tồn kho được cập nhật. Ảnh chụp giao diện ghi nhận một sản phẩm với số lượng tồn là 10 tại thời điểm chụp.
 
-Ở lần kiểm tra ban đầu, `GET /api/products` trên domain Beanstalk trả HTTP `200 OK` và JSON chứa sản phẩm `test`. Ngày 18/10/2026, sau khi Environment có giai đoạn Health `Warning` và domain từ chối kết nối, ứng dụng truy cập lại được. Nhóm thực hiện kiểm thử API và Web UI trên Environment công khai; kết quả chi tiết được ghi ở phần dưới. Các số lượng trong ảnh chụp cũ là dữ liệu tại thời điểm chụp, không nhất thiết trùng với dữ liệu sau này.
-
 #### Kiểm thử lại API và Web UI ngày 18/10/2026
 
 Các yêu cầu được gửi tới `http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com`. Những endpoint đọc và trang chủ trả HTTP `200 OK`. Bộ kiểm thử API dùng SKU riêng, thực hiện tạo/đọc/cập nhật/xóa sản phẩm, giao dịch nhập/xuất, đọc lại tồn kho và lịch sử. Hình 12–14 là ảnh chụp các lệnh và phản hồi thực tế.
