@@ -502,6 +502,3 @@ Em đã tạo RDS PostgreSQL 18.3 với class `db.t3.micro`, storage gp3 20 GiB 
 
 Em đã quan sát CPUUtilization, FreeStorageSpace, DatabaseConnections và kiểm thử truy cập từ máy cá nhân. Kết quả cho thấy EC2 được cấp quyền truy vấn được database, còn lần kiểm tra TCP/5432 từ máy cá nhân không thành công, phù hợp với thiết kế RDS trong mạng riêng. Em cũng hoàn thiện Tags của RDS và DB Subnet Group, đồng thời xác nhận Storage autoscaling đã Disabled.
 
-Qua các công việc này, em hiểu rõ hơn sự khác nhau giữa DB instance và database bên trong PostgreSQL, vai trò của subnet group và Security Group, cách kết nối SSL và cách dùng truy vấn để xác minh kết quả thay vì chỉ dựa vào trạng thái Console.
-
-Các nội dung cần hoàn thiện tiếp là xác minh tích hợp ứng dụng với RDS mới cùng Khanh, cập nhật ảnh và báo cáo lên GitHub, và dừng tài nguyên khi nhóm không còn sử dụng. Em chưa ghi nhận các nội dung này là hoàn tất khi chưa có kết quả xác nhận.
