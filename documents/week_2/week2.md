@@ -151,7 +151,7 @@ Các yêu cầu được gửi tới `http://inventory-env-py312.eba-vbehyxmh.us
 Trên Web UI, nhóm tạo sản phẩm `TEST2` với tồn ban đầu `4`, thực hiện nhập `7` và xác nhận tồn kho đổi thành `11`, sau đó xuất `3` và xác nhận tồn kho đổi thành `8` sau mỗi lần giao diện tải lại. Hai trạng thái giao diện được ghi lại ở Hình 15 và Hình 16.
 
 **Hình 12. Kiểm thử CRUD sản phẩm qua API trên Beanstalk**
-.
+
 ![Kết quả kiểm thử CRUD sản phẩm qua API](./screenshots/38_api_products_crud_test.png)
 
 **Hình 13. Kiểm thử giao dịch nhập và xuất qua API**
