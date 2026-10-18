@@ -9,12 +9,20 @@ DB_PORT = os.environ.get("DB_PORT", "5432")
 
 
 def get_db_connection():
+    try:
+        connect_timeout = int(os.environ.get("DB_CONNECT_TIMEOUT", "5"))
+    except ValueError as error:
+        raise ValueError("DB_CONNECT_TIMEOUT must be a positive integer") from error
+    if connect_timeout < 1:
+        raise ValueError("DB_CONNECT_TIMEOUT must be a positive integer")
+
     return psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
         user=DB_USER,
         password=DB_PASSWORD,
-        port=DB_PORT
+        port=DB_PORT,
+        connect_timeout=connect_timeout,
     )
 
 

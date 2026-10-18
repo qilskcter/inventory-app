@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import psycopg2
 
 import app as inventory_app
+import init_db
 
 
 class InventoryApiTests(unittest.TestCase):
@@ -181,6 +182,51 @@ class InventoryApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 409)
         connection.rollback.assert_called_once()
+
+    def test_database_timeout_returns_retryable_api_error(self):
+        with patch.object(
+            inventory_app,
+            "get_db_connection",
+            side_effect=psycopg2.OperationalError("connection timeout"),
+        ):
+            with self.assertLogs("app", level="ERROR"):
+                response = self.client.get("/api/products")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.get_json(), {
+            "error": "Cơ sở dữ liệu tạm thời không khả dụng. Vui lòng thử lại."
+        })
+        self.assertEqual(response.headers["Retry-After"], "5")
+        self.assertNotIn("connection timeout", response.get_data(as_text=True))
+
+    def test_database_timeout_returns_html_service_unavailable_page(self):
+        with patch.object(
+            inventory_app,
+            "get_db_connection",
+            side_effect=psycopg2.OperationalError("connection timeout"),
+        ):
+            with self.assertLogs("app", level="ERROR"):
+                response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("Dịch vụ tạm thời không khả dụng", response.get_data(as_text=True))
+        self.assertEqual(response.headers["Retry-After"], "5")
+
+    def test_database_connect_timeout_is_configurable_and_positive(self):
+        with patch.dict("os.environ", {"DB_CONNECT_TIMEOUT": "8"}):
+            with patch("init_db.psycopg2.connect") as connect:
+                init_db.get_db_connection()
+
+        self.assertEqual(connect.call_args.kwargs["connect_timeout"], 8)
+
+    def test_database_connect_timeout_rejects_invalid_values(self):
+        for value in ("0", "-1", "not-a-number"):
+            with self.subTest(value=value):
+                with patch.dict("os.environ", {"DB_CONNECT_TIMEOUT": value}):
+                    with self.assertRaisesRegex(
+                        ValueError, "DB_CONNECT_TIMEOUT must be a positive integer"
+                    ):
+                        init_db.get_db_connection()
 
     def test_create_transaction_rejects_non_positive_quantity(self):
         with patch.object(inventory_app, "get_db_connection") as get_connection:

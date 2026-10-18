@@ -9,7 +9,7 @@
 | --- | --- |
 | Tuần 1 | [week1.md](./logs/week1.md) |
 | Tuần 2 | [week2.md](./logs/week2.md) |
-| Tuần 3 | |
+| Tuần 3 | [week3.md](./logs/week3.md) |
 | Tuần 4 | |
 ---
 
@@ -80,6 +80,14 @@ Giao dịch xuất được cập nhật tồn kho bằng một câu lệnh SQL 
 | Public application URL | [inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com](http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/) |
 
 RDS được đặt trong VPC và ứng dụng kết nối qua Security Group; chỉ cấp quyền PostgreSQL TCP/5432 từ Security Group của tầng Web. Environment properties được cấu hình trên Elastic Beanstalk (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`); không lưu mật khẩu trong repository. URL minh họa hiện dùng HTTP, không truyền dữ liệu nhạy cảm qua môi trường này.
+
+### CloudWatch Logs và lỗi kết nối database
+
+Source bundle chứa `.ebextensions/01-cloudwatch-logs.config`, bật stream các log mặc định của Elastic Beanstalk lên CloudWatch Logs, lưu log 7 ngày và giữ lại log group khi terminate environment. Với Python trên Amazon Linux 2023, các log mặc định bao gồm `web.stdout.log`, Nginx access log và Nginx error log. Instance profile cần policy `AWSElasticBeanstalkWebTier` hoặc quyền CloudWatch Logs tương ứng.
+
+Sau khi deploy cấu hình, xem log tại Elastic Beanstalk → chọn `inventory-env-py312` → **Logs**. Cấu hình trong repository chưa tự xác nhận rằng AWS environment đã áp dụng thành công; cần kiểm tra các log group/log stream trong Console sau deployment.
+
+Kết nối PostgreSQL dùng `DB_CONNECT_TIMEOUT` tính bằng giây (mặc định 5, phải là số nguyên dương). Lỗi kết nối/vận hành database được ghi vào log ứng dụng và trả HTTP `503` cùng `Retry-After: 5`; chi tiết lỗi nội bộ không được gửi về client.
 
 ---
 

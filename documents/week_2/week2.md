@@ -11,7 +11,7 @@
 
 ---
 
-> **Phạm vi báo cáo:** Báo cáo ghi nhận việc chuẩn bị mạng và khởi tạo schema trên Amazon RDS, triển khai ứng dụng Flask lên AWS Elastic Beanstalk, cấu hình kết nối giữa tầng Web và Database, và kiểm thử Web/API. Kết quả được trình bày theo các ảnh minh chứng có trong thư mục `screenshots`.
+> **Phạm vi báo cáo:** Báo cáo ghi nhận việc chuẩn bị mạng và khởi tạo schema trên Amazon RDS, triển khai ứng dụng Flask lên AWS Elastic Beanstalk, cấu hình kết nối giữa tầng Web và Database, kiểm thử Web/API, cấu hình CloudWatch Logs, và cập nhật xử lý database timeout. Log access thực tế và phiên bản ứng dụng mới đã được xác minh trên AWS qua các ảnh minh chứng tại Mục 3.7.
 
 [Nhật ký công việc tuần 2](../../logs/week2.md)
 
@@ -27,6 +27,8 @@ Tuần 2, nhóm chuẩn bị hạ tầng mạng cho tầng cơ sở dữ liệu 
 4. Tìm hiểu và thiết lập Elastic Beanstalk Application và Environment cho ứng dụng trong VPC `inventory-vpc`.
 5. Cấu hình `LabInstanceProfile` và Security Group `inventory-web-sg` cho EC2 instance do Elastic Beanstalk quản lý.
 6. Triển khai ứng dụng Flask lên Elastic Beanstalk và kiểm tra kết nối tới RDS qua giao diện Web và REST API.
+7. Cấu hình source bundle để stream log ứng dụng, log truy cập và log lỗi của Elastic Beanstalk lên CloudWatch Logs.
+8. Giới hạn thời gian thiết lập kết nối database và xử lý lỗi database tạm thời bằng phản hồi HTTP có thể thử lại.
 
 ---
 
@@ -182,6 +184,26 @@ Trên Web UI, nhóm tạo sản phẩm `TEST2` với tồn ban đầu `4`, thự
 
 ![API GET products trả HTTP 200 và JSON sản phẩm](./screenshots/22_api_products_test.png)
 
+### 3.7. Cấu hình CloudWatch Logs và xử lý database timeout
+
+Source bundle được bổ sung `.ebextensions/01-cloudwatch-logs.config` để bật stream các log mặc định của Elastic Beanstalk lên CloudWatch Logs, giữ log 7 ngày và không xóa log group khi terminate environment. Với platform Python trên Amazon Linux 2023, các log mặc định gồm log ứng dụng `web.stdout.log`, Nginx access log và Nginx error log. Để stream hoạt động, EC2 instance profile cần policy `AWSElasticBeanstalkWebTier` hoặc quyền `logs:CreateLogStream`, `logs:PutLogEvents`, `logs:DescribeLogGroups` và `logs:DescribeLogStreams`.
+
+Sau khi cấu hình log streaming trên Environment, Console hiển thị 7 log groups của `inventory-env-py312`, gồm `web.stdout.log`, Nginx access/error và các log Elastic Beanstalk; retention của các nhóm là 7 ngày. Trong `nginx/access.log`, nhóm xác nhận có request `GET /api/products` trả HTTP `200`. Một số dòng `GET /favicon.ico` trả `404` do ứng dụng chưa cung cấp favicon; điều này không ảnh hưởng kết quả endpoint API.
+
+Source bundle mới được deploy lên Elastic Beanstalk với Running version `timeout-logs-20261018-1`; sau cập nhật, Environment hiển thị Health `Ok` và Events xác nhận deployment hoàn tất. Kết nối PostgreSQL trong [init_db.py](../../init_db.py) dùng biến `DB_CONNECT_TIMEOUT` (giây), mặc định 5; giá trị không hợp lệ hoặc nhỏ hơn 1 bị báo lỗi cấu hình rõ ràng. Lỗi `psycopg2.OperationalError` được ghi log phía server, trả HTTP `503` và `Retry-After: 5`; API không để lộ chi tiết lỗi database, còn giao diện Web hiển thị trang báo dịch vụ tạm thời không khả dụng. Các nhánh xử lý này được kiểm thử tự động; chưa thực hiện mô phỏng DB timeout trên AWS.
+
+**Hình 17. CloudWatch hiển thị 7 log groups với retention 7 ngày**
+
+![CloudWatch Logs của inventory-env-py312 với retention 7 ngày](./screenshots/43_cloudwatch_log_groups.png)
+
+**Hình 18. Access log ghi nhận API `/api/products` trả HTTP 200**
+
+![CloudWatch nginx access log ghi nhận GET api products trả 200](./screenshots/44_cloudwatch_access_log.png)
+
+**Hình 19. Phiên bản mới được deploy và Environment đạt Health Ok**
+
+![Elastic Beanstalk chạy version timeout-logs-20261018-1 với Health Ok](./screenshots/45_beanstalk_updated_version.png)
+
 ---
 
 ## 4. KẾT QUẢ VÀ MINH CHỨNG
@@ -193,17 +215,18 @@ Trên Web UI, nhóm tạo sản phẩm `TEST2` với tồn ban đầu `4`, thự
 | Khởi tạo schema trên RDS | Đã thực thi schema trên `inventory_db`; truy vấn xác nhận có đủ hai bảng `products` và `transactions` trong schema `public`. Chạy lại schema không tạo trùng bảng/index do có `IF NOT EXISTS`. | Hình 8: `screenshots/19_rds_tables_created.png`. |
 | Route Tables | Đã rà soát theo yêu cầu công việc. | Hình 2: `screenshots/12_private_route_tables.png`. |
 | `inventory-db-sg` | Đã rà soát theo yêu cầu công việc. | Hình 3: `screenshots/13_inventory_db_sg.png`. |
-| Elastic Beanstalk `inventory-env-py312` | Ứng dụng đã được triển khai trên Python 3.12 / Amazon Linux 2023; Health `Ok` (Green), Running version `1.0`. | Hình 9: `screenshots/20_beanstalk_env_py312_green.png`. |
+| Elastic Beanstalk `inventory-env-py312` | Ứng dụng chạy trên Python 3.12 / Amazon Linux 2023; phiên bản mới `timeout-logs-20261018-1` được deploy thành công, Health `Ok` (Green). | Hình 9 ghi nhận phiên bản ban đầu; Hình 19 ghi nhận phiên bản mới. |
 | Cấu hình VPC, subnet và IAM | Environment ở `inventory-vpc`, public subnets; sử dụng `LabRole`, `LabInstanceProfile` và `inventory-web-sg`. | Hình 5–7: `screenshots/16_beanstalk_networking.png`, `17_beanstalk_ec2_instance.png`, `18_beanstalk_ec2_security.png`. |
 | Tích hợp Web với RDS | Giao diện tải dữ liệu từ kho; kiểm thử ngày 18/10/2026 tạo sản phẩm, nhập `7` (tồn `4 → 11`) và xuất `3` (tồn `11 → 8`), xác nhận giao diện hiển thị tồn mới sau mỗi thao tác. | Hình 10 ghi nhận lần trước; Hình 15–16 ghi nhận kiểm thử lại tại Mục 3.6. |
 | Kiểm thử REST API | Ngày 18/10/2026, kiểm thử danh sách, CRUD sản phẩm, đọc lịch sử, giao dịch `IN`/`OUT`, tồn kho và các phản hồi lỗi; các mã nhận được phù hợp với kết quả nêu tại Mục 3.6. Các sản phẩm thử nghiệm trong ảnh còn tồn tại tại lần xác minh đọc sau đó. | Hình 11 ghi nhận lần trước; Hình 12–14 ghi nhận kiểm thử lại tại Mục 3.6. |
+| CloudWatch Logs và database timeout | Đã xác nhận 7 log groups với retention 7 ngày; access log ghi nhận `GET /api/products` trả `200`. Source bundle có giới hạn thời gian kết nối và phản hồi `503` khi database tạm thời không khả dụng; bản cập nhật đã deploy và Environment Health `Ok`. Hành vi timeout được kiểm thử tự động, chưa mô phỏng cố ý trên AWS. | Hình 17–19; `.ebextensions/01-cloudwatch-logs.config`, `init_db.py`, `tests/test_app.py`. |
 
 ---
 
 ## 5. KHAI BÁO SỬ DỤNG TRỢ LÝ AI
 
 - **Công cụ và model:** Trợ lý AI trong cuộc trao đổi này được sử dụng để biên soạn và rà soát nội dung báo cáo. Model cụ thể không được xác định trong thông tin phiên làm việc. AWS Console và AWS CLI là công cụ kỹ thuật, không phải công cụ AI.
-- **Phạm vi hỗ trợ:** Hỗ trợ biên tập nội dung báo cáo về hạ tầng mạng, Amazon RDS, Elastic Beanstalk, triển khai ứng dụng và kiểm thử tích hợp; cập nhật script khởi tạo schema để ưu tiên biến `DB_PASSWORD`.
+- **Phạm vi hỗ trợ:** Hỗ trợ biên tập báo cáo và cập nhật source bundle để cấu hình stream CloudWatch Logs, xử lý lỗi kết nối/vận hành database và kiểm thử các phản hồi timeout. Các ghi nhận hạ tầng AWS vẫn dựa trên kết quả và ảnh minh chứng do nhóm cung cấp.
 - **Nội dung được hỗ trợ biên soạn:** Cấu trúc lại báo cáo theo các phần mục tiêu, thiết kế mạng, công việc đã thực hiện, kết quả/minh chứng và kết luận.
 - **Kiểm chứng:** AI không truy cập AWS account và không trực tiếp tạo hoặc thay đổi tài nguyên AWS. Việc chạy schema, triển khai Environment và kiểm thử ứng dụng do nhóm thực hiện; báo cáo dựa trên kết quả và ảnh minh chứng được lưu trong repository.
 - **Minh chứng tham chiếu:** [Nhật ký công việc tuần 2](../../logs/week2.md).
@@ -212,7 +235,7 @@ Trên Web UI, nhóm tạo sản phẩm `TEST2` với tồn ban đầu `4`, thự
 
 ## 6. KẾT LUẬN
 
-Trong tuần 2, nhóm đã chuẩn bị DB Subnet Group và Security Group cho tầng dữ liệu, tạo RDS PostgreSQL `inventory-db`, thực thi schema và xác nhận hai bảng `products`, `transactions`. Ứng dụng Flask được triển khai trên Elastic Beanstalk Environment `inventory-env-py312` dùng Python 3.12. Ngày 18/10/2026, sau giai đoạn Environment từ chối kết nối, nhóm truy cập lại thành công; các API sản phẩm/giao dịch và luồng tạo sản phẩm, nhập/xuất trên Web UI đã được kiểm thử. Tồn kho trên UI đổi từ `4` lên `11` sau nhập và xuống `8` sau xuất. Các ảnh kiểm thử lại được trình bày tại Hình 12–16; một số dữ liệu kiểm thử còn lại sau khi chụp và được ghi rõ tại Mục 3.6. Kết quả triển khai và kiểm thử ban đầu được minh họa tại Hình 8–11. Environment ban đầu `inventory-env` đã dùng Sample application và không phải Environment đang chạy ứng dụng Flask.
+Trong tuần 2, nhóm đã chuẩn bị DB Subnet Group và Security Group cho tầng dữ liệu, tạo RDS PostgreSQL `inventory-db`, thực thi schema và xác nhận hai bảng `products`, `transactions`. Ứng dụng Flask được triển khai trên Elastic Beanstalk Environment `inventory-env-py312` dùng Python 3.12. Ngày 18/10/2026, sau giai đoạn Environment từ chối kết nối, nhóm truy cập lại thành công; các API sản phẩm/giao dịch và luồng tạo sản phẩm, nhập/xuất trên Web UI đã được kiểm thử. Tồn kho trên UI đổi từ `4` lên `11` sau nhập và xuống `8` sau xuất. CloudWatch xác nhận 7 log groups có retention 7 ngày và access log ghi nhận `GET /api/products` trả HTTP `200`. Source bundle cập nhật xử lý database timeout đã được deploy với version `timeout-logs-20261018-1`; Environment hiển thị Health `Ok`. Phản hồi timeout đã được kiểm thử tự động nhưng chưa mô phỏng cố ý trên AWS. Các ảnh kiểm thử lại được trình bày tại Hình 12–16; các minh chứng CloudWatch và deployment mới được trình bày tại Hình 17–19. Một số dữ liệu kiểm thử còn lại sau khi chụp và được ghi rõ tại Mục 3.6. Kết quả triển khai và kiểm thử ban đầu được minh họa tại Hình 8–11. Environment ban đầu `inventory-env` đã dùng Sample application và không phải Environment đang chạy ứng dụng Flask.
 
 
 ---

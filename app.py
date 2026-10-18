@@ -143,6 +143,18 @@ def handle_integrity_error(error):
     return jsonify({"error": "SKU đã tồn tại hoặc dữ liệu vi phạm ràng buộc."}), 409
 
 
+@app.errorhandler(psycopg2.OperationalError)
+def handle_database_operational_error(error):
+    logger.exception("Database operation failed")
+    if request.path.startswith("/api/"):
+        return (
+            jsonify({"error": "Cơ sở dữ liệu tạm thời không khả dụng. Vui lòng thử lại."}),
+            503,
+            {"Retry-After": "5"},
+        )
+    return render_template("service_unavailable.html"), 503, {"Retry-After": "5"}
+
+
 @app.route("/")
 def index():
     conn = get_db_connection()
