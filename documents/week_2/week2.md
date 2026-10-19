@@ -471,6 +471,11 @@ Em kiểm tra lại Storage autoscaling và xác nhận Disabled. Các ảnh đ�
 
 **Trạng thái còn lại:** Chưa có xác nhận đã dừng RDS hoặc EC2 `inventory-db-setup`; cần phối hợp với Khanh để kết thúc sử dụng trước khi dừng. Chưa xác nhận toàn bộ ảnh và báo cáo mới đã được commit lên GitHub. Không đánh dấu hoàn thành hai nội dung này khi chưa thực hiện.
 
+### Commit minh chứng cho Mục 7
+
+- Nội dung công việc được giao và quá trình thực hiện: [commit `53ee148fd9ba0454fe93c4910f7121a1309b1e7f`](https://github.com/qilskcter/inventory-app/commit/53ee148fd9ba0454fe93c4910f7121a1309b1e7f).
+- Ảnh minh chứng hạ tầng RDS được sử dụng trong mục này: [commit `857211e85c0c5c617a57d865c264266bad25ff81`](https://github.com/qilskcter/inventory-app/commit/857211e85c0c5c617a57d865c264266bad25ff81).
+
 ---
 
 ## 8. KẾT QUẢ VÀ MINH CHỨNG CỦA VÕ MINH QUÂN
