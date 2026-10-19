@@ -221,6 +221,16 @@ Source bundle mới được deploy lên Elastic Beanstalk với Running version
 | Kiểm thử REST API | Ngày 18/10/2026, kiểm thử danh sách, CRUD sản phẩm, đọc lịch sử, giao dịch `IN`/`OUT`, tồn kho và các phản hồi lỗi; các mã nhận được phù hợp với kết quả nêu tại Mục 3.6. Các sản phẩm thử nghiệm trong ảnh còn tồn tại tại lần xác minh đọc sau đó. | Hình 11 ghi nhận lần trước; Hình 12–14 ghi nhận kiểm thử lại tại Mục 3.6. |
 | CloudWatch Logs và database timeout | Đã xác nhận 7 log groups với retention 7 ngày; access log ghi nhận `GET /api/products` trả `200`. Source bundle có giới hạn thời gian kết nối và phản hồi `503` khi database tạm thời không khả dụng; bản cập nhật đã deploy và Environment Health `Ok`. Hành vi timeout được kiểm thử tự động, chưa mô phỏng cố ý trên AWS. | Hình 17–19; `.ebextensions/01-cloudwatch-logs.config`, `init_db.py`, `tests/test_app.py`. |
 
+### 4.1. Commit mã nguồn minh chứng
+
+| Hạng mục | SHA commit | Liên kết |
+| :--- | :--- | :--- |
+| Tạo môi trường (create environment) | `a8b61fee284cc54b1cea4302c64ca2c8e37e6c1f` | [Xem commit](https://github.com/qilskcter/inventory-app/commit/a8b61fee284cc54b1cea4302c64ca2c8e37e6c1f) |
+| Triển khai ứng dụng (deploy application) | `0f7531777a630f89e72b704b9af2acb61963d71b` | [Xem commit](https://github.com/qilskcter/inventory-app/commit/0f7531777a630f89e72b704b9af2acb61963d71b) |
+| Cấu hình CloudWatch Logs | `9112c287a61d14381fad26c998d73ff22b9b0393` | [Xem commit](https://github.com/qilskcter/inventory-app/commit/9112c287a61d14381fad26c998d73ff22b9b0393) |
+| Cập nhật kiểm thử Web (update test web) | `e6d8c8d5cccbcbef1792b04dd31b9fdd5e714791` | [Xem commit](https://github.com/qilskcter/inventory-app/commit/e6d8c8d5cccbcbef1792b04dd31b9fdd5e714791) |
+| Bổ sung ảnh minh chứng hạ tầng RDS | `857211e85c0c5c617a57d865c264266bad25ff81` | [Xem commit](https://github.com/qilskcter/inventory-app/commit/857211e85c0c5c617a57d865c264266bad25ff81) |
+
 ---
 
 ## 5. KHAI BÁO SỬ DỤNG TRỢ LÝ AI
@@ -501,4 +511,3 @@ Trong tuần 2, em đã thực hiện phần hạ tầng mạng và cơ sở d�
 Em đã tạo RDS PostgreSQL 18.3 với class `db.t3.micro`, storage gp3 20 GiB và không bật truy cập công khai. Từ EC2 quản trị trong VPC, em kết nối RDS qua SSL có xác minh chứng chỉ, tạo `inventory_db`, thực thi schema và xác nhận hai bảng `products`, `transactions` cùng ba index. Sau đó, em bàn giao thông số kết nối cho Nguyễn Đình Khanh để phối hợp cấu hình ứng dụng.
 
 Em đã quan sát CPUUtilization, FreeStorageSpace, DatabaseConnections và kiểm thử truy cập từ máy cá nhân. Kết quả cho thấy EC2 được cấp quyền truy vấn được database, còn lần kiểm tra TCP/5432 từ máy cá nhân không thành công, phù hợp với thiết kế RDS trong mạng riêng. Em cũng hoàn thiện Tags của RDS và DB Subnet Group, đồng thời xác nhận Storage autoscaling đã Disabled.
-
