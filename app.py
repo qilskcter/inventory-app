@@ -1,10 +1,13 @@
 import logging
 
+from datetime import datetime, timezone
+
 import psycopg2
 import psycopg2.extras
-from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
 
 from init_db import init_db, get_db_connection
+from reports import generate_inventory_csv, upload_report_to_s3
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -393,6 +396,68 @@ def api_create_transaction():
         product_id, data["type"], data["quantity"]
     )
     return jsonify({"product": product, "transaction": transaction_record}), 201
+
+
+@app.get("/api/reports/inventory/csv")
+def api_export_inventory_csv():
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        try:
+            cur.execute("SELECT * FROM products ORDER BY id ASC")
+            products = [_row_dict(row) for row in cur.fetchall()]
+        finally:
+            cur.close()
+    finally:
+        conn.close()
+
+    csv_data = generate_inventory_csv(products)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    filename = f"inventory_report_{timestamp}.csv"
+
+    return Response(
+        csv_data.encode("utf-8-sig"),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Type": "text/csv; charset=utf-8",
+        },
+    )
+
+
+@app.post("/api/reports/inventory/export-s3")
+def api_export_inventory_to_s3():
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        try:
+            cur.execute("SELECT * FROM products ORDER BY id ASC")
+            products = [_row_dict(row) for row in cur.fetchall()]
+        finally:
+            cur.close()
+    finally:
+        conn.close()
+
+    csv_data = generate_inventory_csv(products)
+    try:
+        upload_result = upload_report_to_s3(csv_data)
+        return (
+            jsonify(
+                {
+                    "message": "Báo cáo tồn kho đã được xuất và lưu trữ an toàn vào Amazon S3.",
+                    "s3_bucket": upload_result["bucket"],
+                    "s3_key": upload_result["key"],
+                    "size_bytes": upload_result["size_bytes"],
+                    "total_records": len(products),
+                }
+            ),
+            200,
+        )
+    except ValueError as error:
+        raise ApiError(str(error), 400)
+    except Exception as error:
+        logger.exception("S3 upload failed: %s", error)
+        raise ApiError("Không thể lưu trữ báo cáo vào Amazon S3. Vui lòng kiểm tra cấu hình.", 502)
 
 
 if __name__ == "__main__":

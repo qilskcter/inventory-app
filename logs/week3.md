@@ -59,9 +59,9 @@
 ## IV. DANH SÁCH CÔNG VIỆC CẦN LÀM
 
 ### Giai đoạn 1: Tích hợp ứng dụng
-- [ ] Kiểm tra API và giao diện kết nối Environment hiện tại tới đúng RDS/database.
-- [ ] Kiểm thử nhập/xuất kho, ngưỡng tồn, giao dịch đồng thời và các mã lỗi dự kiến.
-- [ ] Đánh giá xuất báo cáo CSV và tích hợp S3 private; chỉ đánh dấu hoàn thành sau khi upload/read được đối tượng thử nghiệm.
+- [x] Kiểm tra API và giao diện kết nối Environment hiện tại tới đúng RDS/database.
+- [x] Kiểm thử nhập/xuất kho, ngưỡng tồn, giao dịch đồng thời và các mã lỗi dự kiến.
+- [x] Đánh giá xuất báo cáo CSV và tích hợp S3 private; chỉ đánh dấu hoàn thành sau khi upload/read được đối tượng thử nghiệm.
 - [ ] Đánh giá/cài đặt SNS cảnh báo tồn kho; xác nhận subscription trước khi gửi thông báo.
 
 ### Giai đoạn 2: Bảo mật
