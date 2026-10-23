@@ -7,6 +7,7 @@ import psycopg2.extras
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
 
 from init_db import init_db, get_db_connection
+from notifications import send_low_stock_alert
 from reports import generate_inventory_csv, upload_report_to_s3
 
 app = Flask(__name__)
@@ -125,6 +126,16 @@ def _perform_stock_transaction(product_id, trans_type, quantity):
             )
             transaction = _row_dict(cur.fetchone())
             conn.commit()
+
+            if trans_type == "OUT":
+                prev_qty = product["quantity"] + quantity
+            else:
+                prev_qty = product["quantity"] - quantity
+            try:
+                send_low_stock_alert(product, prev_qty, product["quantity"], trans_type=trans_type)
+            except Exception as alert_err:
+                logger.warning("Lỗi kích hoạt cảnh báo tồn kho: %s", alert_err)
+
             return product, transaction
         except Exception:
             conn.rollback()
@@ -458,6 +469,26 @@ def api_export_inventory_to_s3():
     except Exception as error:
         logger.exception("S3 upload failed: %s", error)
         raise ApiError("Không thể lưu trữ báo cáo vào Amazon S3. Vui lòng kiểm tra cấu hình.", 502)
+
+
+@app.route("/api/notifications/status", methods=["GET"])
+def api_notification_status():
+    from notifications import (
+        ALERT_ENABLED,
+        SNS_REGION,
+        SNS_TOPIC_ARN,
+        inspect_topic_subscriptions,
+    )
+
+    info = {
+        "alert_enabled": ALERT_ENABLED,
+        "topic_arn_configured": bool(SNS_TOPIC_ARN),
+        "topic_arn": SNS_TOPIC_ARN if SNS_TOPIC_ARN else "Chưa cấu hình (Cần gán biến SNS_TOPIC_ARN)",
+        "region": SNS_REGION,
+    }
+    sub_data = inspect_topic_subscriptions(topic_arn=SNS_TOPIC_ARN, region_name=SNS_REGION)
+    info.update(sub_data)
+    return jsonify(info), 200
 
 
 if __name__ == "__main__":

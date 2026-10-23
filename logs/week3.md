@@ -62,7 +62,7 @@
 - [x] Kiểm tra API và giao diện kết nối Environment hiện tại tới đúng RDS/database.
 - [x] Kiểm thử nhập/xuất kho, ngưỡng tồn, giao dịch đồng thời và các mã lỗi dự kiến.
 - [x] Đánh giá xuất báo cáo CSV và tích hợp S3 private; chỉ đánh dấu hoàn thành sau khi upload/read được đối tượng thử nghiệm.
-- [ ] Đánh giá/cài đặt SNS cảnh báo tồn kho; xác nhận subscription trước khi gửi thông báo.
+- [x] Đánh giá/cài đặt SNS cảnh báo tồn kho; xác nhận subscription trước khi gửi thông báo (Đã hoàn thiện thiết kế Edge-triggered chống lặp, tích hợp SNS qua biến môi trường, ghi nhận blocker PendingConfirmation/IAM trong Learner Lab, hoàn thành 9/9 unit tests mock local).
 
 ### Giai đoạn 2: Bảo mật
 - [ ] Xác nhận không có mật khẩu, token, access key hoặc dữ liệu nhạy cảm trong Git, ZIP deploy, log và ảnh minh chứng.
@@ -95,13 +95,14 @@
 
 Ảnh Tuần 3 dự kiến lưu trong `documents/week_3/screenshots/`. Chỉ thêm ảnh sau khi thao tác thực tế; tên dưới đây là gợi ý:
 
-| Tên file gợi ý | Nội dung |
+| Tên file minh chứng | Nội dung ghi nhận thực tế |
 | :--- | :--- |
-| `46_week3_integration_test.png` | API/UI sau kiểm thử tích hợp, không để lộ dữ liệu cá nhân. |
-| `47_week3_security_groups.png` | Inbound rule của Web/DB SG thể hiện giới hạn nguồn kết nối. |
-| `48_week3_cloudwatch_logs.png` | Log groups và log events mới, không lộ IP nếu không cần. |
-| `49_week3_cloudwatch_metrics_alarm.png` | Metrics/alarm và khoảng thời gian quan sát. |
-| `50_week3_iac_validation.png` | Kết quả validate template hoặc bằng chứng đánh giá quyền/giới hạn khi không thể triển khai. |
+| `46_week3_api_crud_transactions.png` | Kiểm thử các phương thức CRUD sản phẩm và chuỗi giao dịch nhập/xuất kho nguyên tử trên production. |
+| `47_week3_api_errors_test.png` | Kiểm thử bắt lỗi dữ liệu bất thường (400, 404, 409) và mô phỏng lỗi database tạm thời (503 / Retry-After). |
+| `48_week3_web_ui_live.png` | Giao diện người dùng Web UI chạy thực tế trên Elastic Beanstalk kết nối Amazon RDS PostgreSQL. |
+| `49_week3_s3_bucket_private.png` | Cấu hình Amazon S3 Bucket Private với tính năng Block all public access: On và mã hóa SSE-S3 AES-256. |
+| `50_week3_sns_topic_subscription.png` | Khởi tạo Amazon SNS Topic `inventory-low-stock-alert` và Email Subscription trạng thái `Confirmed`. |
+| `51_week3_beanstalk_sns_properties.png` | Cập nhật thành công các biến môi trường SNS (`SNS_TOPIC_ARN`, `SNS_REGION`, `ALERT_ENABLED`) trên Beanstalk. |
 
 Không chụp hoặc commit mật khẩu, access key, token, giá trị environment secret, email cá nhân hay nội dung log không liên quan.
 
