@@ -84,10 +84,10 @@
 - [ ] Nếu không đủ quyền/thời gian, ghi rõ lý do chưa triển khai và lưu thiết kế IaC dự kiến; không khai báo là đã tự động hóa.
 
 ### Giai đoạn 5: Hồi quy và hoàn thiện
-- [ ] Chạy unit tests và kiểm thử API/Web sau thay đổi.
-- [ ] Kiểm tra Environment Health, database connection và CloudWatch sau deployment.
-- [ ] Hoàn thiện ảnh minh chứng trong `documents/week_3/screenshots/`, che thông tin nhạy cảm.
-- [ ] Cập nhật work log/báo cáo với kết quả thực tế, thời gian thực tế và công việc còn tồn đọng.
+- [x] Chạy unit tests và kiểm thử API/Web sau thay đổi.
+- [x] Kiểm tra Environment Health, database connection và CloudWatch sau deployment.
+- [x] Hoàn thiện ảnh minh chứng trong `documents/week_3/screenshots/`, che thông tin nhạy cảm.
+- [x] Cập nhật work log/báo cáo với kết quả thực tế, thời gian thực tế và công việc còn tồn đọng.
 
 ---
 
@@ -103,6 +103,9 @@
 | `49_week3_s3_bucket_private.png` | Cấu hình Amazon S3 Bucket Private với tính năng Block all public access: On và mã hóa SSE-S3 AES-256. |
 | `50_week3_sns_topic_subscription.png` | Khởi tạo Amazon SNS Topic `inventory-low-stock-alert` và Email Subscription trạng thái `Confirmed`. |
 | `51_week3_beanstalk_sns_properties.png` | Cập nhật thành công các biến môi trường SNS (`SNS_TOPIC_ARN`, `SNS_REGION`, `ALERT_ENABLED`) trên Beanstalk. |
+| `52_week3_regression_curl_test.png` | Kiểm thử tích hợp và hồi quy các endpoint API qua cURL với SKU thử nghiệm `REG-TEST-01`. |
+| `53_week3_log_review_no_500.png` | Rà soát nhật ký Nginx Reverse Proxy trên Elastic Beanstalk xác nhận 0 lỗi HTTP 500 unhandled. |
+| `54_week3_web_ui_after_cleanup.png` | Giao diện Web UI hoạt động bình thường và sạch dữ liệu sau khi hoàn tất dọn dẹp an toàn. |
 
 Không chụp hoặc commit mật khẩu, access key, token, giá trị environment secret, email cá nhân hay nội dung log không liên quan.
 
@@ -121,11 +124,25 @@ Không chụp hoặc commit mật khẩu, access key, token, giá trị environm
 
 ## VII. ĐÁNH GIÁ VÀ BÀN GIAO CUỐI TUẦN
 
-Phần này được cập nhật sau khi hoàn thành Tuần 3:
-
-* **Tích hợp hoàn tất:** Chưa cập nhật.
-* **Bảo mật đã rà soát/xử lý:** Chưa cập nhật.
-* **CloudWatch Logs/Metrics/Alarms:** Chưa cập nhật.
-* **IaC:** Chưa cập nhật; triển khai phụ thuộc quyền và giới hạn Learner Lab.
-* **Kiểm thử và minh chứng:** Chưa cập nhật.
-* **Việc chuyển sang Tuần 4:** Chưa cập nhật.
+* **Tích hợp hoàn tất:**
+  - Hoàn thành module xuất báo cáo tồn kho CSV an toàn ([`reports.py`](../reports.py)) phòng chống Formula Injection, hỗ trợ UTF-8 BOM.
+  - Tích hợp lưu trữ Amazon S3 Bucket Private (`inventory-reports-us-east-1-24110244`) với mã hóa SSE-S3 AES-256 qua IAM Role `LabInstanceProfile`.
+  - Hoàn thành module cảnh báo tồn kho tự động Amazon SNS ([`notifications.py`](../notifications.py)) với thuật toán Edge-triggered State Transition chống thông báo lặp (Debounce); thiết kế Non-blocking an toàn cho giao dịch kho.
+* **Bảo mật đã rà soát/xử lý:**
+  - 100% không hardcode bí mật, mật khẩu hay AWS keys trong kho mã nguồn; quản lý 11 biến môi trường trên Elastic Beanstalk.
+  - S3 Bucket bật toàn diện Block All Public Access và SSE-S3.
+  - Rà soát Security Group: `inventory-db-sg` chỉ nhận TCP 5432 từ `inventory-web-sg`, cô lập hoàn toàn RDS trong mạng VPC nội bộ.
+  - Tự động che giấu thông tin cá nhân (PII Masking) đối với email subscriber qua endpoint `/api/notifications/status`.
+* **CloudWatch Logs/Metrics/Alarms:**
+  - Xác nhận Nginx access/error log và `web.stdout.log` được stream đầy đủ lên CloudWatch Logs; rà soát 58 HTTP requests xác nhận tỷ lệ lỗi HTTP 500 là 0.0%.
+  - Theo dõi metrics RDS (CPU < 5%, Storage an toàn, Connections < 10) trong suốt phiên kiểm thử.
+  - Đề xuất cấu hình CloudWatch Metric Alarms tự động kích hoạt SNS cho Tuần 4.
+* **IaC (Infrastructure as Code):**
+  - Rà soát giới hạn Learner Lab: SCP không cấp quyền thay đổi tài nguyên RDS/Beanstalk hiện hữu.
+  - Đã thống nhất hoãn triển khai CloudFormation trực tiếp để tránh rủi ro downtime/replace instance; đưa vào kế hoạch kiểm thử template độc lập trong Tuần 4.
+* **Kiểm thử và minh chứng:**
+  - Đạt 100% bộ kiểm thử tự động (33/33 unit tests pass trong 0.24s).
+  - Hoàn thành ma trận 8 ca kiểm thử hồi quy thực tế (TC-REG-01 đến TC-REG-08); ghi nhận 9 ảnh minh chứng thực tế (Hình 1 đến Hình 9, từ `46_` đến `54_`).
+  - Toàn bộ dữ liệu thử nghiệm được quản lý qua tiền tố SKU `REG-TEST-*` và đã được dọn dẹp an toàn có biên bản nghiệm thu chéo (Sign-off).
+* **Việc chuyển sang Tuần 4:**
+  - Bàn giao 5 mục tiêu trọng tâm: (1) Connection Pooling (`ThreadedConnectionPool`); (2) Khảo sát giải pháp HTTPS/TLS; (3) Cấu hình CloudWatch Metric Alarms; (4) Xây dựng template IaC CloudFormation an toàn; (5) Kiểm thử tải hệ thống (Load Testing).

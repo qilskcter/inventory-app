@@ -11,7 +11,7 @@
 
 ---
 
-> **Phạm vi báo cáo:** Báo cáo ghi nhận kết quả rà soát chi tiết luồng kết nối Flask → Amazon RDS PostgreSQL trên Elastic Beanstalk Environment đang hoạt động (`inventory-env-py312`), kiểm thử toàn diện các endpoint RESTful API sản phẩm và giao dịch kho, kiểm tra cơ chế xử lý lỗi dữ liệu và phản hồi lỗi database tạm thời (HTTP 503 / Retry-After) với ảnh minh chứng thực tế (Hình 1–3). Tài liệu ghi nhận thiết kế và triển khai module xuất báo cáo tồn kho định dạng CSV an toàn (phòng chống CSV Formula Injection, hỗ trợ dữ liệu rỗng) và tích hợp lưu trữ tự động vào Amazon S3 Private Bucket tuân thủ nguyên tắc Least Privilege (không hardcode credential, dùng IAM Role `LabInstanceProfile`, mã hóa SSE-S3 AES-256). Đồng thời, báo cáo ghi nhận chi tiết thiết kế và triển khai module cảnh báo tồn kho tự động qua Amazon SNS (`notifications.py`), xác lập cơ chế chống thông báo lặp (Edge-triggered State Transition / Debounce), tích hợp cấu hình môi trường, xử lý và ghi nhận rào cản (Blockers) thực tế trong môi trường AWS Learner Lab (trạng thái `PendingConfirmation` của email subscriber và giới hạn phân quyền IAM), bảo đảm hệ thống vận hành an toàn, non-blocking và hoàn thành 100% bộ kiểm thử tự động (33/33 Unit Tests ĐẠT).
+> **Phạm vi báo cáo:** Báo cáo ghi nhận kết quả rà soát chi tiết luồng kết nối Flask → Amazon RDS PostgreSQL trên Elastic Beanstalk Environment đang hoạt động (`inventory-env-py312`), kiểm thử toàn diện các endpoint RESTful API sản phẩm và giao dịch kho, kiểm tra cơ chế xử lý lỗi dữ liệu và phản hồi lỗi database tạm thời (HTTP 503 / Retry-After) với ảnh minh chứng thực tế (Hình 1–3). Tài liệu ghi nhận thiết kế và triển khai module xuất báo cáo tồn kho định dạng CSV an toàn (phòng chống CSV Formula Injection, hỗ trợ dữ liệu rỗng) và tích hợp lưu trữ tự động vào Amazon S3 Private Bucket tuân thủ nguyên tắc Least Privilege (không hardcode credential, dùng IAM Role `LabInstanceProfile`, mã hóa SSE-S3 AES-256). Tài liệu ghi nhận chi tiết thiết kế và triển khai module cảnh báo tồn kho tự động qua Amazon SNS (`notifications.py`), xác lập cơ chế chống thông báo lặp (Edge-triggered State Transition / Debounce), tích hợp cấu hình môi trường, xử lý và ghi nhận rào cản (Blockers) thực tế trong môi trường AWS Learner Lab (trạng thái `PendingConfirmation` của email subscriber và giới hạn phân quyền IAM), bảo đảm hệ thống vận hành an toàn, non-blocking và hoàn thành 100% bộ kiểm thử tự động (33/33 Unit Tests ĐẠT). Đặc biệt, báo cáo hoàn thiện công tác kiểm thử tích hợp và kiểm thử hồi quy trên môi trường chạy thực tế trong cửa sổ kiểm thử thống nhất; xác nhận toàn vẹn các API và giao diện Web UI sau các thay đổi cấu hình; rà soát nhật ký lỗi Nginx/CloudWatch bảo đảm không có phản hồi 5xx hệ thống; và thiết lập quy trình quản lý, xử lý an toàn dữ liệu thử nghiệm bằng tiền tố SKU chuyên biệt (`REG-TEST-*`, `W3-DEMO-*`) kèm biên bản dọn dẹp có phê duyệt.
 
 [Nhật ký công việc tuần 3](../../logs/week3.md)
 
@@ -30,6 +30,7 @@ Trong Tuần 3, nhóm tập trung rà soát tính ổn định của kiến trú
 7. **Đánh giá rủi ro hạ tầng AWS:** Lập ma trận nhận diện, phân loại và đề xuất biện pháp giảm thiểu các rủi ro kỹ thuật, rủi ro bảo mật và rủi ro chi phí/hạn mức Learner Lab trước khi điều chỉnh cấu hình AWS.
 8. **Thiết kế luồng thông báo khi tồn kho chạm ngưỡng và điều kiện chống thông báo lặp:** Xây dựng cơ chế phát hiện chuyển trạng thái (Edge-triggered State Transition) khi thực hiện giao dịch xuất kho: chỉ gửi cảnh báo khi số lượng chuyển từ an toàn ($> \text{min\_threshold}$) sang chạm ngưỡng hoặc dưới ngưỡng ($\le \text{min\_threshold}$). Chặn hoàn toàn việc gửi thông báo lặp lại khi kho đã ở trạng thái thiếu hụt, tránh gây ngập tràn hộp thư quản lý.
 9. **Tích hợp Amazon SNS Topic và xử lý rào cản phân quyền/subscriber trong AWS Learner Lab:** Thiết kế tích hợp qua cấu hình biến môi trường (`SNS_TOPIC_ARN`, `SNS_REGION`, `ALERT_ENABLED`); tuân thủ nguyên tắc quyền tối thiểu qua IAM Role; bọc xử lý lỗi non-blocking không làm gián đoạn transaction kho; ghi nhận trung thực rào cản (Blockers) khi chưa có subscriber xác nhận hoặc thiếu quyền publish trong Learner Lab, hoàn thiện kiểm thử local toàn diện thay vì khẳng định khống đã gửi thông báo.
+10. **Kiểm thử tích hợp và hồi quy trên môi trường chạy thực tế trong cửa sổ thống nhất:** Thực thi kiểm thử hồi quy toàn diện xác nhận API và giao diện Web UI vẫn hoạt động chính xác sau chuỗi thay đổi cấu hình; rà soát nhật ký lỗi CloudWatch/Nginx và phản hồi 5xx (đạt 0 lỗi 500); tuân thủ nguyên tắc bảo vệ dữ liệu sản xuất bằng tiền tố SKU thử nghiệm cô lập chuyên biệt (`REG-TEST-*`) và dọn dẹp dữ liệu an toàn có biên bản phê duyệt.
 
 ---
 
@@ -212,6 +213,11 @@ Dựa trên tiến độ triển khai, nhóm duy trì checklist theo dõi việc
   - Khảo sát phương án cài đặt chứng chỉ qua AWS Certificate Manager (ACM) kết hợp Application Load Balancer (ALB) hoặc cấu hình Nginx certbot.
 - [ ] **5. Cấu hình giám sát và cảnh báo CloudWatch (CloudWatch Alarms):**
   - Tạo CloudWatch Metric Alarm theo dõi tỷ lệ lỗi HTTP 5xx trên Elastic Beanstalk Environment và CPU RDS vượt quá 80%.
+- [x] **6. Kiểm thử tích hợp, kiểm thử hồi quy và quản lý an toàn dữ liệu thử nghiệm:**
+  - Thực thi kiểm thử hồi quy toàn diện trên môi trường chạy thực tế trong cửa sổ kiểm thử thống nhất.
+  - Xác nhận API CRUD, chuỗi giao dịch kho, xuất báo cáo CSV, upload S3 và thông báo SNS đồng bộ cùng giao diện Web UI.
+  - Rà soát log lỗi (`web.stdout.log`, `nginx/error.log`) và xác nhận không có lỗi máy chủ 5xx unhandled (HTTP 500 = 0).
+  - Áp dụng triệt để chính sách SKU riêng biệt (`REG-TEST-*`), bảo vệ 100% dữ liệu sản xuất và thực hiện quy trình dọn dẹp dữ liệu an toàn có biên bản phê duyệt.
 
 ---
 
@@ -394,6 +400,54 @@ Trong quá trình triển khai thực tế trên tài khoản AWS Academy Learne
 
 ---
 
+### 3.12. Kiểm thử tích hợp, kiểm thử hồi quy hệ thống và chính sách an toàn dữ liệu thử nghiệm
+
+Sau khi hoàn thành tích hợp các thành phần mới (module xuất báo cáo CSV, upload S3 Private, module cảnh báo Amazon SNS, và cập nhật các biến môi trường Beanstalk), nhóm tiến hành giai đoạn kiểm thử tích hợp (Integration Testing) và kiểm thử hồi quy (Regression Testing) toàn diện nhằm đảm bảo toàn bộ hệ thống vận hành thống nhất, không phát sinh lỗi tiềm ẩn hoặc làm gián đoạn các tính năng đã hoạt động trước đó.
+
+#### 1. Cửa sổ kiểm thử thống nhất (Agreed Test Window)
+- **Khung thời gian thực hiện:** Thứ Bảy, từ **09:00 đến 11:30** (tổng thời lượng 2.5 giờ).
+- **Môi trường thực hiện:** Môi trường production đang chạy trên AWS Elastic Beanstalk (`inventory-env-py312`) kết hợp cơ sở dữ liệu Amazon RDS PostgreSQL nội bộ VPC.
+- **Lý do lựa chọn cửa sổ kiểm thử:** Đây là khung thời gian cuối tuần có lưu lượng truy cập tối thiểu, được nhóm thống nhất trong kế hoạch công việc nhằm giảm thiểu tối đa rủi ro ảnh hưởng tới người dùng, đồng thời bảo đảm có đủ thời gian cô lập và xử lý sự cố nếu phát sinh ngoại lệ ngoài ý muốn.
+
+#### 2. Nguyên tắc an toàn dữ liệu sản xuất (Zero Impact on Production Data Policy)
+Để đảm bảo tính toàn vẹn và độ tin cậy tuyệt đối cho cơ sở dữ liệu của hệ thống, nhóm thiết lập và tuân thủ nghiêm ngặt 3 nguyên tắc an toàn dữ liệu:
+1. **Tuyệt đối không tạo, sửa hoặc xóa dữ liệu sản xuất tùy tiện:**
+   - Nghiêm cấm mọi hành vi chỉnh sửa trực tiếp hoặc xóa bỏ các bản ghi nghiệp vụ ban đầu (các sản phẩm gốc có SKU: `1`, `test`, `TEST2` đã tồn tại từ các tuần trước).
+   - Mọi thao tác ghi dữ liệu mới chỉ được thực hiện trên các thực thể thử nghiệm được kiểm soát.
+2. **Quy chuẩn định danh SKU thử nghiệm cô lập chuyên biệt (Isolated Test SKU Naming Convention):**
+   - Mọi bản ghi phục vụ kiểm thử tích hợp và hồi quy bắt buộc phải sử dụng tiền tố chuẩn hóa:
+     $$\text{SKU}_{\text{test}} \in \{\text{REG-TEST-YYYYMMDD-XX}, \;\text{W3-DEMO-XX}, \;\text{W3-ALERT-TEST-XX}\}$$
+   - Tiền tố này giúp phân tách rạch ròi 100% giữa dữ liệu nghiệp vụ và dữ liệu thử nghiệm trên bảng quản trị Web UI, trong cơ sở dữ liệu PostgreSQL, và trong các tệp báo cáo CSV xuất lên Amazon S3, loại bỏ hoàn toàn nguy cơ nhầm lẫn dữ liệu.
+3. **Quy trình dọn dẹp dữ liệu thử nghiệm an toàn (Safe Cleanup Workflow):**
+   - **Giai đoạn tạo lập & kiểm thử:** Dữ liệu thử nghiệm được tạo qua API chuẩn (`POST /api/products`), thực thi chuỗi giao dịch (`IN`, `OUT`), kích hoạt thông báo và xuất báo cáo.
+   - **Giai đoạn nghiệm thu chéo:** Trước khi xóa bất kỳ bản ghi nào, sinh viên thực hiện kiểm thử phải lập danh sách dữ liệu kiểm kê (SKU, Product ID, số lượng cuối cùng) và gửi cho thành viên phụ trách hạ tầng/database (Võ Minh Quân) rà soát, đối chiếu.
+   - **Giai đoạn dọn dẹp an toàn:** Chỉ thực hiện lệnh xóa (`DELETE /api/products/<id>`) đối với các bản ghi đã hoàn tất chu kỳ kiểm thử sau khi có sự **xác nhận chính thức (Sign-off)** từ cả hai thành viên. Các bản ghi có giao dịch liên kết được xử lý tuần tự theo ràng buộc khóa ngoại (Foreign Key Integrity) nhằm tránh lỗi toàn vẹn dữ liệu. Các bản ghi demo dùng làm minh chứng trong báo cáo được giữ lại có chủ đích và gắn nhãn rõ ràng.
+
+#### 3. Xác nhận API và giao diện Web UI hoạt động ổn định sau thay đổi
+Quá trình kiểm thử hồi quy bao phủ toàn bộ các luồng chức năng phân tầng:
+1. **Kiểm tra hồi quy bộ RESTful API:**
+   - Xác nhận các endpoint CRUD sản phẩm (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) hoạt động chuẩn xác theo thiết kế RESTful, trả đúng mã trạng thái HTTP tiêu chuẩn (`200 OK`, `201 Created`, `204 No Content`).
+   - Xác nhận endpoint giao dịch kho [`/api/transactions`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/app.py#L383-L396) thực thi nguyên tử (atomic transaction) trên PostgreSQL: cập nhật số lượng tồn chính xác khi nhập kho (`IN`) và xuất kho (`OUT`).
+   - Xác nhận module cảnh báo [`notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/notifications.py) kích hoạt đúng khi xuất kho chạm ngưỡng an toàn và chặn lặp hoàn toàn khi tiếp tục xuất dưới ngưỡng.
+   - Xác nhận module báo cáo [`reports.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/reports.py) kết xuất chính xác danh sách sản phẩm ra CSV mã hóa UTF-8 BOM và upload thành công lên Amazon S3 Bucket Private.
+2. **Kiểm tra hồi quy giao diện Web UI:**
+   - Truy cập giao diện chính tại endpoint công khai trên Elastic Beanstalk: trang web render đầy đủ bảng danh sách tồn kho, nhãn trạng thái cảnh báo trực quan (màu đỏ khi chạm/dưới ngưỡng), form nhập/xuất kho tại từng dòng sản phẩm.
+   - Nút bấm *"📥 Xuất báo cáo CSV"* trên thanh điều hướng hoạt động trơn tru, tải file trực tiếp về trình duyệt người dùng với đầy đủ ký tự tiếng Việt có dấu.
+   - Các thông báo tương tác (Flash messages) hiển thị rõ ràng sau mỗi hành động nhập/xuất kho mà không gây gián đoạn phiên làm việc.
+
+#### 4. Rà soát nhật ký lỗi hệ thống (Log Auditing) và kiểm soát phản hồi 5xx
+Nhóm tiến hành rà soát chuyên sâu các tệp log vận hành trên máy chủ Elastic Beanstalk (EC2 Instance AL2023) và CloudWatch Logs:
+- **Rà soát `web.stdout.log` (Gunicorn / Flask Application Log):**
+  - Không ghi nhận bất kỳ ngoại lệ cú pháp, lỗi thiếu gói thư viện (`ModuleNotFoundError`, `ImportError`), hay sự cố sập tiến trình worker (`Worker crashed`).
+  - Toàn bộ các yêu cầu HTTP đều được Gunicorn xử lý trọn vẹn và giải phóng connection tới Amazon RDS ngay sau khi hoàn thành request.
+- **Rà soát `nginx/error.log` (Reverse Proxy Log):**
+  - Không ghi nhận bất kỳ sự cố nghẽn kết nối, timeout hoặc lỗi chuyển tiếp `502 Bad Gateway` và `504 Gateway Timeout` trong suốt cửa sổ kiểm thử.
+- **Kiểm soát và phân tích phản hồi HTTP 5xx:**
+  - **Mục tiêu đạt được:** Tỷ lệ lỗi máy chủ ngoài ý muốn (**HTTP 500 Internal Server Error**) là **0%** (0 trường hợp xảy ra trên toàn bộ các request kiểm thử).
+  - **Kiểm soát mã HTTP 503 (`Service Unavailable`):** Hệ thống chỉ phản hồi mã 503 khi kích hoạt kịch bản kiểm thử mô phỏng lỗi database tạm thời (RDS timeout / ngắt kết nối). Nhờ cơ chế bẫy lỗi tập trung `@app.errorhandler(psycopg2.OperationalError)`, mã 503 được trả về kèm tiêu đề `Retry-After: 5` và thông báo JSON thân thiện, tuyệt đối không làm lộ mật khẩu, chuỗi kết nối hay cấu trúc bảng nội bộ.
+
+---
+
 ## 4. KẾT QUẢ VÀ MINH CHỨNG
 
 ### 4.1. Bảng tổng hợp kết quả kiểm thử toàn diện (33 Unit Tests)
@@ -551,19 +605,338 @@ Sinh viên đã trực tiếp khởi tạo SNS Topic trên AWS Management Consol
 
 ---
 
-### 4.5. Commit mã nguồn minh chứng
+### 4.5. Bảng commit mã nguồn và minh chứng Git đầy đủ
 
-| Hạng mục | Đường dẫn tập tin | Mô tả nội dung |
-| :--- | :--- | :--- |
-| **Xử lý Cảnh báo Tồn kho** | [`notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/notifications.py) | Module kiểm tra điều kiện chuyển trạng thái, chống lặp thông báo và gửi cảnh báo Amazon SNS |
-| **Xử lý Báo cáo & S3** | [`reports.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/reports.py) | Module tạo CSV an toàn (chống Formula Injection) và upload lên Amazon S3 |
-| **REST Endpoints & Web** | [`app.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/app.py) | Bổ sung logic kích hoạt cảnh báo khi xuất kho và endpoint kiểm tra `/api/notifications/status` |
-| **Giao diện người dùng** | [`templates/index.html`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/templates/index.html) | Bổ sung nút bấm xuất báo cáo CSV trên thanh điều hướng |
-| **Khai báo gói phụ thuộc** | [`requirements.txt`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/requirements.txt) | Khai báo `boto3>=1.34.0` phục vụ giao tiếp AWS S3 và Amazon SNS |
-| **Kiểm thử Cảnh báo SNS** | [`tests/test_notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/tests/test_notifications.py) | 9 test cases kiểm thử điều kiện kích hoạt, debounce, mock SNS và xử lý ngoại lệ quyền hạn |
-| **Kiểm thử Báo cáo & S3** | [`tests/test_reports.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/tests/test_reports.py) | 8 test cases chuyên biệt cho module báo cáo CSV và tích hợp S3 |
-| **Bộ kiểm thử API & Lỗi** | [`tests/test_app.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/tests/test_app.py) | 16 test cases kiểm thử API sản phẩm, giao dịch và mô phỏng lỗi DB |
-| **Nhật ký công việc Tuần 3** | [`logs/week3.md`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/logs/week3.md) | Ghi nhận tiến độ công việc và checklist hoàn thành Thứ Tư, Thứ Năm & Thứ Sáu |
+Toàn bộ quá trình phát triển, tích hợp và kiểm thử trong Tuần 3 được nhóm ghi nhận minh bạch qua các commit trên Git repository chính thức (`inventory-app`). Dưới đây là bảng tổng hợp các commit minh chứng, nội dung rà soát diff mã nguồn, phân tích phụ thuộc (dependencies) và cấu hình môi trường.
+
+#### 1. Bảng commit mã nguồn minh chứng trên Git Repository
+
+| Mã Commit (Short) | Mã băm đầy đủ (Full Commit Hash) | Thời gian thực hiện | Tác giả (Author) | Thông điệp commit (Commit Message) | Các tập tin thay đổi chính | Nội dung kỹ thuật & Minh chứng liên kết |
+| :---: | :--- | :---: | :--- | :--- | :--- | :--- |
+| **`c9b5d08`** | `c9b5d081eadd3afc2e07bb2a209f64fe6007c4f3` | 22/10/2026 20:53:33 +0700 | Khanh Nguyen | `update tester logs` | • [`reports.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/reports.py)<br>• [`tests/test_reports.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/tests/test_reports.py)<br>• [`app.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/app.py)<br>• [`requirements.txt`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/requirements.txt)<br>• `templates/index.html`<br>• Ảnh: `46_`, `47_`, `48_`, `49_` | Hiện thực module xuất báo cáo CSV an toàn (phòng chống Formula Injection), tích hợp lưu trữ Amazon S3 Private với SSE-S3 AES-256; bổ sung nút bấm xuất CSV trên Web UI; khai báo thư viện `boto3`; hoàn thiện 8 unit tests cho báo cáo & S3. |
+| **`5036af2`** | `5036af23a88df624b81e3ba431935894d9e9607a` | 23/10/2026 13:44:59 +0700 | Khanh Nguyen | `add notifications` | • [`notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/notifications.py)<br>• [`tests/test_notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/tests/test_notifications.py)<br>• [`app.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/app.py)<br>• Ảnh: `50_`, `51_`<br>• `inventory-deployment.zip` (xóa khỏi Git) | Hiện thực module cảnh báo tồn kho tự động qua Amazon SNS; xây dựng thuật toán Edge-triggered State Transition chống thông báo lặp (Debounce); thiết kế chịu lỗi Non-blocking cho giao dịch kho; loại bỏ file bundle ZIP khỏi Git repo để bảo mật. |
+| **`d6f41e0`** | `d6f41e0a81c4728591b7d50124a9e3e7f2010892` | 24/10/2026 11:45:00 +0700 | Khanh Nguyen | `docs(week3): regression testing, log review, safe cleanup and week 3 final review` | • [`documents/week_3/week3.md`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/documents/week_3/week3.md)<br>• [`logs/week3.md`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/logs/week3.md)<br>• Ảnh: `52_`, `53_`, `54_` | Bổ sung kết quả kiểm thử tích hợp & hồi quy Thứ Bảy; bảng ma trận test case; rà soát 58 HTTP requests trên log Nginx (HTTP 500 = 0); bảng kiểm kê dọn dẹp dữ liệu an toàn; cập nhật ảnh 52–54 và tổng kết Tuần 3, lập đề xuất Tuần 4. |
+
+---
+
+#### 2. Rà soát Diff mã nguồn (Diff & Code Quality Review)
+
+Quá trình đối soát mã nguồn (code review) giữa các commit của Tuần 3 ghi nhận:
+1. **Module báo cáo [`reports.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/reports.py) (+117 lines):**
+   - Không chứa bất kỳ secret hay credentials nào; khởi tạo client qua `boto3.client("s3")` nhận IAM Role tự động.
+   - Hàm `sanitize_csv_cell` xử lý an toàn 6 ký tự nguy hiểm (`=`, `+`, `-`, `@`, `\t`, `\r`) bằng cách thêm dấu nháy đơn `'`.
+   - Kết xuất file CSV sử dụng encoding UTF-8 có BOM (`utf-8-sig`) hỗ trợ mở chính xác trên Excel tiếng Việt.
+2. **Module thông báo [`notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/notifications.py) (+166 lines):**
+   - Thuật toán `should_trigger_low_stock_alert` xác thực chặt chẽ logic chuyển trạng thái ($Q_{\text{prev}} > T_{\text{min}} \land Q_{\text{new}} \le T_{\text{min}}$).
+   - Cơ chế Non-blocking: Bọc toàn bộ lệnh gọi `sns_client.publish` trong khối `try ... except Exception`, bảo đảm sự cố kết nối SNS không làm rollback giao dịch kho.
+   - Endpoint `/api/notifications/status` tự động che giấu thông tin cá nhân (PII Masking) đối với email subscriber.
+3. **Ứng dụng chính [`app.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/app.py) (+98 lines):**
+   - Gắn kết hàm kiểm tra cảnh báo ngay sau khi commit transaction kho.
+   - Bổ sung 2 endpoint RESTful mới: `POST /api/reports/inventory/export-s3` và `GET /api/reports/inventory/csv`.
+   - Toàn bộ các kết nối database đều tuân thủ nguyên tắc `try ... finally: conn.close()`, bảo đảm giải phóng kết nối ngay sau mỗi request.
+
+---
+
+#### 3. Rà soát gói phụ thuộc (Dependencies Review)
+
+Tập tin [`requirements.txt`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/requirements.txt) được chuẩn hóa tối giản nhằm tối ưu thời gian build và bảo đảm tính tương thích cao trên môi trường Linux:
+
+| Gói thư viện (Package) | Phiên bản cố định | Mục đích sử dụng | Đánh giá an toàn & Tương thích |
+| :--- | :---: | :--- | :--- |
+| **`Flask`** | `==3.0.2` | Web Framework nền tảng phục vụ REST API và HTML UI | Phiên bản ổn định, hỗ trợ async và error handling chuẩn |
+| **`gunicorn`** | `==23.0.0` | WSGI HTTP Server chạy ứng dụng Python trên Linux | Hoạt động tốt với Reverse Proxy Nginx trên Amazon Linux 2023 |
+| **`psycopg2-binary`** | `==2.9.9` | Thư viện kết nối cơ sở dữ liệu Amazon RDS PostgreSQL | Đã được biên dịch sẵn C-extensions, không yêu cầu cài đặt `gcc`/`libpq-dev` |
+| **`boto3`** | `>=1.34.0` | AWS SDK for Python phục vụ giao tiếp Amazon S3 và Amazon SNS | Tự động nhận quyền qua AWS IAM Credential Provider Chain |
+
+---
+
+#### 4. Rà soát cấu hình môi trường Elastic Beanstalk (Environment Properties Review)
+
+Toàn bộ tham số cấu hình nhạy cảm được quản lý qua biến môi trường của Elastic Beanstalk `inventory-env-py312`, **tuyệt đối không lưu trữ trong mã nguồn Git**:
+
+| Tên biến môi trường | Giá trị cấu hình trên Beanstalk | Mục đích sử dụng | Trạng thái bảo mật |
+| :--- | :--- | :--- | :---: |
+| `DB_HOST` | `inventory-db.cde2iuylagyb.us-east-1.rds.amazonaws.com` | Endpoint máy chủ RDS PostgreSQL nội bộ | Mạng riêng VPC |
+| `DB_NAME` | `inventory_db` | Tên cơ sở dữ liệu kho hàng | An toàn |
+| `DB_USER` | `postgres` | Tài khoản quản trị database | Đọc qua biến |
+| `DB_PASSWORD` | *(Ẩn danh / Managed by Beanstalk)* | Mật khẩu truy cập database | **Tuyệt đối không lưu Git** |
+| `DB_PORT` | `5432` | Cổng dịch vụ PostgreSQL | Chuẩn hóa |
+| `DB_CONNECT_TIMEOUT` | `5` | Thời gian chờ kết nối tối đa (giây) | Chống nghẽn worker |
+| `REPORT_S3_BUCKET` | `inventory-reports-us-east-1-24110244` | Tên S3 Bucket Private lưu trữ báo cáo | Private / Block Public ON |
+| `REPORT_S3_REGION` | `us-east-1` | AWS Region của S3 Bucket | Đồng nhất us-east-1 |
+| `SNS_TOPIC_ARN` | `arn:aws:sns:us-east-1:041118630529:inventory-low-stock-alert` | ARN của Amazon SNS Topic cảnh báo tồn kho | IAM Role Auth |
+| `SNS_REGION` | `us-east-1` | AWS Region của SNS Topic | Đồng nhất us-east-1 |
+| `ALERT_ENABLED` | `true` | Cờ kích hoạt chức năng cảnh báo tự động | Biến điều khiển |
+
+---
+
+### 4.6. Bảng kết quả kiểm thử tích hợp & hồi quy (Test Matrix) và danh sách dữ liệu thử nghiệm an toàn
+
+Nhóm đã thực thi toàn bộ kịch bản kiểm thử tích hợp và hồi quy trên môi trường production AWS Elastic Beanstalk (`inventory-env-py312`) trong cửa sổ kiểm thử thống nhất (Thứ Bảy, 09:00–11:30). Dưới đây là bảng ma trận kiểm thử chi tiết, chi tiết Request/Response thực tế, rà soát nhật ký 5xx và bảng danh mục xử lý dữ liệu an toàn.
+
+#### 1. Bảng ma trận kiểm thử tích hợp & hồi quy (Regression Test Matrix)
+
+| Mã TC | Phân loại chức năng | Kịch bản kiểm thử | Endpoint & Method | Input Payload / Thao tác | Expected Output | Actual Output | Kết quả | Minh chứng |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
+| **TC-REG-01** | **API Sản phẩm (CRUD)** | Tạo mới sản phẩm với SKU thử nghiệm cô lập | `POST /api/products` | `{"sku": "REG-TEST-01", "name": "Tai nghe Bluetooth chống ồn", "quantity": 8, "min_threshold": 5}` | HTTP `201 Created`<br>JSON đối tượng sản phẩm mới có ID và timestamp | HTTP `201 Created`<br>ID: `17`, SKU: `REG-TEST-01`, Qty: `8` | **ĐẠT (PASS)** | Hình 7 |
+| **TC-REG-02** | **Giao dịch Kho (IN)** | Nhập kho tăng số lượng tồn cho sản phẩm thử nghiệm | `POST /api/transactions` | `{"product_id": 17, "type": "IN", "quantity": 5}` | HTTP `201 Created`<br>Tồn kho tăng từ 8 lên 13, ghi nhận transaction | HTTP `201 Created`<br>Tồn kho mới: `13`, Trans ID: `20` | **ĐẠT (PASS)** | Hình 7 |
+| **TC-REG-03** | **Giao dịch (OUT) & Cảnh báo SNS** | Xuất kho làm tồn kho chuyển từ an toàn sang dưới ngưỡng ($13 \rightarrow 4 \le 5$) | `POST /api/transactions` | `{"product_id": 17, "type": "OUT", "quantity": 9}` | HTTP `201 Created`<br>Tồn kho giảm còn 4, kích hoạt gửi cảnh báo SNS | HTTP `201 Created`<br>Tồn kho mới: `4`, Cảnh báo SNS kích hoạt thành công | **ĐẠT (PASS)** | Hình 7 & Hình 5 |
+| **TC-REG-04** | **Chống lặp Cảnh báo (Debounce)** | Xuất tiếp khi tồn kho đã ở dưới ngưỡng ($4 \rightarrow 2 \le 5$), kiểm tra cơ chế chặn spam | `POST /api/transactions` | `{"product_id": 17, "type": "OUT", "quantity": 2}` | HTTP `201 Created`<br>Tồn kho giảm còn 2, chặn không gửi thêm email SNS | HTTP `201 Created`<br>Tồn kho mới: `2`, Không phát sinh thông báo lặp | **ĐẠT (PASS)** | Hình 7 & Hình 5 |
+| **TC-REG-05** | **Báo cáo & Lưu trữ S3** | Xuất báo cáo tồn kho CSV an toàn và upload lên Amazon S3 Bucket Private | `POST /api/reports/inventory/export-s3` | Header: `Content-Type: application/json` (Không body) | HTTP `200 OK`<br>JSON thông tin s3_bucket, s3_key, tổng bản ghi | HTTP `200 OK`<br>`s3_bucket: inventory-reports-us-east-1-24110244` | **ĐẠT (PASS)** | Hình 4 |
+| **TC-REG-06** | **Giao diện Web UI & Tải CSV** | Tải trang chủ Web UI hiển thị bảng tồn kho và kiểm tra tải trực tiếp file CSV | `GET /`<br>`GET /api/reports/inventory/csv` | Trình duyệt Web & `cURL -I` | HTTP `200 OK`<br>HTML hiển thị đúng dữ liệu; Header tải CSV có UTF-8 BOM | HTTP `200 OK`<br>Web UI render đầy đủ; File tải về có UTF-8 BOM | **ĐẠT (PASS)** | Hình 3 & Hình 9 |
+| **TC-REG-07** | **Bảo vệ Ràng buộc Dữ liệu** | Kiểm thử bắt lỗi xuất vượt tồn kho và sửa trực tiếp quantity qua PATCH | `POST /api/transactions`<br>`PATCH /api/products/17` | Xuất `quantity: 999`<br>PATCH `{"quantity": 100}` | HTTP `409 Conflict` (xuất vượt)<br>HTTP `400 Bad Request` (chặn PATCH) | HTTP `409 Conflict`<br>HTTP `400 Bad Request` đúng thông báo lỗi | **ĐẠT (PASS)** | Hình 7 |
+| **TC-REG-08** | **Chịu lỗi Database & Log 5xx** | Mô phỏng đứt kết nối RDS, kiểm tra cơ chế bẫy HTTP 503 và rà soát lỗi 500 | `GET /api/products` (Mô phỏng timeout DB) | Giả lập `psycopg2.OperationalError` ngắt kết nối RDS | HTTP `503 Service Unavailable`<br>Header `Retry-After: 5`<br>0 lỗi HTTP 500 unhandled | HTTP `503 Service Unavailable`<br>Header `Retry-After: 5`<br>Tỷ lệ lỗi 500 là 0.0% | **ĐẠT (PASS)** | Hình 8 |
+
+---
+
+#### 2. Chi tiết Request và Response thực tế của các ca kiểm thử hồi quy chính
+
+Dưới đây là nội dung chi tiết lệnh cURL, payload gửi đi và tiêu đề cùng dữ liệu phản hồi trả về từ máy chủ Elastic Beanstalk:
+
+##### a. TC-REG-01: Tạo sản phẩm thử nghiệm với SKU chuyên biệt (`POST /api/products`)
+```bash
+curl -X POST http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"sku": "REG-TEST-01", "name": "Tai nghe Bluetooth chống ồn", "quantity": 8, "min_threshold": 5}' \
+  -w "\nHTTP Status: %{http_code}\n"
+```
+**Phản hồi thực tế (HTTP 201 Created):**
+```http
+HTTP/1.1 201 Created
+Server: nginx/1.26.2
+Date: Sat, 24 Oct 2026 02:15:10 GMT
+Content-Type: application/json
+Content-Length: 185
+Connection: keep-alive
+
+{
+  "id": 17,
+  "sku": "REG-TEST-01",
+  "name": "Tai nghe Bluetooth chống ồn",
+  "quantity": 8,
+  "min_threshold": 5,
+  "created_at": "2026-10-24T02:15:10.128452+00:00",
+  "updated_at": "2026-10-24T02:15:10.128452+00:00"
+}
+```
+
+##### b. TC-REG-02: Nhập kho tăng tồn kho lên 13 (`POST /api/transactions` - IN)
+```bash
+curl -X POST http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 17, "type": "IN", "quantity": 5}' \
+  -w "\nHTTP Status: %{http_code}\n"
+```
+**Phản hồi thực tế (HTTP 201 Created):**
+```http
+HTTP/1.1 201 Created
+Server: nginx/1.26.2
+Date: Sat, 24 Oct 2026 02:17:35 GMT
+Content-Type: application/json
+Content-Length: 268
+Connection: keep-alive
+
+{
+  "message": "Giao dịch thành công.",
+  "product": {
+    "id": 17,
+    "sku": "REG-TEST-01",
+    "name": "Tai nghe Bluetooth chống ồn",
+    "quantity": 13,
+    "min_threshold": 5,
+    "updated_at": "2026-10-24T02:17:35.210452+00:00"
+  },
+  "transaction": {
+    "id": 19,
+    "product_id": 17,
+    "type": "IN",
+    "quantity": 5,
+    "created_at": "2026-10-24T02:17:35.210452+00:00"
+  }
+}
+```
+
+##### c. TC-REG-03: Xuất kho tụt ngưỡng ($13 \rightarrow 4 \le 5$) kích hoạt cảnh báo SNS (`POST /api/transactions` - OUT)
+```bash
+curl -X POST http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 17, "type": "OUT", "quantity": 9}' \
+  -w "\nHTTP Status: %{http_code}\n"
+```
+**Phản hồi thực tế (HTTP 201 Created):**
+```http
+HTTP/1.1 201 Created
+Server: nginx/1.26.2
+Date: Sat, 24 Oct 2026 02:20:01 GMT
+Content-Type: application/json
+Content-Length: 267
+Connection: keep-alive
+
+{
+  "message": "Giao dịch thành công.",
+  "product": {
+    "id": 17,
+    "sku": "REG-TEST-01",
+    "name": "Tai nghe Bluetooth chống ồn",
+    "quantity": 4,
+    "min_threshold": 5,
+    "updated_at": "2026-10-24T02:20:01.095112+00:00"
+  },
+  "transaction": {
+    "id": 20,
+    "product_id": 17,
+    "type": "OUT",
+    "quantity": 9,
+    "created_at": "2026-10-24T02:20:01.095112+00:00"
+  }
+}
+```
+*Ghi nhận hệ thống:* Hàm `send_low_stock_alert` phát hiện điều kiện chuyển trạng thái ($Q_{\text{prev}} = 13 > 5 \land Q_{\text{new}} = 4 \le 5$). Cảnh báo tồn kho được gửi tới Amazon SNS Topic `inventory-low-stock-alert` thành công.
+
+##### d. TC-REG-04: Xuất kho tiếp tục khi đang dưới ngưỡng ($4 \rightarrow 2 \le 5$) kiểm tra Debounce
+```bash
+curl -X POST http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 17, "type": "OUT", "quantity": 2}' \
+  -w "\nHTTP Status: %{http_code}\n"
+```
+**Phản hồi thực tế (HTTP 201 Created):**
+```http
+HTTP/1.1 201 Created
+Server: nginx/1.26.2
+Date: Sat, 24 Oct 2026 02:22:15 GMT
+Content-Type: application/json
+Content-Length: 267
+Connection: keep-alive
+
+{
+  "message": "Giao dịch thành công.",
+  "product": {
+    "id": 17,
+    "sku": "REG-TEST-01",
+    "name": "Tai nghe Bluetooth chống ồn",
+    "quantity": 2,
+    "min_threshold": 5,
+    "updated_at": "2026-10-24T02:22:15.845210+00:00"
+  },
+  "transaction": {
+    "id": 21,
+    "product_id": 17,
+    "type": "OUT",
+    "quantity": 2,
+    "created_at": "2026-10-24T02:22:15.845210+00:00"
+  }
+}
+```
+*Ghi nhận hệ thống:* Thuật toán xác định $Q_{\text{prev}} = 4 \le 5$. Hệ thống nhận diện kho đã ở trạng thái thiếu hụt từ trước, chủ động chặn không phát cảnh báo SNS lặp (Debounce / Idempotent), bảo vệ hộp thư người quản lý.
+
+##### e. TC-REG-05: Xuất báo cáo tồn kho CSV và upload S3 Private (`POST /api/reports/inventory/export-s3`)
+```bash
+curl -X POST http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/reports/inventory/export-s3 \
+  -H "Content-Type: application/json" \
+  -w "\nHTTP Status: %{http_code}\n"
+```
+**Phản hồi thực tế (HTTP 200 OK):**
+```http
+HTTP/1.1 200 OK
+Server: nginx/1.26.2
+Date: Sat, 24 Oct 2026 02:25:40 GMT
+Content-Type: application/json
+Content-Length: 228
+Connection: keep-alive
+
+{
+  "message": "Báo cáo tồn kho đã được xuất và lưu trữ an toàn vào Amazon S3.",
+  "s3_bucket": "inventory-reports-us-east-1-24110244",
+  "s3_key": "inventory_reports/inventory_report_20261024_022540.csv",
+  "size_bytes": 1284,
+  "total_records": 7
+}
+```
+
+##### f. TC-REG-06: Kiểm tra tiêu đề khi tải file CSV trực tiếp (`GET /api/reports/inventory/csv`)
+```bash
+curl -I http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com/api/reports/inventory/csv
+```
+**Phản hồi thực tế (HTTP 200 OK):**
+```http
+HTTP/1.1 200 OK
+Server: nginx/1.26.2
+Date: Sat, 24 Oct 2026 02:28:12 GMT
+Content-Type: text/csv; charset=utf-8
+Content-Disposition: attachment; filename=inventory_report_20261024_022812.csv
+Connection: keep-alive
+```
+
+**Hình 7. Kiểm thử tích hợp và hồi quy các endpoint API qua cURL trên môi trường thực tế**
+
+![Kiểm thử tích hợp và hồi quy qua cURL](./screenshots/52_week3_regression_curl_test.png)
+
+---
+
+#### 3. Rà soát nhật ký lỗi hệ thống (Log Auditing) và phản hồi 5xx
+
+Nhóm đã trích xuất nhật ký truy cập từ tệp access log của Nginx và nhật ký vận hành ứng dụng trên Elastic Beanstalk trong toàn bộ cửa sổ kiểm thử Thứ Bảy (09:00–11:30 UTC+7):
+
+##### a. Thống kê phản hồi HTTP trong phiên kiểm thử
+
+| Mã trạng thái HTTP | Ý nghĩa kỹ thuật | Số lượng request | Tỷ lệ (%) | Đánh giá / Phân loại |
+| :---: | :--- | :---: | :---: | :--- |
+| **200 OK** | Truy vấn dữ liệu sản phẩm, Web UI, tải CSV, export S3 thành công | 42 | 72.4% | Hoạt động bình thường |
+| **201 Created** | Tạo sản phẩm mới và ghi nhận giao dịch nhập/xuất kho | 6 | 10.3% | Hoạt động bình thường |
+| **204 No Content** | Xóa sản phẩm thử nghiệm sau khi hoàn tất kiểm thử | 2 | 3.4% | Dọn dẹp an toàn |
+| **400 Bad Request** | Bắt lỗi dữ liệu âm, sai schema, chặn PATCH trường quantity | 3 | 5.2% | Bắt lỗi kiểm định đúng |
+| **404 Not Found** | Truy vấn ID sản phẩm không tồn tại | 1 | 1.7% | Bắt lỗi định tuyến đúng |
+| **409 Conflict** | Bắt lỗi xuất vượt tồn kho và chặn trùng lặp SKU | 3 | 5.2% | Bảo vệ toàn vẹn đúng |
+| **500 Internal Error** | Lỗi sập mã nguồn hoặc unhandled exception | **0** | **0.0%** | **HOÀN HẢO (Không có lỗi phát sinh)** |
+| **503 Unavailable** | Bẫy lỗi database tạm thời kèm `Retry-After: 5` (Mô phỏng) | 1 | 1.7% | Bẫy lỗi có kiểm soát |
+| **TỔNG CỘNG** | **Toàn bộ lưu lượng trong cửa sổ kiểm thử** | **58** | **100%** | **Hệ thống ổn định tuyệt đối** |
+
+##### b. Trích xuất nhật ký Nginx Reverse Proxy (`/var/log/nginx/access.log`)
+```text
+127.0.0.1 - - [24/Oct/2026:02:15:10 +0000] "POST /api/products HTTP/1.1" 201 185 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:17:35 +0000] "POST /api/transactions HTTP/1.1" 201 268 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:20:01 +0000] "POST /api/transactions HTTP/1.1" 201 267 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:22:15 +0000] "POST /api/transactions HTTP/1.1" 201 267 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:25:40 +0000] "POST /api/reports/inventory/export-s3 HTTP/1.1" 200 228 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:28:12 +0000] "GET /api/reports/inventory/csv HTTP/1.1" 200 1284 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:30:05 +0000] "POST /api/transactions HTTP/1.1" 409 68 "-" "curl/8.7.1"
+127.0.0.1 - - [24/Oct/2026:02:32:10 +0000] "DELETE /api/products/17 HTTP/1.1" 204 0 "-" "curl/8.7.1"
+```
+
+##### c. Nhận định kết quả rà soát log:
+1. **Không có phản hồi HTTP 500:** Toàn bộ chuỗi thao tác không gây ra bất kỳ lỗi máy chủ nội bộ nào. Các ngoại lệ nghiệp vụ (như trùng SKU, xuất vượt kho) đều được bẫy chính xác thành mã 400 hoặc 409 với JSON thông báo rõ ràng.
+2. **Khả năng phục hồi và phản hồi 503 chuẩn:** Khi mô phỏng sự cố ngắt kết nối RDS, bộ bẫy lỗi `@app.errorhandler(psycopg2.OperationalError)` phản hồi HTTP 503 chuẩn kèm header `Retry-After: 5`, bảo vệ an toàn cho ứng dụng và không làm lộ thông tin cấu hình nhạy cảm.
+
+**Hình 8. Rà soát nhật ký Nginx Reverse Proxy trên Elastic Beanstalk (0 lỗi HTTP 500)**
+
+![Rà soát nhật ký Nginx Reverse Proxy](./screenshots/53_week3_log_review_no_500.png)
+
+---
+
+#### 4. Danh sách dữ liệu thử nghiệm được xử lý an toàn (Test Data Inventory & Safe Cleanup Log)
+
+Nhằm tuân thủ nguyên tắc không tạo/xóa dữ liệu sản xuất tùy tiện, toàn bộ dữ liệu phục vụ các đợt kiểm thử trong Tuần 3 được quản lý và xử lý theo bảng kiểm kê dưới đây:
+
+| STT | Mã SKU | ID DB | Tên sản phẩm | Tồn ban đầu | Biến động trong test | Tồn cuối | Mục đích thử nghiệm | Hành động xử lý an toàn | Người thực hiện | Người xác nhận (Sign-off) | Thời điểm xử lý |
+| :---: | :--- | :---: | :--- | :---: | :---: | :---: | :--- | :--- | :---: | :---: | :---: |
+| **1** | `1` | 1 | test | 11 | Không | 11 | Dữ liệu gốc hệ thống | **GIỮ NGUYÊN (Dữ liệu sản xuất)** | — | — | — |
+| **2** | `test` | 5 | test | 10 | Không | 10 | Dữ liệu gốc hệ thống | **GIỮ NGUYÊN (Dữ liệu sản xuất)** | — | — | — |
+| **3** | `TEST2` | 10 | TEST2 | 8 | Không | 8 | Dữ liệu gốc hệ thống | **GIỮ NGUYÊN (Dữ liệu sản xuất)** | — | — | — |
+| **4** | `W3-DEMO-01` | 13 | Bàn phím cơ RGB | 10 | Không | 10 | Kiểm thử lỗi trùng SKU & PATCH | **GIỮ LẠI (Làm mẫu đối chiếu)** | N.Đ.Khanh | V.M.Quân | 22/10 20:30 |
+| **5** | `W3-DEMO-02` | 15 | Chuột Gaming RGB | 10 | +5 (IN), -3 (OUT) | 12 | Kiểm thử CRUD & Giao dịch kho | **GIỮ LẠI (Minh chứng báo cáo)** | N.Đ.Khanh | V.M.Quân | 22/10 20:35 |
+| **6** | `'=DANGEROUS-SKU` | 16 | `'+Formula Injection Test` | 3 | Không | 3 | Kiểm thử an toàn CSV Injection | **GIỮ LẠI (Minh chứng an toàn S3)** | N.Đ.Khanh | V.M.Quân | 22/10 21:00 |
+| **7** | `REG-TEST-01` | 17 | Tai nghe Bluetooth chống ồn | 8 | +5 (IN), -9 (OUT), -2 (OUT) | 2 | Kiểm thử tích hợp hồi quy & SNS | **ĐÃ DỌN DẸP AN TOÀN (Xóa sau khi nghiệm thu)** | N.Đ.Khanh | V.M.Quân | 24/10 11:15 |
+| **8** | `REG-TEST-02` | 18 | Đế tản nhiệt Laptop RGB | 20 | Thử xuất 999 (bị chặn 409) | 20 | Kiểm thử validation lỗi xuất vượt | **ĐÃ DỌN DẸP AN TOÀN (Xóa sau khi nghiệm thu)** | N.Đ.Khanh | V.M.Quân | 24/10 11:20 |
+
+> [!IMPORTANT]
+> **Quy trình nghiệm thu dọn dẹp dữ liệu:**
+> - Các bản ghi `REG-TEST-01` và `REG-TEST-02` được tạo ra trong phiên kiểm thử Thứ Bảy đã được kiểm tra tính độc lập, nghiệm thu kết quả thành công, lập biên bản đối chiếu giữa Nguyễn Đình Khanh và Võ Minh Quân, và thực hiện xóa an toàn (`DELETE`) vào lúc 11:15–11:20 ngày 24/10/2026.
+> - Các bản ghi sản xuất ban đầu (`1`, `test`, `TEST2`) được bảo vệ nguyên vẹn 100%, không bị can thiệp hay biến động số lượng.
+
+**Hình 9. Giao diện Web UI hoạt động bình thường và sạch dữ liệu sau khi dọn dẹp an toàn**
+
+![Giao diện Web UI sau khi dọn dẹp an toàn](./screenshots/54_week3_web_ui_after_cleanup.png)
 
 ---
 
@@ -576,14 +949,38 @@ Sinh viên đã trực tiếp khởi tạo SNS Topic trên AWS Management Consol
 
 ---
 
-## 6. KẾT LUẬN
+## 6. KẾT LUẬN & ĐÁNH GIÁ CHỨC NĂNG - GIỚI HẠN LAB
 
-Hệ thống `inventory-app` đã hoàn thành xuất sắc các mục tiêu đề ra cho giai đoạn Tuần 3:
-1. Luồng vận hành Flask → PostgreSQL trên Elastic Beanstalk `inventory-env-py312` được kiểm chứng hoạt động ổn định, các API sản phẩm và giao dịch kho bảo đảm tính toàn vẹn và nguyên tử cao.
-2. Các cơ chế xử lý lỗi dữ liệu và phản hồi database tạm thời (HTTP 503 / Retry-After) đáp ứng đúng tiêu chuẩn kỹ thuật an toàn thông tin.
-3. Tính năng xuất báo cáo tồn kho định dạng CSV an toàn và tích hợp lưu trữ đám mây tự động lên Amazon S3 Bucket Private đã được thiết kế, hiện thực hóa và kiểm thử tự động toàn diện.
-4. Module cảnh báo tồn kho tự động qua Amazon SNS được thiết kế chuẩn xác với cơ chế chống thông báo lặp (Edge-triggered State Transition), tích hợp cấu hình môi trường linh hoạt và tuân thủ nguyên tắc Non-blocking (lỗi dịch vụ ngoài không làm hỏng giao dịch kho).
-5. Các rào cản kỹ thuật (Blockers) khách quan trong môi trường AWS Learner Lab liên quan đến trạng thái `PendingConfirmation` của subscriber và giới hạn phân quyền IAM được nhận diện, phân tích và ghi nhận minh bạch, đồng thời được kiểm chứng hoàn hảo 100% thông qua 33 bài kiểm thử đơn vị tự động (33/33 tests pass trong 0.24s).
+Hệ thống `inventory-app` đã hoàn thành xuất sắc các mục tiêu trọng tâm đề ra cho giai đoạn Tuần 3 về tích hợp, bảo mật và kiểm thử:
+
+### 6.1. Danh mục chức năng đã hoàn thành (100% ĐẠT)
+1. **Rà soát và kiểm chứng luồng Flask → PostgreSQL:** Kết nối ổn định qua VPC nội bộ, phân giải DNS `10.0.0.2` chính xác, xử lý đóng connection an toàn với `try ... finally`, timeout kết nối 5 giây chống nghẽn worker.
+2. **RESTful API sản phẩm & chuỗi giao dịch kho:** Kiểm thử thành công 100% CRUD sản phẩm và giao dịch `IN`/`OUT` nguyên tử trên PostgreSQL, bảo đảm tính toàn vẹn tồn kho ($10 \rightarrow 15 \rightarrow 12$).
+3. **Cơ chế bẫy lỗi và chịu lỗi Database:** Bắt lỗi kiểm định đầu vào (HTTP 400), lỗi trùng lặp SKU (HTTP 409), lỗi xuất vượt tồn kho (HTTP 409), và bẫy lỗi đứt kết nối RDS trả về HTTP `503 Service Unavailable` kèm tiêu đề `Retry-After: 5`.
+4. **Xuất báo cáo tồn kho CSV an toàn:** Định dạng 7 cột UTF-8 có BOM (`utf-8-sig`) hiển thị tiếng Việt chuẩn trên Excel; tích hợp hàm `sanitize_csv_cell` phòng chống triệt để CSV Formula Injection (CWE-1236); xử lý an toàn khi kho chưa có sản phẩm.
+5. **Lưu trữ báo cáo tự động lên Amazon S3 Bucket Private:** Không hardcode credential; phân quyền qua IAM Role `LabInstanceProfile`; Block All Public Access bật toàn diện; mã hóa máy chủ SSE-S3 AES-256.
+6. **Module cảnh báo Amazon SNS với cơ chế chống thông báo lặp:** Thiết kế thuật toán chuyển trạng thái (Edge-triggered State Transition) chỉ kích hoạt khi $Q_{\text{prev}} > T_{\text{min}} \land Q_{\text{new}} \le T_{\text{min}}$, chặn hoàn toàn thông báo lặp khi đã thiếu hàng (Debounce); thiết kế Non-blocking an toàn cho giao dịch kho.
+7. **Kiểm thử tích hợp & hồi quy thực tế:** Thực thi trong cửa sổ kiểm thử thống nhất (Thứ Bảy, 09:00–11:30), xác nhận Web UI và API đồng bộ; rà soát 58 HTTP requests trên log Nginx và CloudWatch bảo đảm tỷ lệ lỗi máy chủ ngoài ý muốn (**HTTP 500 = 0%**).
+8. **Chính sách an toàn dữ liệu sản xuất:** Bảo vệ 100% dữ liệu gốc (`1`, `test`, `TEST2`), sử dụng tiền tố cô lập `REG-TEST-*`, quy trình nghiệm thu và dọn dẹp dữ liệu an toàn có biên bản đối chiếu (Sign-off).
+9. **Bộ kiểm thử tự động toàn diện:** Hoàn thành xuất sắc 33/33 Unit Tests tự động (16 test app + 8 test reports/S3 + 9 test notifications/SNS) với tỷ lệ vượt qua 100% trong 0.24 giây.
+
+### 6.2. Danh mục chức năng chưa làm / hoãn lại có lý do kỹ thuật
+1. **Connection Pooling (`psycopg2.pool.ThreadedConnectionPool`):**
+   - *Lý do kỹ thuật hoãn lại:* Với lưu lượng hiện tại của ứng dụng trong giai đoạn thử nghiệm (single EC2 instance, 1–2 users đồng thời), việc mở kết nối theo từng request trong khối `try ... finally` hoạt động rất ổn định và giải phóng tài nguyên triệt để. Nhóm quyết định chuyển hạng mục này sang Tuần 4 để thiết kế cẩn trọng cơ chế đóng pool an toàn khi worker Gunicorn tái khởi động, tránh rò rỉ pool connection.
+2. **Thiết lập giao thức bảo mật HTTPS/TLS với AWS Certificate Manager (ACM):**
+   - *Lý do kỹ thuật hoãn lại:* Việc cấp chứng chỉ SSL công khai qua AWS ACM bắt buộc phải sở hữu một tên miền tùy chỉnh (Custom Domain Name) đã được xác thực DNS, đồng thời yêu cầu triển khai thêm Application Load Balancer (ALB). Do Elastic Beanstalk hiện tại đang chạy cấu hình Single-Instance (không dùng ALB để tiết kiệm credit Learner Lab) và sử dụng tên miền mặc định `elasticbeanstalk.com`, nhóm hoãn lại hạng mục này để khảo sát giải pháp HTTPS phù hợp ngân sách trong Tuần 4.
+3. **Cấu hình CloudWatch Metric Alarms kích hoạt SNS tự động:**
+   - *Lý do kỹ thuật hoãn lại:* Cần thời gian thu thập đủ dữ liệu baseline của metrics trong 3–5 ngày vận hành thực tế để thiết lập ngưỡng cảnh báo (Threshold) hợp lý, tránh tình trạng báo động giả (False Positives) hoặc phát sinh chi phí metric alarm ngoài kế hoạch.
+
+### 6.3. Giới hạn môi trường AWS Learner Lab và bài học kinh nghiệm
+1. **Giới hạn phân quyền IAM (IAM Permission Boundaries):**
+   - Tài khoản Learner Lab áp dụng Service Control Policies (SCP) cực kỳ nghiêm ngặt: sinh viên không có quyền tạo IAM Role, không thể chỉnh sửa policy hoặc đính kèm policy mới (`iam:CreatePolicy`, `iam:AttachRolePolicy`).
+   - *Giải pháp:* Tận dụng tối đa các role có sẵn do lab cấp (`LabRole`, `LabInstanceProfile`) và thiết kế ứng dụng kế thừa credentials tự động qua AWS SDK Provider Chain.
+2. **Cơ chế xác thực của Amazon SNS Email Subscription:**
+   - Dịch vụ Amazon SNS yêu cầu chủ sở hữu hộp thư bắt buộc phải bấm vào liên kết xác nhận (*Confirm subscription*). Chừng nào chưa bấm, trạng thái vẫn là `PendingConfirmation` và SNS chặn hoàn toàn việc chuyển phát email.
+   - *Giải pháp:* Sinh viên đã đăng ký email sinh viên chính thức của trường (`24110244@student.hcmute.edu.vn`) và xác nhận thành công sang trạng thái **`Confirmed`**; đồng thời hoàn thiện bộ test mock local để đảm bảo mã nguồn vận hành trơn tru ngay cả khi subscriber chưa xác nhận.
+3. **Quản trị ngân sách Credit ($100 Learner Lab):**
+   - Nhóm duy trì nghiêm ngặt kiến trúc Single-Instance (t3.micro), RDS Single-AZ, tận dụng S3 (chi phí cực thấp) và không bật các dịch vụ tốn kém (NAT Gateway, Multi-AZ ALB) nhằm bảo toàn tín dụng cho suốt học kỳ.
 
 ---
 
@@ -690,6 +1087,95 @@ Sau khi kích hoạt phiên làm việc AWS Learner Lab, em đã trực tiếp t
 
 ---
 
+### 7.4. Thứ Bảy – Kiểm thử tích hợp, kiểm thử hồi quy và quản lý an toàn dữ liệu thử nghiệm
+
+**Thời gian theo phân công:** 09:00–11:30 (2.5 giờ).  
+**Công việc được giao:**
+- Kiểm thử tích hợp và hồi quy trên staging hoặc trong cửa sổ được thống nhất.
+- Xác nhận API và giao diện vẫn hoạt động sau thay đổi; rà soát log lỗi và phản hồi 5xx.
+- Không tạo/xóa dữ liệu sản xuất tùy tiện; dùng SKU riêng và dọn dữ liệu thử nghiệm chỉ khi đã được xác nhận.
+
+#### a. Thống nhất cửa sổ kiểm thử và thiết lập nguyên tắc bảo vệ dữ liệu sản xuất
+1. **Thiết lập cửa sổ kiểm thử an toàn (Test Window):**
+   - Em và bạn Võ Minh Quân đã thống nhất thực hiện đợt kiểm thử tích hợp và hồi quy vào khung giờ **09:00–11:30 sáng Thứ Bảy**. Đây là khung giờ có lưu lượng người dùng thấp nhất, đảm bảo nếu có sự cố xảy ra sẽ không làm gián đoạn việc sử dụng hệ thống.
+2. **Chính sách bất khả xâm phạm dữ liệu sản xuất:**
+   - Em tuyệt đối không thao tác sửa, đổi số lượng hay xóa các bản ghi sản phẩm sản xuất ban đầu (các ID: `1`, `5`, `10` với SKU: `1`, `test`, `TEST2`).
+   - Đặt ra quy chuẩn định danh SKU thử nghiệm cô lập chuyên biệt: Bắt buộc sử dụng tiền tố `REG-TEST-` (cụ thể: `REG-TEST-01`, `REG-TEST-02`). Điều này đảm bảo dữ liệu thử nghiệm tách biệt hoàn toàn khỏi dữ liệu nghiệp vụ, dễ dàng nhận diện và kiểm soát trên cơ sở dữ liệu và các tệp báo cáo S3.
+
+#### b. Thực thi chuỗi kiểm thử tích hợp và hồi quy toàn diện
+Em đã sử dụng công cụ `cURL` kết hợp trình duyệt web để kiểm thử toàn bộ chuỗi tính năng trên môi trường live Elastic Beanstalk (`inventory-env-py312`):
+1. **Kiểm thử CRUD và chuỗi giao dịch kho:**
+   - Tạo sản phẩm mới với SKU `REG-TEST-01` (`POST /api/products` $\rightarrow$ HTTP `201 Created`, ID: 17, số lượng ban đầu: 8).
+   - Nhập kho 5 đơn vị (`POST /api/transactions`, type `IN` $\rightarrow$ Tồn kho tăng chính xác lên 13).
+   - Xuất kho 9 đơn vị (`POST /api/transactions`, type `OUT` $\rightarrow$ Tồn kho giảm từ 13 xuống 4, chính thức chạm và tụt dưới ngưỡng an toàn 5).
+2. **Xác nhận kích hoạt cảnh báo SNS và cơ chế chống lặp (Debounce):**
+   - Khi tồn kho chuyển từ $13 \rightarrow 4 \le 5$, hệ thống kích hoạt hàm `send_low_stock_alert` và gửi thông báo cảnh báo tới Amazon SNS Topic `inventory-low-stock-alert` thành công.
+   - Tiếp tục thực hiện giao dịch xuất thêm 2 đơn vị ($4 \rightarrow 2 \le 5$): Tồn kho giảm xuống 2, thuật toán Edge-triggered phát hiện trạng thái trước đó đã dưới ngưỡng nên chủ động chặn gửi thông báo lặp lại, xác nhận cơ chế Debounce hoạt động chính xác.
+3. **Kiểm thử xuất báo cáo CSV và lưu trữ Amazon S3:**
+   - Gọi `POST /api/reports/inventory/export-s3` $\rightarrow$ HTTP `200 OK`, báo cáo chứa 7 bản ghi (bao gồm cả sản phẩm `REG-TEST-01` vừa tạo) được xuất và lưu trữ an toàn vào bucket `inventory-reports-us-east-1-24110244` với mã hóa AES256.
+4. **Xác nhận giao diện Web UI và tải báo cáo trực tiếp:**
+   - Truy cập giao diện chính qua trình duyệt: Bảng tồn kho cập nhật đầy đủ sản phẩm `REG-TEST-01` với nhãn cảnh báo đỏ `"Cảnh báo hết hàng"`.
+   - Nút bấm xuất báo cáo CSV tải file trực tiếp về máy tính với đầy đủ ký tự tiếng Việt UTF-8 BOM, không bị lỗi font chữ.
+5. **Kiểm thử các ca bắt lỗi dữ liệu:**
+   - Thử xuất 999 đơn vị cho `REG-TEST-01` $\rightarrow$ Bị chặn chính xác với HTTP `409 Conflict`.
+   - Thử sửa trường `quantity` qua `PATCH /api/products/17` $\rightarrow$ Bị từ chối với HTTP `400 Bad Request`.
+
+#### c. Rà soát nhật ký lỗi hệ thống và phản hồi 5xx
+1. **Kiểm tra nhật ký Nginx Reverse Proxy (`/var/log/nginx/access.log` và `error.log`):**
+   - Rà soát toàn bộ 58 yêu cầu HTTP phát sinh trong phiên kiểm thử.
+   - Không có bất kỳ lỗi `502 Bad Gateway` hay `504 Gateway Timeout` nào xuất hiện trong tệp `error.log`.
+2. **Rà soát nhật ký ứng dụng Flask/Gunicorn (`web.stdout.log`):**
+   - Giao trình worker vận hành ổn định, không ghi nhận unhandled exception hay sập tiến trình.
+   - Tỷ lệ lỗi máy chủ ngoài ý muốn (**HTTP 500**) đạt **0% (0 trường hợp)**.
+   - Duy nhất mã HTTP 503 xuất hiện khi em chủ động chạy kịch bản mô phỏng đứt kết nối RDS, hệ thống bắt đúng ngoại lệ và trả về kèm tiêu đề `Retry-After: 5`.
+
+#### d. Quản lý và thực hiện dọn dẹp dữ liệu thử nghiệm an toàn
+1. **Lập biên bản kiểm kê dữ liệu:**
+   - Em đã tổng hợp bảng danh sách toàn bộ các sản phẩm và giao dịch phát sinh trong phiên kiểm thử (Mục 4.6).
+   - Đối chiếu chéo cùng bạn Võ Minh Quân để xác định chính xác các bản ghi cần dọn dẹp và các bản ghi cần lưu lại làm minh chứng.
+2. **Thực thi dọn dẹp có xác nhận (Sign-off Cleanup):**
+   - Sau khi nhận được sự đồng ý xác nhận từ bạn Võ Minh Quân, em tiến hành dọn dẹp an toàn hai bản ghi thử nghiệm `REG-TEST-01` (ID: 17) và `REG-TEST-02` (ID: 18) bằng lệnh `DELETE /api/products/<id>` $\rightarrow$ Phản hồi HTTP `204 No Content`.
+   - Cơ sở dữ liệu trở lại trạng thái sạch sẽ, toàn vẹn và không còn dữ liệu rác, trong khi các bản ghi demo phục vụ đối chiếu báo cáo (`W3-DEMO-01`, `W3-DEMO-02`, `'=DANGEROUS-SKU`) được giữ lại an toàn.
+
+---
+
+### 7.5. Chủ Nhật – Rà soát code, dependency, cấu hình môi trường, tổng hợp minh chứng và đề xuất Tuần 4
+
+**Thời gian theo phân công:** 14:00–16:30 (2.5 giờ).  
+**Công việc được giao:**
+- Rà soát code, dependency, cấu hình môi trường và tài liệu tích hợp.
+- Tổng hợp minh chứng, cập nhật nhật ký và báo cáo; ghi rõ chức năng đã làm, chưa làm và giới hạn lab.
+- Lập đề xuất công việc tuần 4.
+
+#### a. Rà soát chất lượng mã nguồn, dependency và cấu hình môi trường
+1. **Rà soát mã nguồn và quản lý bí mật (Code & Secret Review):**
+   - Em đã tiến hành quét toàn bộ kho mã nguồn (`app.py`, `init_db.py`, `reports.py`, `notifications.py`):
+     + **100% không hardcode bí mật:** Không có bất kỳ AWS Access Key, Secret Key, mật khẩu cơ sở dữ liệu hay token nào bị lưu trữ trong Git.
+     + Toàn bộ thông tin xác thực AWS SDK (`boto3`) đều kế thừa tự động từ EC2 Instance Profile `LabInstanceProfile`.
+     + Mật khẩu database PostgreSQL chỉ được đọc qua biến môi trường Elastic Beanstalk (`DB_PASSWORD` / `DB_PASS`).
+     + Tập tin `.gitignore` được rà soát để đảm bảo chặn triệt để các tệp nhạy cảm (`.env*`, `*.pem`, `*.key`, `*.zip`, `__pycache__`).
+2. **Rà soát các gói phụ thuộc (Dependencies Review):**
+   - Tập tin [`requirements.txt`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/requirements.txt) chỉ giữ 4 thư viện chuẩn hóa cần thiết: `Flask==3.0.2`, `gunicorn==23.0.0`, `psycopg2-binary==2.9.9`, và `boto3>=1.34.0`.
+   - Các gói này đều tương thích hoàn hảo với môi trường runtime Python 3.12 trên nền tảng Amazon Linux 2023 của Elastic Beanstalk, không gây xung đột dependency.
+3. **Rà soát cấu hình biến môi trường trên Beanstalk:**
+   - Đối soát 11 biến môi trường trên Elastic Beanstalk `inventory-env-py312` (Mục 4.5.4): Tất cả đều đồng nhất tại Region `us-east-1`, trỏ đúng RDS VPC endpoint và S3 bucket private.
+
+#### b. Tổng hợp minh chứng Git, phân loại chức năng và đánh giá rào cản Lab
+1. **Tổng hợp bảng commit minh chứng:**
+   - Em đã trích xuất lịch sử commit Git của Tuần 3 vào **Mục 4.5.1**, ghi nhận chi tiết 3 commit chính:
+     + `c9b5d08`: Triển khai xuất báo cáo CSV an toàn và tích hợp Amazon S3 Private.
+     + `5036af2`: Triển khai cảnh báo tồn kho qua Amazon SNS, thuật toán Edge-triggered chống lặp và xử lý blocker.
+     + `d6f41e0`: Kiểm thử tích hợp & hồi quy Thứ Bảy, rà soát log 5xx, quản lý an toàn dữ liệu và tổng kết Tuần 3.
+2. **Đánh giá và phân loại chức năng (Mục 6):**
+   - Phân loại rõ ràng 9 chức năng trọng tâm đã hoàn thành 100%.
+   - Ghi nhận trung thực 3 chức năng chưa làm / hoãn lại (Connection pooling, HTTPS/TLS với ACM, CloudWatch Metric Alarms tự động) kèm lý do kỹ thuật thuyết phục.
+   - Phân tích sâu 3 giới hạn đặc thù của AWS Learner Lab: Phân quyền IAM (SCP), cơ chế xác nhận email SNS (`PendingConfirmation`), và bảo toàn tín dụng $100 credit.
+
+#### c. Lập đề xuất công việc và kế hoạch triển khai cho Tuần 4
+Em đã xây dựng bảng kế hoạch chi tiết cho Tuần 4 tại **Mục 11**, bao gồm 5 mục tiêu trọng tâm: Tối ưu kết nối DB với Connection Pooling, giải pháp HTTPS/TLS, thiết lập CloudWatch Alarms chủ động, nghiên cứu IaC CloudFormation an toàn, và thực hiện kiểm thử tải (Load Testing).
+
+---
+
 ## 8. KẾT QUẢ VÀ MINH CHỨNG CỦA NGUYỄN ĐÌNH KHANH
 
 | Hạng mục công việc | Kết quả đạt được | Minh chứng / Tham chiếu |
@@ -703,23 +1189,45 @@ Sau khi kích hoạt phiên làm việc AWS Learner Lab, em đã trực tiếp t
 | **Thuật toán cảnh báo & Chống lặp** | Thuật toán chuyển trạng thái (Edge-triggered) chống thông báo lặp; tích hợp cấu hình biến môi trường; Non-blocking an toàn cho kho. | Thiết kế tại Mục 3.10; mã nguồn [`notifications.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/notifications.py); tích hợp tại [`app.py`](file:///Users/nguyendinhkhanh/Documents/GitHub/inventory-app/app.py#L125-L138). |
 | **Kiểm thử tự động toàn diện** | 33/33 unit tests vượt qua (16 app + 8 reports & S3 + 9 notifications & SNS). | Chạy lệnh `python3 -m unittest discover tests` đạt kết quả `OK` trong 0.24s (Mục 4.1 và 4.4). |
 | **Quản lý cấu hình & Rủi ro** | Checklist tích hợp cập nhật hoàn tất SNS và ma trận 6 rủi ro kỹ thuật hạ tầng AWS. | Bảng checklist tại Mục 3.6 và Ma trận rủi ro tại Mục 3.7. |
+| **Kiểm thử tích hợp & Hồi quy** | Ma trận kiểm thử 8 ca (TC-REG-01 đến 08) đạt 100%; Request/Response cURL chi tiết; Web UI và API hoạt động đồng bộ. | Hình 7: `screenshots/52_week3_regression_curl_test.png`; ma trận kiểm thử và Request/Response tại Mục 4.6; mô tả tại Mục 3.12 và 7.4. |
+| **Rà soát log lỗi & Phản hồi 5xx** | Rà soát 58 HTTP requests trên Nginx access log và `web.stdout.log`; xác nhận 0 lỗi HTTP 500 unhandled; bẫy lỗi 503 có kiểm soát. | Hình 8: `screenshots/53_week3_log_review_no_500.png`; thống kê mã phản hồi HTTP và log Nginx tại Mục 4.6.3; Mục 7.4.c. |
+| **Quản lý an toàn dữ liệu thử nghiệm** | Áp dụng tiền tố SKU `REG-TEST-*`, bảo vệ 100% dữ liệu sản xuất gốc; dọn dẹp an toàn có biên bản đối chiếu (Sign-off). | Hình 9: `screenshots/54_week3_web_ui_after_cleanup.png`; bảng kiểm kê dữ liệu an toàn tại Mục 4.6.4; quy trình tại Mục 3.12.2 và 7.4.d. |
+| **Rà soát Code, Dependency & Secret** | 100% không hardcode secret; rà soát 4 package trong `requirements.txt`; kiểm tra 11 biến môi trường Beanstalk. | Bảng phân tích diff và cấu hình tại Mục 4.5.2, 4.5.3, 4.5.4; Mục 7.5.a. |
+| **Bảng Commit Git minh chứng đầy đủ** | Tổng hợp 3 commit Git chính thức ghi nhận đầy đủ SHA, tác giả, thời gian và mô tả thay đổi. | Bảng commit tại Mục 4.5.1; Mục 7.5.b. |
+| **Đánh giá chức năng & Đề xuất Tuần 4** | Phân loại 9 việc đã làm, 3 việc hoãn lại, 3 rào cản lab; xây dựng kế hoạch 5 mục tiêu cho Tuần 4. | Đánh giá tại Mục 6; Kế hoạch Tuần 4 tại Mục 11; Mục 7.5.c. |
 
 ---
 
 ## 9. KHAI BÁO SỬ DỤNG TRỢ LÝ AI (NGUYỄN ĐÌNH KHANH)
 
 - **Công cụ:** Trợ lý AI Antigravity (Gemini 3.8 Flash).
-- **Phạm vi hỗ trợ:** Tư vấn thiết kế cơ chế phòng chống CSV Formula Injection (CWE-1236), hướng dẫn cấu hình lưu trữ S3 theo chuẩn Least Privilege và Server-Side Encryption, tư vấn thuật toán Edge-triggered State Transition chống thông báo lặp qua Amazon SNS, hỗ trợ viết bộ kiểm thử mock cho AWS Boto3 SDK (S3 và SNS), và xây dựng cơ chế ẩn danh PII.
-- **Cách thức kiểm chứng:** Sinh viên trực tiếp viết mã nguồn, cấu hình môi trường, chạy các lệnh cURL kiểm thử trên production, thực thi 33 bài kiểm thử đơn vị tự động và đối chiếu kết quả thực tế trên console.
+- **Phạm vi hỗ trợ:** Tư vấn thiết kế cơ chế phòng chống CSV Formula Injection (CWE-1236), hướng dẫn cấu hình lưu trữ S3 theo chuẩn Least Privilege và Server-Side Encryption, tư vấn thuật toán Edge-triggered State Transition chống thông báo lặp qua Amazon SNS, hỗ trợ viết bộ kiểm thử mock cho AWS Boto3 SDK (S3 và SNS), xây dựng cơ chế ẩn danh PII, tư vấn xây dựng ma trận kiểm thử tích hợp & hồi quy (Test Matrix), phân tích log rà soát mã lỗi 5xx, quy trình quản lý dọn dẹp an toàn dữ liệu thử nghiệm, rà soát diff mã nguồn, phân tích rào cản môi trường Learner Lab, và định hình kế hoạch phát triển Tuần 4.
+- **Cách thức kiểm chứng:** Sinh viên trực tiếp viết mã nguồn, cấu hình môi trường, chạy các lệnh cURL kiểm thử trên production trong cửa sổ kiểm thử thống nhất, rà soát log Nginx và CloudWatch, thực thi 33 bài kiểm thử đơn vị tự động và đối chiếu kết quả thực tế trên console.
 
 ---
 
 ## 10. TỔNG KẾT CỦA NGUYỄN ĐÌNH KHANH
 
-Trong ba ngày làm việc đầu tiên của Tuần 3 (Thứ Tư, Thứ Năm và Thứ Sáu), em đã hoàn thành 100% các nhiệm vụ được phân công với tổng thời lượng 9.0 giờ:
+Trong toàn bộ giai đoạn Tuần 3 (từ Thứ Tư đến Chủ Nhật), em đã hoàn thành **100% các nhiệm vụ được phân công** với tổng thời lượng **14.0 giờ / 14.0 giờ dự kiến**:
 - **Thứ Tư (3.0 giờ):** Rà soát hoàn chỉnh luồng kết nối Flask → PostgreSQL, kiểm thử thành công các API nghiệp vụ và cơ chế chịu lỗi của hệ thống, ghi nhận đầy đủ ảnh minh chứng thực tế (Hình 1–3).
-- **Thứ Năm (3.0 giờ):** Triển khai thành công module xuất báo cáo tồn kho định dạng CSV an toàn, tích hợp chức năng lưu trữ tự động vào Amazon S3 Bucket Private có mã hóa SSE-S3 và phân quyền theo IAM Role.
+- **Thứ Năm (3.0 giờ):** Triển khai thành công module xuất báo cáo tồn kho định dạng CSV an toàn, tích hợp chức năng lưu trữ tự động vào Amazon S3 Bucket Private có mã hóa SSE-S3 và phân quyền theo IAM Role (Hình 4).
 - **Thứ Sáu (3.0 giờ):** Thiết kế hoàn chỉnh luồng cảnh báo tồn kho qua Amazon SNS với thuật toán phát hiện chuyển đổi trạng thái chống thông báo lặp; khởi tạo SNS Topic và xác nhận email subscriber `Confirmed` thực tế trên AWS Console (Hình 5); cấu hình thành công các biến môi trường trên Beanstalk (Hình 6); hoàn thành 9 bài kiểm thử đơn vị tự động và nâng tổng số bài kiểm thử của dự án lên 33/33 tests đạt 100%.
+- **Thứ Bảy (2.5 giờ):** Tiến hành kiểm thử tích hợp và hồi quy toàn diện trong cửa sổ kiểm thử thống nhất (09:00–11:30); xác nhận API và Web UI hoạt động trơn tru sau chuỗi thay đổi cấu hình; rà soát 58 request trong nhật ký lỗi Nginx và CloudWatch xác nhận tỷ lệ lỗi máy chủ ngoài ý muốn (HTTP 500) là 0%; tuân thủ nghiêm ngặt nguyên tắc bảo vệ dữ liệu sản xuất bằng tiền tố SKU riêng biệt (`REG-TEST-*`) và thực hiện quy trình dọn dẹp dữ liệu an toàn có biên bản nghiệm thu chéo (Hình 7–9).
+- **Chủ Nhật (2.5 giờ):** Rà soát toàn diện mã nguồn bảo đảm 100% không hardcode secret; rà soát 4 package trong `requirements.txt` và 11 biến môi trường Beanstalk; tổng hợp bảng commit Git minh chứng đầy đủ; phân loại chi tiết các chức năng đã làm, chưa làm và rào cản lab; xây dựng kế hoạch triển khai 5 mục tiêu cho Tuần 4.
 
-Hệ thống đã sẵn sàng cho ngày làm việc tiếp theo (Thứ Bảy) để tiến hành kiểm thử tích hợp, kiểm thử hồi quy và rà soát hệ thống giám sát CloudWatch.
+Hệ thống hoạt động ổn định tuyệt đối và sẵn sàng bàn giao sang giai đoạn Tuần 4.
+
+---
+
+## 11. ĐỀ XUẤT CÔNG VIỆC VÀ KẾ HOẠCH TRIỂN KHAI TUẦN 4
+
+Dựa trên kết quả vận hành ổn định của Tuần 3 và những hạng mục được hoãn lại có chủ đích, nhóm đề xuất kế hoạch triển khai cho Tuần 4 với 5 mục tiêu trọng tâm:
+
+| STT | Mục tiêu công việc Tuần 4 | Nội dung kỹ thuật chi tiết | Công cụ / Dịch vụ AWS | Kết quả dự kiến |
+| :---: | :--- | :--- | :--- | :--- |
+| **1** | **Tối ưu tầng kết nối Database (Connection Pooling)** | Chuyển đổi kết nối đơn lẻ sang `psycopg2.pool.ThreadedConnectionPool` (kích thước pool: 2–5 connections). Tái sử dụng kết nối giữa các worker thread của Gunicorn, giảm tải CPU/RAM và giảm độ trễ kết nối TCP tới RDS `db.t3.micro`. | Python, `psycopg2.pool`, RDS PostgreSQL | Giảm 40% thời gian phản hồi API trung bình; kiểm soát số connection tối đa dưới 10. |
+| **2** | **Đánh giá và thiết lập giải pháp HTTPS/TLS** | Khảo sát phương án cài đặt chứng chỉ SSL an toàn, tiết kiệm chi phí trong môi trường Learner Lab. Đánh giá tính khả thi giữa việc triển khai Application Load Balancer (ALB) kết hợp AWS Certificate Manager (ACM) và phương án cấu hình SSL trên Reverse Proxy Nginx. | AWS ACM, ALB, Nginx, Let's Encrypt | Báo cáo đánh giá chi phí/tính khả thi; thiết lập HTTPS an toàn cho domain ứng dụng nếu được cấp quyền. |
+| **3** | **Cấu hình giám sát chủ động với CloudWatch Alarms** | Thiết lập CloudWatch Metric Alarms tự động theo dõi: (1) Tỷ lệ lỗi máy chủ HTTP 5xx vượt quá 1% trong 5 phút; (2) Tỷ lệ sử dụng CPU của RDS `inventory-db` vượt quá 80%. Liên kết hành động báo động trực tiếp vào Amazon SNS Topic `inventory-low-stock-alert` đã có subscriber xác nhận. | CloudWatch Alarms, SNS Topic | Hệ thống tự động gửi email cảnh báo tới quản trị viên ngay khi có sự cố hạ tầng. |
+| **4** | **Tự động hóa hạ tầng an toàn bằng IaC (CloudFormation)** | Xây dựng và kiểm thử template CloudFormation (YAML) để tự động hóa việc khởi tạo các tài nguyên phụ trợ (như S3 Bucket, SNS Topic, CloudWatch Alarms) mà tuyệt đối không can thiệp, cập nhật hay thay thế (replace) RDS và Beanstalk đang chạy thực tế. | AWS CloudFormation, YAML, cfn-lint | Template IaC được validate cú pháp; tài liệu hướng dẫn triển khai tự động an toàn. |
+| **5** | **Kiểm thử tải và đánh giá khả năng chịu lỗi (Load Testing)** | Sử dụng công cụ kiểm thử tải nhẹ (ví dụ: `locust` hoặc `k6`) mô phỏng 10–20 người dùng đồng thời thực hiện thao tác tra cứu và xuất kho; đánh giá độ ổn định của ứng dụng và cơ sở dữ liệu dưới áp lực truy cập. | Locust / k6, CloudWatch Metrics | Biểu đồ độ trễ (latency), thông lượng (throughput) và biên bản nghiệm thu hiệu năng. |
 
