@@ -10,7 +10,7 @@
 | Tuần 1 | [week1.md](./logs/week1.md) |
 | Tuần 2 | [week2.md](./logs/week2.md) |
 | Tuần 3 | [week3.md](./logs/week3.md) |
-| Tuần 4 | |
+| Tuần 4 | [week4.md](./logs/week4.md) |
 ---
 
 # Báo cáo tuần
