@@ -1255,7 +1255,9 @@ Quá trình rà soát phát hiện báo cáo đang mô tả hai môi trường k
 
 Ảnh cấu hình Beanstalk được đối chiếu trong phiên thực hành xác nhận `DB_HOST` trỏ tới endpoint `c92a24squlld`. Truy cập `GET /api/products` trả danh sách sản phẩm. Ảnh cấu hình gốc có thông tin xác thực nên không được đưa vào bộ minh chứng bổ sung. Không khẳng định Beanstalk đã kết nối tới RDS `cde2iuylagyb`; không thay đổi DB_HOST hoặc xây dựng kết nối liên tài khoản trong đợt rà soát này.
 
-![API ứng dụng trả danh sách sản phẩm](screenshots/quan_09_application_api.png)
+**Hình 63. API ứng dụng trả danh sách sản phẩm**
+
+![API ứng dụng trả danh sách sản phẩm](screenshots/63_week3_application_api.png)
 
 ### 12.2. Thứ Tư – Rà soát Security Groups, EC2 và IAM
 
@@ -1265,17 +1267,25 @@ RDS `inventory-db` của Quân có trạng thái `Available`, engine PostgreSQL,
 
 DB SG có một inbound rule PostgreSQL TCP 5432, nguồn là `inventory-web-sg` (`sg-0bb46c5bbb3ba364b`) trong cùng VPC. Outbound có một rule `All traffic / All ports / 0.0.0.0/0`; sinh viên ghi nhận phạm vi đi ra rộng và giữ nguyên trong lần kiểm tra. Outbound này không đồng nghĩa DB cho phép kết nối Internet đi vào.
 
-![Cấu hình RDS private và DB Security Group](screenshots/quan_01_rds_connectivity.png)
+**Hình 55. Cấu hình RDS private và DB Security Group**
 
-![Nguồn inbound TCP 5432 của DB SG](screenshots/quan_02_db_inbound_source.png)
+![Cấu hình RDS private và DB Security Group](screenshots/55_week3_rds_connectivity.png)
 
-![Rà soát outbound DB SG](screenshots/quan_03_db_outbound.png)
+**Hình 56. Nguồn inbound TCP 5432 của DB SG**
+
+![Nguồn inbound TCP 5432 của DB SG](screenshots/56_week3_db_inbound_source.png)
+
+**Hình 57. Rà soát outbound DB SG**
+
+![Rà soát outbound DB SG](screenshots/57_week3_db_outbound.png)
 
 #### b. Kiểm tra EC2 và giới hạn rà soát IAM
 
 EC2 `inventory-db-setup` gắn `inventory-web-sg` và IAM role `LabRole`. Trang IAM hiển thị 7 policies, nhưng phiên đăng nhập `voclabs` bị từ chối thao tác `iam:GetPolicy`; thông báo nêu identity-based policy explicit deny. Không suy ra nguyên nhân là SCP, không kết luận role thiếu quyền S3/SNS/CloudWatch và không tuyên bố đã xác nhận least privilege. Không chỉnh sửa role hoặc policy do lab quản lý.
 
-![EC2 quản trị DB, Security Group và IAM role](screenshots/quan_04_ec2_security.png)
+**Hình 58. EC2 quản trị DB, Security Group và IAM role**
+
+![EC2 quản trị DB, Security Group và IAM role](screenshots/58_week3_ec2_security.png)
 
 #### c. Kiểm tra cổng và thu hẹp rule không sử dụng
 
@@ -1291,7 +1301,9 @@ pg_isready -h inventory-db.cde2iuylagyb.us-east-1.rds.amazonaws.com -p 5432 -t 5
 
 Kết quả: `accepting connections`. Điều này xác nhận PostgreSQL phản hồi từ EC2 quản trị qua mạng; không chứng minh xác thực bằng mật khẩu hoặc truy vấn nghiệp vụ. Việc thay mật khẩu DB chưa được thực hiện trong phạm vi báo cáo cá nhân này; không đánh dấu đã khắc phục.
 
-![Kiểm tra kết nối EC2 tới RDS sau khi sinh viên xác nhận lưu xóa rule 5000](screenshots/quan_05_rds_connectivity_after_change.png)
+**Hình 59. Kiểm tra kết nối EC2 tới RDS sau khi sinh viên xác nhận lưu xóa rule 5000**
+
+![Kiểm tra kết nối EC2 tới RDS sau khi sinh viên xác nhận lưu xóa rule 5000](screenshots/59_week3_rds_connectivity_after_change.png)
 
 ### 12.3. Thứ Năm – Quan sát metrics và đối chiếu log
 
@@ -1303,11 +1315,17 @@ Sinh viên dùng RDS Monitoring, dashboard CloudWatch, xem cửa sổ 3 giờ v�
 | DatabaseConnections | Các điểm dữ liệu hiển thị ở 0 | Không kết luận DB hỏng; DB này khác DB ứng dụng |
 | FreeStorageSpace (Minimum) | Quanh 18,38 G bytes, có xu hướng giảm nhẹ | Nhãn trục làm tròn; chưa xác định mức giảm chính xác hoặc nguyên nhân |
 
-![CPU RDS theo thời gian](screenshots/quan_06_rds_cpu.png)
+**Hình 60. CPU RDS theo thời gian**
 
-![Số kết nối RDS theo thời gian](screenshots/quan_07_rds_connections.png)
+![CPU RDS theo thời gian](screenshots/60_week3_rds_cpu.png)
 
-![Dung lượng trống RDS theo thời gian](screenshots/quan_08_rds_storage.png)
+**Hình 61. Số kết nối RDS theo thời gian**
+
+![Số kết nối RDS theo thời gian](screenshots/61_week3_rds_connections.png)
+
+**Hình 62. Dung lượng trống RDS theo thời gian**
+
+![Dung lượng trống RDS theo thời gian](screenshots/62_week3_rds_storage.png)
 
 Trong tài khoản của Quân, CloudWatch chỉ hiển thị ba log groups Lambda: `/aws/lambda/RedshiftEventSubscription`, `/aws/lambda/RedshiftOverwatch`, `/aws/lambda/RoleCreationFunction`; không có nhóm log Beanstalk của ứng dụng. Không tạo log group trống để thay thế bằng chứng streaming. Đối chiếu minh chứng ứng dụng đã có trong tài liệu chung:
 
@@ -1339,7 +1357,9 @@ aws cloudformation validate-template \
 
 AWS trả JSON có `Parameters: []` và description khớp template, không có lỗi. Kết luận: ValidateTemplate thành công; chưa kiểm chứng khả năng tạo stack, quyền tạo Log Group hay chi phí triển khai. Không tạo Change Set, không execute stack, không import/replace tài nguyên hiện hữu.
 
-![Kết quả CloudFormation ValidateTemplate thành công](screenshots/quan_10_iac_validation.png)
+**Hình 64. Kết quả CloudFormation ValidateTemplate thành công**
+
+![Kết quả CloudFormation ValidateTemplate thành công](screenshots/64_week3_iac_validation.png)
 
 Bản template để lưu lâu dài: [`infrastructure/week3-logging.yaml`](../../infrastructure/week3-logging.yaml). File `/tmp` trên EC2 chỉ là bản tạm. Việc validate độc lập là phần bổ sung thực hành; hạng mục triển khai IaC vẫn chưa thực hiện.
 
