@@ -1231,3 +1231,150 @@ Dựa trên kết quả vận hành ổn định của Tuần 3 và những hạ
 | **4** | **Tự động hóa hạ tầng an toàn bằng IaC (CloudFormation)** | Xây dựng và kiểm thử template CloudFormation (YAML) để tự động hóa việc khởi tạo các tài nguyên phụ trợ (như S3 Bucket, SNS Topic, CloudWatch Alarms) mà tuyệt đối không can thiệp, cập nhật hay thay thế (replace) RDS và Beanstalk đang chạy thực tế. | AWS CloudFormation, YAML, cfn-lint | Template IaC được validate cú pháp; tài liệu hướng dẫn triển khai tự động an toàn. |
 | **5** | **Kiểm thử tải và đánh giá khả năng chịu lỗi (Load Testing)** | Sử dụng công cụ kiểm thử tải nhẹ (ví dụ: `locust` hoặc `k6`) mô phỏng 10–20 người dùng đồng thời thực hiện thao tác tra cứu và xuất kho; đánh giá độ ổn định của ứng dụng và cơ sở dữ liệu dưới áp lực truy cập. | Locust / k6, CloudWatch Metrics | Biểu đồ độ trễ (latency), thông lượng (throughput) và biên bản nghiệm thu hiệu năng. |
 
+
+
+---
+
+## 12. CÔNG VIỆC ĐƯỢC GIAO VÀ QUÁ TRÌNH THỰC HIỆN – VÕ MINH QUÂN
+
+**Sinh viên:** Võ Minh Quân – MSSV `24110312`. **Vai trò:** Database, Security & Infrastructure.
+
+Các mục Thứ Tư đến Chủ Nhật dưới đây tương ứng lịch phân công, không phải xác nhận các thao tác đã diễn ra vào đúng ngày trong lịch. Phần bổ sung được tổng hợp ngày 25/10/2026 từ kết quả sinh viên trực tiếp thao tác trên AWS Console và Session Manager. Chưa có nhật ký đủ để xác nhận tổng số giờ thực tế; không quy đổi 14 giờ dự kiến thành giờ đã thực hiện.
+
+### 12.1. Phạm vi môi trường và đối chiếu kết nối
+
+Quá trình rà soát phát hiện báo cáo đang mô tả hai môi trường khác nhau. Phần bổ sung này làm rõ phạm vi áp dụng của các nhận định về RDS trong tài liệu trước đó:
+
+| Thành phần | Môi trường ứng dụng | Môi trường thực hành hạ tầng của Quân |
+| :--- | :--- | :--- |
+| AWS account | `041118630529` | `523156739905` |
+| Region | `us-east-1` | `us-east-1` |
+| Compute | Beanstalk `inventory-env-py312` | EC2 `inventory-db-setup`, `i-045b3bd223100e462` |
+| DB endpoint | `inventory-db.c92a24squlld.us-east-1.rds.amazonaws.com` | `inventory-db.cde2iuylagyb.us-east-1.rds.amazonaws.com` |
+| Bằng chứng | Đối chiếu DB_HOST trong cấu hình Beanstalk và API trả danh sách sản phẩm | DB private, Security Groups, EC2 role và lệnh `pg_isready` |
+
+Ảnh cấu hình Beanstalk được đối chiếu trong phiên thực hành xác nhận `DB_HOST` trỏ tới endpoint `c92a24squlld`. Truy cập `GET /api/products` trả danh sách sản phẩm. Ảnh cấu hình gốc có thông tin xác thực nên không được đưa vào bộ minh chứng bổ sung. Không khẳng định Beanstalk đã kết nối tới RDS `cde2iuylagyb`; không thay đổi DB_HOST hoặc xây dựng kết nối liên tài khoản trong đợt rà soát này.
+
+![API ứng dụng trả danh sách sản phẩm](screenshots/quan_09_application_api.png)
+
+### 12.2. Thứ Tư – Rà soát Security Groups, EC2 và IAM
+
+#### a. Xác minh cấu hình mạng RDS
+
+RDS `inventory-db` của Quân có trạng thái `Available`, engine PostgreSQL, cổng 5432, `Publicly accessible: No`, đặt trong VPC `vpc-08899e1e1656f5f73`. DB gắn `inventory-db-sg` (`sg-0f5e8348f198a9f97`).
+
+DB SG có một inbound rule PostgreSQL TCP 5432, nguồn là `inventory-web-sg` (`sg-0bb46c5bbb3ba364b`) trong cùng VPC. Outbound có một rule `All traffic / All ports / 0.0.0.0/0`; sinh viên ghi nhận phạm vi đi ra rộng và giữ nguyên trong lần kiểm tra. Outbound này không đồng nghĩa DB cho phép kết nối Internet đi vào.
+
+![Cấu hình RDS private và DB Security Group](screenshots/quan_01_rds_connectivity.png)
+
+![Nguồn inbound TCP 5432 của DB SG](screenshots/quan_02_db_inbound_source.png)
+
+![Rà soát outbound DB SG](screenshots/quan_03_db_outbound.png)
+
+#### b. Kiểm tra EC2 và giới hạn rà soát IAM
+
+EC2 `inventory-db-setup` gắn `inventory-web-sg` và IAM role `LabRole`. Trang IAM hiển thị 7 policies, nhưng phiên đăng nhập `voclabs` bị từ chối thao tác `iam:GetPolicy`; thông báo nêu identity-based policy explicit deny. Không suy ra nguyên nhân là SCP, không kết luận role thiếu quyền S3/SNS/CloudWatch và không tuyên bố đã xác nhận least privilege. Không chỉnh sửa role hoặc policy do lab quản lý.
+
+![EC2 quản trị DB, Security Group và IAM role](screenshots/quan_04_ec2_security.png)
+
+#### c. Kiểm tra cổng và thu hẹp rule không sử dụng
+
+Sinh viên mở Session Manager và chạy `sudo ss -lntp`. Kết quả tại thời điểm kiểm tra chỉ thấy SSH lắng nghe TCP 22 trên IPv4/IPv6; không thấy listener 80, 443 hoặc 5000. Kiểm tra Related resources của Web SG hiển thị một instance quản trị, một network interface, bốn rule và một VPC; không phải bảy máy EC2.
+
+Web SG ban đầu mở inbound 80, 443, 5000 từ `0.0.0.0/0`, outbound cho phép mọi lưu lượng. Sau rà soát, sinh viên xóa duy nhất rule Custom TCP 5000 (`sgr-0971e1b338caa9896`) và xác nhận đã Save rules; giữ nguyên 80/443. Chưa lưu ảnh bảng rules sau thay đổi trong bộ bổ sung, vì vậy bằng chứng thay đổi gồm xác nhận thao tác của sinh viên và kết quả kiểm tra kết nối sau đó, không coi ảnh màn hình chỉnh sửa chưa lưu là bằng chứng áp dụng.
+
+Lệnh kiểm tra sau thay đổi:
+
+```bash
+pg_isready -h inventory-db.cde2iuylagyb.us-east-1.rds.amazonaws.com -p 5432 -t 5
+```
+
+Kết quả: `accepting connections`. Điều này xác nhận PostgreSQL phản hồi từ EC2 quản trị qua mạng; không chứng minh xác thực bằng mật khẩu hoặc truy vấn nghiệp vụ. Việc thay mật khẩu DB chưa được thực hiện trong phạm vi báo cáo cá nhân này; không đánh dấu đã khắc phục.
+
+![Kiểm tra kết nối EC2 tới RDS sau khi sinh viên xác nhận lưu xóa rule 5000](screenshots/quan_05_rds_connectivity_after_change.png)
+
+### 12.3. Thứ Năm – Quan sát metrics và đối chiếu log
+
+Sinh viên dùng RDS Monitoring, dashboard CloudWatch, xem cửa sổ 3 giờ và period hiển thị 5 phút. Các biểu đồ được chụp nối tiếp, trục thời gian xấp xỉ 06:00–09:00 UTC (13:00–16:00 UTC+7). Ngày tuyệt đối chưa được xác nhận trong ảnh lịch nên không tự gán ngày cho toàn bộ cửa sổ. Đây là quan sát hiện trạng, không phải kiểm thử tải.
+
+| Metric | Kết quả quan sát | Giới hạn diễn giải |
+| :--- | :--- | :--- |
+| CPUUtilization | Dao động xấp xỉ 3,87–4,63% theo các điểm và trục hiển thị | Không chứng minh khả năng chịu tải hoặc CPU luôn dưới 5% |
+| DatabaseConnections | Các điểm dữ liệu hiển thị ở 0 | Không kết luận DB hỏng; DB này khác DB ứng dụng |
+| FreeStorageSpace (Minimum) | Quanh 18,38 G bytes, có xu hướng giảm nhẹ | Nhãn trục làm tròn; chưa xác định mức giảm chính xác hoặc nguyên nhân |
+
+![CPU RDS theo thời gian](screenshots/quan_06_rds_cpu.png)
+
+![Số kết nối RDS theo thời gian](screenshots/quan_07_rds_connections.png)
+
+![Dung lượng trống RDS theo thời gian](screenshots/quan_08_rds_storage.png)
+
+Trong tài khoản của Quân, CloudWatch chỉ hiển thị ba log groups Lambda: `/aws/lambda/RedshiftEventSubscription`, `/aws/lambda/RedshiftOverwatch`, `/aws/lambda/RoleCreationFunction`; không có nhóm log Beanstalk của ứng dụng. Không tạo log group trống để thay thế bằng chứng streaming. Đối chiếu minh chứng ứng dụng đã có trong tài liệu chung:
+
+![Các log groups Beanstalk và retention ghi nhận ở tuần 2](../week_2/screenshots/43_cloudwatch_log_groups.png)
+
+![Access log ứng dụng ghi nhận ở tuần 2](../week_2/screenshots/44_cloudwatch_access_log.png)
+
+![Minh chứng rà soát log ứng dụng tuần 3](screenshots/53_week3_log_review_no_500.png)
+
+Ảnh tuần 2 chứng minh retention tại thời điểm chụp, không xác nhận retention hiện tại. Quân không trực tiếp xác minh log mới trong tài khoản Beanstalk ở phiên này. Chưa tạo CloudWatch alarm; giữ hạng mục đánh giá/triển khai alarm trong kế hoạch tuần 4, phụ thuộc quyền và chi phí.
+
+### 12.4. Thứ Sáu – Rà soát secret và đánh giá HTTPS
+
+Qua đối chiếu `app.py`, sinh viên xác nhận `app.secret_key` đang được gán chuỗi trực tiếp. Đây là Flask session signing key, khác mật khẩu RDS. Đề xuất chuyển sang biến môi trường `FLASK_SECRET_KEY`, cấu hình giá trị ngẫu nhiên trước deployment và kiểm thử lại cùng người phụ trách backend. Chưa sửa code, thay khóa hoặc deploy; không kết luận đã khắc phục.
+
+Ảnh cấu hình Beanstalk được cung cấp có hiển thị DB_PASSWORD. Không đưa ảnh gốc vào phần bổ sung hoặc sao chép giá trị mật khẩu vào tài liệu. Cần kiểm tra/che các bản ảnh khác trước khi công bố. Việc bỏ ảnh khỏi bản bổ sung không thu hồi secret đã lộ. Chưa rà soát đầy đủ lịch sử Git, mọi ZIP deploy và mọi log; kết luận trước đó trong tài liệu về “100% không hardcode bí mật” không áp dụng như kết luận của đợt rà soát này.
+
+Về HTTPS, sử dụng hiện trạng và đề xuất của nhóm: environment Single instance, URL mặc định đang được truy cập qua HTTP; chưa có minh chứng triển khai HTTPS trong bộ ảnh. Đánh giá cho tuần tiếp theo gồm phương án domain/chứng chỉ, TLS tại proxy hoặc load balancer, chi phí và quyền được phép. Không coi ALB là điều kiện duy nhất cho mọi phương án HTTPS. Chưa tạo ALB, chứng chỉ hoặc thay đổi proxy.
+
+### 12.5. Thứ Bảy – Viết và validate template IaC độc lập
+
+EC2 có AWS CLI `2.36.47`. Sinh viên tạo `/tmp/week3-logging.yaml`, khai báo một `AWS::Logs::LogGroup`, retention 7 ngày, Tags `Project=inventory-app`, `Purpose=week3-iac-test`. Template không chứa RDS, Beanstalk hoặc IAM resources và không chứa secret.
+
+```bash
+aws cloudformation validate-template \
+  --template-body file:///tmp/week3-logging.yaml \
+  --region us-east-1 --no-cli-pager
+```
+
+AWS trả JSON có `Parameters: []` và description khớp template, không có lỗi. Kết luận: ValidateTemplate thành công; chưa kiểm chứng khả năng tạo stack, quyền tạo Log Group hay chi phí triển khai. Không tạo Change Set, không execute stack, không import/replace tài nguyên hiện hữu.
+
+![Kết quả CloudFormation ValidateTemplate thành công](screenshots/quan_10_iac_validation.png)
+
+Bản template để lưu lâu dài: [`infrastructure/week3-logging.yaml`](../../infrastructure/week3-logging.yaml). File `/tmp` trên EC2 chỉ là bản tạm. Việc validate độc lập là phần bổ sung thực hành; hạng mục triển khai IaC vẫn chưa thực hiện.
+
+### 12.6. Chủ Nhật – Tags, ngân sách và bàn giao
+
+Sinh viên kiểm tra RDS có Tags `Owner=Khanh-Quan`, `Project=inventory-app`; không thay đổi Tags. Learner Lab hiển thị `Used $3.5 of $50`: đã dùng 7%, còn 46,50 USD theo số liệu hiển thị. Không dùng mức 100 USD trong mô tả chung làm ngân sách của tài khoản này; số liệu có thể cập nhật trễ và không phải dự báo chi phí cuối kỳ.
+
+Tài nguyên cần quản lý gồm EC2 `inventory-db-setup`, RDS `inventory-db`, SG và hạ tầng mạng có sẵn. Trong bước IaC chỉ tạo file, chưa tạo tài nguyên AWS. Không dừng/xóa DB hoặc EC2; chưa có xác nhận dọn tài nguyên. Kiểm tra Tags và ngân sách chỉ áp dụng tài khoản Quân, không thay cho kiểm kê chi phí tài khoản ứng dụng.
+
+## 13. TỔNG HỢP KẾT QUẢ VÀ GIỚI HẠN – VÕ MINH QUÂN
+
+| Hạng mục | Trạng thái thực tế |
+| :--- | :--- |
+| RDS private, inbound/outbound Web/DB SG | Đã rà soát |
+| Cổng 5000 | Sinh viên xác nhận đã xóa và lưu; kiểm tra RDS sau thay đổi thành công |
+| IAM least privilege | Đã xác định role; bị giới hạn đọc policy, chưa xác nhận least privilege |
+| EC2 → RDS của Quân | PostgreSQL phản hồi; chưa xác nhận truy vấn có xác thực |
+| Ứng dụng → DB ứng dụng | Đối chiếu cấu hình DB_HOST và quan sát API trả sản phẩm; khác DB của Quân |
+| Metrics RDS | Đã quan sát theo thời gian; chưa kiểm thử tải |
+| Logs/retention Beanstalk | Đối chiếu minh chứng chung; chưa kiểm tra trực tiếp retention hiện tại |
+| Secret | Đã phát hiện vấn đề; chưa sửa khóa Flask, chưa xử lý mật khẩu lộ |
+| HTTPS và alarm | Chưa triển khai; chuyển đánh giá tiếp sang tuần 4 |
+| IaC | Đã viết/validate template độc lập; chưa triển khai stack |
+| Tags/ngân sách | Đã kiểm tra tài khoản Quân |
+
+Ưu tiên tiếp theo: thống nhất endpoint trong các phần báo cáo; xử lý khóa hardcode và thông tin xác thực đã lộ cùng backend; xác minh retention/log mới và phương án alarm trong tài khoản ứng dụng; hoàn thiện đánh giá HTTPS; kiểm tra template qua Change Set khi được phép. Không ghi toàn bộ nhiệm vụ đã hoàn tất hoặc mọi cấu hình đã an toàn.
+
+## 14. KHAI BÁO SỬ DỤNG TRỢ LÝ AI – VÕ MINH QUÂN
+
+- **Công cụ:** Trợ lý AI Antigravity (Gemini 3.8 Flash) — theo thông tin sinh viên cung cấp. Phiên hướng dẫn, đối chiếu ảnh và biên soạn phần bổ sung này có sử dụng Codex; không quy các thao tác AWS cho trợ lý AI.
+- **Phạm vi hỗ trợ:** Hướng dẫn đọc cấu hình RDS, SG và IAM; phân biệt hai tài khoản/endpoint; gợi ý lệnh kiểm tra cổng và PostgreSQL; hỗ trợ diễn giải metrics và giới hạn bằng chứng; hướng dẫn viết/validate YAML độc lập; phát hiện secret hardcode, chọn minh chứng phù hợp và biên soạn báo cáo theo kết quả thực tế. Nội dung Antigravity hỗ trợ cụ thể ngoài thông tin sinh viên khai báo chưa được xác minh trong phiên này.
+- **Cách thức kiểm chứng:** Sinh viên trực tiếp thao tác AWS Console và Session Manager, gửi ảnh kết quả để đối chiếu tên/ID tài nguyên, source rule, output `ss`, `pg_isready`, metrics và JSON ValidateTemplate. Xác nhận lưu xóa rule 5000 bằng phản hồi của sinh viên và kiểm tra kết nối sau đó. Đối chiếu DB_HOST với API trả dữ liệu; phân biệt minh chứng nhóm có sẵn với thao tác trực tiếp và không dùng mock/validate thay cho bằng chứng triển khai thật. Các mục chưa kiểm tra được ghi rõ, không tự tạo kết quả hoặc giờ thực hiện.
+
+## 15. KHAI BÁO COMMIT VÀ PHẠM VI THAY ĐỔI – VÕ MINH QUÂN
+
+Phần này ghi nhận commit thực tế sau khi tạo; không dùng commit cũ của thành viên khác để chứng minh thao tác AWS cá nhân. Tác giả Git lấy theo cấu hình Git thực tế, không đổi tên để giả lập người thực hiện. Commit chỉ xác nhận lưu tài liệu/template/minh chứng, không chứng minh các thao tác AWS đã được tự động thực thi.
+
+<!-- QUAN_COMMIT_TABLE -->

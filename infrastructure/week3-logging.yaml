@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Inventory week 3 isolated logging template
+
+Resources:
+  TestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: inventory-app
+        - Key: Purpose
+          Value: week3-iac-test
