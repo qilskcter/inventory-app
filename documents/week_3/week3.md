@@ -1375,10 +1375,6 @@ Tài nguyên cần quản lý gồm EC2 `inventory-db-setup`, RDS `inventory-db`
 
 ## 15. KHAI BÁO COMMIT VÀ PHẠM VI THAY ĐỔI – VÕ MINH QUÂN
 
-Phần này ghi nhận commit thực tế sau khi tạo; không dùng commit cũ của thành viên khác để chứng minh thao tác AWS cá nhân. Tác giả Git lấy theo cấu hình Git thực tế, không đổi tên để giả lập người thực hiện. Commit chỉ xác nhận lưu tài liệu/template/minh chứng, không chứng minh các thao tác AWS đã được tự động thực thi.
+Phần công việc của Võ Minh Quân được lưu trong commit [`49d26fa`](https://github.com/qilskcter/inventory-app/commit/49d26fa7bc8e020998b67d47c6fa348435d5b0ed), ghi nhận lúc 16:43:15 ngày 25/10/2026 (UTC+7), với tác giả Git là `minhquan-tool`. Commit bổ sung các mục 12–15 của báo cáo tuần 3, 10 ảnh minh chứng và template Log Group độc lập. Nội dung làm rõ hai môi trường AWS, trình bày kết quả rà soát hạ tầng, quan sát metrics, kiểm tra kết nối và validate template, đồng thời ghi nhận các giới hạn và công việc còn tồn đọng.
 
-| Commit | Thời điểm Git ghi nhận | Tác giả Git | Nội dung và phạm vi |
-| :--- | :--- | :--- | :--- |
-| [49d26fa](https://github.com/qilskcter/inventory-app/commit/49d26fa7bc8e020998b67d47c6fa348435d5b0ed) | 2026-10-25T16:43:15+07:00 | minhquan-tool | Bổ sung mục 12–15, 10 ảnh đã chọn và template Log Group; phân biệt hai môi trường, ghi rõ kết quả và tồn đọng. |
-
-Bảng được bổ sung sau khi commit trên đã tồn tại; commit cập nhật bảng có thể kiểm tra qua lịch sử file trên GitHub. Không ghi giờ commit là giờ thực hiện thao tác AWS.
+Commit [`d152d81`](https://github.com/qilskcter/inventory-app/commit/d152d81) bổ sung thông tin đối chiếu commit sau khi commit nội dung đã được tạo. Lịch sử thay đổi có thể kiểm tra trực tiếp trên GitHub. Các commit này xác nhận việc lưu tài liệu, template và minh chứng; không thay thế bằng chứng thao tác AWS, không chứng minh hạ tầng đã được triển khai tự động và không được dùng thời điểm commit làm thời gian thực hiện công việc trên AWS.
