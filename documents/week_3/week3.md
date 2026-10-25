@@ -1377,4 +1377,8 @@ Tài nguyên cần quản lý gồm EC2 `inventory-db-setup`, RDS `inventory-db`
 
 Phần này ghi nhận commit thực tế sau khi tạo; không dùng commit cũ của thành viên khác để chứng minh thao tác AWS cá nhân. Tác giả Git lấy theo cấu hình Git thực tế, không đổi tên để giả lập người thực hiện. Commit chỉ xác nhận lưu tài liệu/template/minh chứng, không chứng minh các thao tác AWS đã được tự động thực thi.
 
-<!-- QUAN_COMMIT_TABLE -->
+| Commit | Thời điểm Git ghi nhận | Tác giả Git | Nội dung và phạm vi |
+| :--- | :--- | :--- | :--- |
+| [49d26fa](https://github.com/qilskcter/inventory-app/commit/49d26fa7bc8e020998b67d47c6fa348435d5b0ed) | 2026-10-25T16:43:15+07:00 | minhquan-tool | Bổ sung mục 12–15, 10 ảnh đã chọn và template Log Group; phân biệt hai môi trường, ghi rõ kết quả và tồn đọng. |
+
+Bảng được bổ sung sau khi commit trên đã tồn tại; commit cập nhật bảng có thể kiểm tra qua lịch sử file trên GitHub. Không ghi giờ commit là giờ thực hiện thao tác AWS.
