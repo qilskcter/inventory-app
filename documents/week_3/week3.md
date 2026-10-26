@@ -1390,7 +1390,7 @@ Tài nguyên cần quản lý gồm EC2 `inventory-db-setup`, RDS `inventory-db`
 ## 14. KHAI BÁO SỬ DỤNG TRỢ LÝ AI – VÕ MINH QUÂN
 
 - **Công cụ:** Trợ lý AI Antigravity (Gemini 3.8 Flash).
-- **Phạm vi hỗ trợ:** Hướng dẫn đọc cấu hình RDS, SG và IAM; phân biệt hai tài khoản/endpoint; gợi ý lệnh kiểm tra cổng và PostgreSQL; hỗ trợ diễn giải metrics và giới hạn bằng chứng; hướng dẫn viết/validate YAML độc lập; phát hiện secret hardcode, chọn minh chứng phù hợp và biên soạn báo cáo theo kết quả thực tế. Nội dung Antigravity hỗ trợ cụ thể ngoài thông tin sinh viên khai báo chưa được xác minh trong phiên này.
+- **Phạm vi hỗ trợ:** Hướng dẫn đọc cấu hình RDS, SG và IAM; phân biệt hai tài khoản/endpoint; gợi ý lệnh kiểm tra cổng và PostgreSQL; hỗ trợ diễn giải metrics và giới hạn bằng chứng; hướng dẫn viết/validate YAML độc lập.
 - **Cách thức kiểm chứng:** Sinh viên trực tiếp thao tác AWS Console và Session Manager, gửi ảnh kết quả để đối chiếu tên/ID tài nguyên, source rule, output `ss`, `pg_isready`, metrics và JSON ValidateTemplate. Xác nhận lưu xóa rule 5000 bằng phản hồi của sinh viên và kiểm tra kết nối sau đó. Đối chiếu DB_HOST với API trả dữ liệu; phân biệt minh chứng nhóm có sẵn với thao tác trực tiếp và không dùng mock/validate thay cho bằng chứng triển khai thật. Các mục chưa kiểm tra được ghi rõ, không tự tạo kết quả hoặc giờ thực hiện.
 
 ## 15. KHAI BÁO COMMIT VÀ PHẠM VI THAY ĐỔI – VÕ MINH QUÂN
