@@ -1,12 +1,20 @@
+import atexit
 import logging
 
 from datetime import datetime, timezone
 
 import psycopg2
 import psycopg2.extras
+from psycopg2 import pool
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, url_for
 
-from init_db import init_db, get_db_connection
+from init_db import (
+    init_db,
+    get_db_connection,
+    release_db_connection,
+    get_db_pool,
+    close_db_pool,
+)
 from notifications import send_low_stock_alert
 from reports import generate_inventory_csv, upload_report_to_s3
 
@@ -14,6 +22,9 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
 logger = logging.getLogger(__name__)
+
+# Đăng ký đóng pool kết nối khi ứng dụng dừng
+atexit.register(close_db_pool)
 
 
 class ApiError(Exception):
@@ -75,7 +86,7 @@ def _get_product(product_id):
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 def _perform_stock_transaction(product_id, trans_type, quantity):
@@ -143,7 +154,7 @@ def _perform_stock_transaction(product_id, trans_type, quantity):
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
 
 
 @app.errorhandler(ApiError)
@@ -169,6 +180,18 @@ def handle_database_operational_error(error):
     return render_template("service_unavailable.html"), 503, {"Retry-After": "5"}
 
 
+@app.errorhandler(pool.PoolError)
+def handle_connection_pool_error(error):
+    logger.exception("Connection pool error: %s", error)
+    if request.path.startswith("/api/"):
+        return (
+            jsonify({"error": "Cơ sở dữ liệu tạm thời hết kết nối khả dụng. Vui lòng thử lại sau giây lát."}),
+            503,
+            {"Retry-After": "5"},
+        )
+    return render_template("service_unavailable.html"), 503, {"Retry-After": "5"}
+
+
 @app.route("/")
 def index():
     conn = get_db_connection()
@@ -180,7 +203,7 @@ def index():
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
     return render_template("index.html", products=products)
 
 
@@ -220,7 +243,7 @@ def add_product():
             finally:
                 cur.close()
         finally:
-            conn.close()
+            release_db_connection(conn)
     except (KeyError, ValueError, ApiError) as error:
         flash(
             error.message if isinstance(error, ApiError) else "Dữ liệu sản phẩm không hợp lệ.",
@@ -268,7 +291,7 @@ def api_list_products():
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
     return jsonify(products)
 
 
@@ -302,7 +325,7 @@ def api_create_product():
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
     return jsonify(product), 201
 
 
@@ -349,7 +372,7 @@ def api_product(product_id):
             finally:
                 cur.close()
         finally:
-            conn.close()
+            release_db_connection(conn)
         return jsonify(product)
 
     conn = get_db_connection()
@@ -367,7 +390,7 @@ def api_product(product_id):
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
     return "", 204
 
 
@@ -390,7 +413,7 @@ def api_list_transactions():
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
     return jsonify(transactions)
 
 
@@ -420,7 +443,7 @@ def api_export_inventory_csv():
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
 
     csv_data = generate_inventory_csv(products)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -447,7 +470,7 @@ def api_export_inventory_to_s3():
         finally:
             cur.close()
     finally:
-        conn.close()
+        release_db_connection(conn)
 
     csv_data = generate_inventory_csv(products)
     try:

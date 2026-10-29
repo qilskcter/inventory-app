@@ -9,8 +9,12 @@ import init_db
 
 class InventoryApiTests(unittest.TestCase):
     def setUp(self):
+        init_db.close_db_pool()
         inventory_app.app.config.update(TESTING=True)
         self.client = inventory_app.app.test_client()
+
+    def tearDown(self):
+        init_db.close_db_pool()
 
     def _connection(self, fetchone=None, fetchall=None):
         cursor = MagicMock()

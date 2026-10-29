@@ -20,7 +20,7 @@
 | Tuần 1 | [week1.md](./documents/week_1/week1.md) |
 | Tuần 2 | [week2.md](./documents/week_2/week2.md) |
 | Tuần 3 | [week3.md](./documents/week_3/week3.md) |
-| Tuần 4 | |
+| Tuần 4 | [week4.md](./documents/week_4/week4.md) |
 
 ---
 
