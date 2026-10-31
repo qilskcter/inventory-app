@@ -63,10 +63,10 @@ Tuần 4 là giai đoạn hoàn thiện và nghiệm thu tổng thể dự án �
 ## IV. DANH SÁCH CÔNG VIỆC CẦN LÀM (CHECKLIST THEO GIAI ĐOẠN)
 
 ### Giai đoạn 1: Tối ưu hiệu năng & Kiểm thử tổng thể
-- [ ] Triển khai Connection Pooling (`ThreadedConnectionPool`) tại `init_db.py`, giới hạn 2–5 kết nối.
-- [ ] Kiểm thử tự động hồi quy: xác nhận 100% unit tests (33/33 tests) chạy thành công với Connection Pool.
-- [ ] Thực hiện kịch bản kiểm thử tải nhẹ (10–20 concurrent users) đo lường độ trễ và thông lượng.
-- [ ] Xác nhận không có hiện tượng cạn kiệt kết nối (Connection Exhaustion) hoặc lỗi HTTP 500 trên CloudWatch Logs.
+- [x] Triển khai Connection Pooling (`ThreadedConnectionPool`) tại `init_db.py`, giới hạn 2–5 kết nối.
+- [x] Kiểm thử tự động hồi quy: xác nhận 100% unit tests (33/33 tests) chạy thành công với Connection Pool.
+- [x] Thực hiện kịch bản kiểm thử tải nhẹ (10–20 concurrent users) đo lường độ trễ và thông lượng.
+- [x] Xác nhận không có hiện tượng cạn kiệt kết nối (Connection Exhaustion) hoặc lỗi HTTP 500 trên CloudWatch Logs.
 
 ### Giai đoạn 2: Giám sát chủ động & Tối ưu chi phí
 - [ ] Cấu hình CloudWatch Metric Alarm theo dõi CPU RDS > 80% gắn action gửi thông báo qua SNS.
@@ -76,8 +76,9 @@ Tuần 4 là giai đoạn hoàn thiện và nghiệm thu tổng thể dự án �
 - [ ] Rà soát AWS Cost Explorer và số dư tín dụng AWS Learner Lab, lập bảng phân bổ chi phí chi tiết.
 
 ### Giai đoạn 3: Chuẩn bị kịch bản và diễn tập Demo
-- [ ] Soạn thảo kịch bản Demo (`demo_script.md`) chi tiết các bước thực hiện và phân vai thuyết minh.
-- [ ] Chuẩn bị bộ dữ liệu demo chuẩn hóa (sản phẩm sắp hết hàng, sản phẩm bình thường, email nhận cảnh báo).
+- [x] Soạn thảo kịch bản Demo ([`documents/week_4/demo_script.md`](../documents/week_4/demo_script.md)) chi tiết các bước thực hiện và phân vai thuyết minh.
+- [x] Chuẩn bị bộ dữ liệu demo chuẩn hóa (`W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`, email nhận cảnh báo `24110244@student.hcmute.edu.vn` trạng thái `Confirmed`).
+- [x] Thực hiện kiểm thử toàn trình E2E ([`tests/verify_e2e_demo.py`](../tests/verify_e2e_demo.py)) đối chiếu phản hồi email SNS và file CSV tải lên S3 Private theo đúng kịch bản demo (6/6 ca E2E ĐẠT).
 - [ ] Thực hiện ít nhất 01 buổi diễn tập Live Demo (Dry-run), đo lường thời gian trình bày dưới 10–15 phút.
 - [ ] Ghi hình video demo dự phòng (1080p có lồng tiếng/thuyết minh) tải lên thư mục lưu trữ dự phòng.
 
