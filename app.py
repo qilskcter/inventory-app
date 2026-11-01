@@ -1,6 +1,12 @@
 import atexit
 import logging
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    force=True,
+)
+
 from datetime import datetime, timezone
 
 import psycopg2
@@ -512,6 +518,18 @@ def api_notification_status():
     sub_data = inspect_topic_subscriptions(topic_arn=SNS_TOPIC_ARN, region_name=SNS_REGION)
     info.update(sub_data)
     return jsonify(info), 200
+
+
+@app.route("/api/pool/status", methods=["GET"])
+def api_pool_status():
+    pool_instance = get_db_pool()
+    return jsonify({
+        "status": "healthy",
+        "pool_type": pool_instance.__class__.__name__,
+        "minconn": pool_instance.minconn,
+        "maxconn": pool_instance.maxconn,
+        "closed": getattr(pool_instance, "closed", False),
+    }), 200
 
 
 if __name__ == "__main__":

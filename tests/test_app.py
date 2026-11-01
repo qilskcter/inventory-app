@@ -264,6 +264,23 @@ class InventoryApiTests(unittest.TestCase):
         self.assertEqual(cursor.execute.call_args_list[0].args[1], (4, 3))
         connection.commit.assert_called_once()
 
+    def test_pool_status_endpoint(self):
+        mock_pool = MagicMock()
+        mock_pool.__class__.__name__ = "ThreadedConnectionPool"
+        mock_pool.minconn = 2
+        mock_pool.maxconn = 5
+        mock_pool.closed = False
+
+        with patch.object(inventory_app, "get_db_pool", return_value=mock_pool):
+            response = self.client.get("/api/pool/status")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data["status"], "healthy")
+        self.assertEqual(data["pool_type"], "ThreadedConnectionPool")
+        self.assertEqual(data["minconn"], 2)
+        self.assertEqual(data["maxconn"], 5)
+
 
 if __name__ == "__main__":
     unittest.main()
