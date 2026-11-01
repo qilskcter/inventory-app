@@ -93,11 +93,33 @@ Không sửa hoặc xóa role/policy do Learner Lab quản lý.
 
 ## 5. Biên bản thực hiện
 
-| Tài nguyên | Hành động được duyệt | Người thao tác | Người đối chiếu | Thời điểm | Kết quả |
+Tại thời điểm lập tài liệu, nhóm chưa thực hiện dừng hoặc xóa
+tài nguyên AWS. Hệ thống được giữ lại để kiểm thử, demo và nghiệm thu.
+
+Snapshot inventory-db-final-snapshot đã đạt trạng thái Available.
+Việc tạo snapshot là bước chuẩn bị backup, không phải thao tác dọn
+tài nguyên và chưa chứng minh khả năng khôi phục.
+
+Sau nghiệm thu, nhóm sẽ ghi từng thao tác thực tế vào bảng dưới đây:
+
+| Tài nguyên | Hành động được thống nhất | Người thao tác | Người đối chiếu | Thời điểm | Kết quả / minh chứng |
 |---|---|---|---|---|---|
-| Chưa thực hiện | | | | | |
+| Chưa thực hiện | Chưa có thao tác dừng/xóa | — | — | — | Hệ thống được giữ để nghiệm thu |
 
-## 6. Xác nhận
+## 6. Xác nhận của các thành viên
 
-- Nguyễn Đình Khanh: Chưa xác nhận thực hiện.
-- Võ Minh Quân: Chưa xác nhận thực hiện.
+Tài liệu này là hướng dẫn dự kiến, chưa phải xác nhận cho phép
+dừng hoặc xóa tài nguyên.
+
+Trước khi thực hiện, hai thành viên phải thống nhất danh sách
+tài nguyên, dữ liệu cần giữ, bản backup và thời điểm thực hiện.
+
+| Thành viên | Trách nhiệm | Trạng thái xác nhận |
+|---|---|---|
+| Nguyễn Đình Khanh | Đối chiếu môi trường ứng dụng, phối hợp thao tác AWS | Chưa xác nhận thực hiện dọn tài nguyên |
+| Võ Minh Quân | Chuẩn bị hướng dẫn, đối chiếu backup và tổng hợp biên bản | Chưa xác nhận thực hiện dọn tài nguyên |
+
+Ngày, giờ thống nhất thực hiện: Chưa xác định.
+
+Sau khi hoàn tất, cả hai thành viên kiểm tra kết quả tại Mục 5
+và bổ sung xác nhận thực tế.
