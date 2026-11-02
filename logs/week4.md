@@ -69,11 +69,11 @@ Tuần 4 là giai đoạn hoàn thiện và nghiệm thu tổng thể dự án �
 - [x] Xác nhận không có hiện tượng cạn kiệt kết nối (Connection Exhaustion) hoặc lỗi HTTP 500 trên CloudWatch Logs.
 
 ### Giai đoạn 2: Giám sát chủ động & Tối ưu chi phí
-- [ ] Cấu hình CloudWatch Metric Alarm theo dõi CPU RDS > 80% gắn action gửi thông báo qua SNS.
-- [ ] Cấu hình CloudWatch Metric Alarm theo dõi HTTP 5xx Errors > 1% trên Elastic Beanstalk.
-- [ ] Thiết lập S3 Lifecycle Rule tự động xóa hoặc chuyển lưu trữ báo cáo cũ sau 7 ngày.
-- [ ] Cấu hình Retention Period cho toàn bộ CloudWatch Log Groups ở mức 7 ngày để giảm chi phí lưu trữ log.
-- [ ] Rà soát AWS Cost Explorer và số dư tín dụng AWS Learner Lab, lập bảng phân bổ chi phí chi tiết.
+- [x] Cấu hình CloudWatch Metric Alarm theo dõi CPU RDS > 80% gắn action gửi thông báo qua SNS.
+- [x] Cấu hình CloudWatch Metric Alarm theo dõi HTTP 5xx Errors > 1% trên Elastic Beanstalk.
+- [x] Thiết lập S3 Lifecycle Rule tự động xóa hoặc chuyển lưu trữ báo cáo cũ sau 7 ngày.
+- [x] Cấu hình Retention Period cho toàn bộ CloudWatch Log Groups ở mức 7 ngày để giảm chi phí lưu trữ log.
+- [x] Rà soát AWS Cost Explorer và số dư tín dụng AWS Learner Lab, lập bảng phân bổ chi phí chi tiết.
 
 ### Giai đoạn 3: Chuẩn bị kịch bản và diễn tập Demo
 - [x] Soạn thảo kịch bản Demo ([`documents/week_4/demo_script.md`](../documents/week_4/demo_script.md)) chi tiết các bước thực hiện và phân vai thuyết minh.
@@ -83,15 +83,15 @@ Tuần 4 là giai đoạn hoàn thiện và nghiệm thu tổng thể dự án �
 - [x] Ghi hình video demo thực tế (1080p có thuyết minh) và tải lên YouTube: [https://youtu.be/HJp49w3nh94](https://youtu.be/HJp49w3nh94).
 
 ### Giai đoạn 4: Hoàn thiện báo cáo kỹ thuật & Minh chứng
-- [ ] Cập nhật toàn diện tài liệu kỹ thuật Tuần 4 (`documents/week_4/week4.md`) theo chuẩn cấu trúc nhóm.
-- [ ] Trích xuất bảng commit Git chính thức, phân tích diff và chứng minh 100% không hardcode bí mật.
-- [ ] Chụp và chuẩn hóa toàn bộ ảnh minh chứng kiểm thử tải, CloudWatch Alarms, S3 Lifecycle và chi phí.
-- [ ] Chuyển đổi báo cáo sang định dạng Word (`week4.docx`) phục vụ in ấn/nộp bài.
+- [x] Cập nhật toàn diện tài liệu kỹ thuật Tuần 4 (`documents/week_4/week4.md`) theo chuẩn cấu trúc nhóm.
+- [x] Trích xuất bảng commit Git chính thức, phân tích diff và chứng minh 100% không hardcode bí mật.
+- [x] Chụp và chuẩn hóa toàn bộ ảnh minh chứng kiểm thử tải, CloudWatch Alarms, S3 Lifecycle và chi phí.
+- [x] Chuyển đổi báo cáo sang định dạng tài liệu nộp bài (`week4.docx` / `week4.pdf`) phục vụ in ấn/nộp bài.
 
 ### Giai đoạn 5: Quy trình dọn dẹp tài nguyên an toàn (Post-Demo Teardown)
-- [ ] Tạo bản Final Snapshot lưu trữ cho cơ sở dữ liệu RDS PostgreSQL trước khi có bất kỳ thao tác dọn dẹp nào.
-- [ ] Soạn thảo và đối chiếu biên bản dọn dẹp tài nguyên có chữ ký xác nhận (Sign-off) của 2 thành viên.
-- [ ] Hướng dẫn thứ tự terminate tài nguyên an toàn: Elastic Beanstalk Environment $\rightarrow$ RDS DB $\rightarrow$ S3 Objects $\rightarrow$ CloudWatch Alarms $\rightarrow$ SNS Topics.
+- [x] Tạo bản Final Snapshot lưu trữ cho cơ sở dữ liệu RDS PostgreSQL (`inventory-db-final-snapshot` trạng thái Available) trước khi dọn dẹp.
+- [x] Soạn thảo và đối chiếu biên bản dọn dẹp tài nguyên có chữ ký xác nhận (Sign-off) của 2 thành viên ([`teardown_guide.md`](../documents/week_4/teardown_guide.md)).
+- [x] Hướng dẫn thứ tự terminate tài nguyên an toàn: Elastic Beanstalk Environment $\rightarrow$ RDS DB $\rightarrow$ S3 Objects $\rightarrow$ CloudWatch Alarms $\rightarrow$ SNS Topics (Kích hoạt thực thi sau khi hoàn tất nghiệm thu môn học).
 
 ---
 
