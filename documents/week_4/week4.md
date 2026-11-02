@@ -12,7 +12,9 @@
 
 ---
 
-> **Phạm vi báo cáo:** Báo cáo ghi nhận toàn bộ quá trình thiết kế, triển khai kỹ thuật và đánh giá thực nghiệm cơ chế Connection Pooling (`psycopg2.pool.ThreadedConnectionPool` kích thước 2–5 kết nối) trong hệ thống `inventory-app` tại hai tệp tin trọng yếu [`init_db.py`](../../init_db.py) và [`app.py`](../../app.py). Tài liệu trình bày phân tích chuyên sâu về sự khác biệt hiệu năng giữa mô hình mở kết nối độc lập từng truy vấn (Per-request Connection) và mô hình tái sử dụng socket thông qua Connection Pool trong môi trường đám mây AWS RDS PostgreSQL (`db.t3.micro`). Báo cáo đặc biệt tập trung chứng minh cơ chế giải phóng tài nguyên an toàn trong khối `finally`, kiểm thử tính ổn định khi xử lý chuỗi request liên tục ở cả chế độ tuần tự (Sequential) và đa luồng đồng thời (Concurrent Multithreading), cơ chế xử lý chống cạn kiệt kết nối (Backoff Timeout) và phản hồi HTTP 503 (`Retry-After: 5`) khi đạt trần `maxconn`. Báo cáo ghi nhận việc rà soát, tinh chỉnh và kiểm tra 33 unit tests hiện hữu bảo đảm tương thích 100% với cơ chế mới, đi kèm bộ kiểm thử ổn định 6 ca độc lập (`verify_pool_stability.py`), đạt tỷ lệ vượt qua tuyệt đối (33/33 Unit Tests ĐẠT). Bên cạnh đó, tài liệu công bố chi tiết kết quả kiểm thử tải nhẹ (Load Testing) bằng Locust mô phỏng 15 người dùng đồng thời trên cả 3 endpoint đọc, xuất báo cáo CSV và giao dịch kho, ghi nhận các chỉ số hiệu năng thực tế (18.11 RPS, p95 latency 340ms) và xác nhận duy trì 0% lỗi HTTP 500 hệ thống do nghẽn connection. Đặc biệt, báo cáo trình bày trọn vẹn **Kịch bản Live Demo chi tiết từng bước (Step-by-step Demo Flow)** từ Web UI đến Backend API và dịch vụ AWS ([`demo_script.md`](./demo_script.md)), bộ dữ liệu demo trực quan (`W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`, Email Subscriber SNS `24110244@student.hcmute.edu.vn` trạng thái `Confirmed`), cùng **Biên bản kiểm thử toàn trình (E2E Test - `verify_e2e_demo.py`)** đối chiếu chính xác 100% phản hồi Email cảnh báo SNS trên Gmail và file CSV tải lên Amazon S3 Private Bucket (`inventory-reports-us-east-1-24110244`).
+> **Cập nhật ngày 02/11/2026:** Bổ sung mục 10.2 và ảnh hạ tầng của Quân; điều chỉnh đánh giá và kết luận theo giới hạn kiểm chứng. Các bảng E2E có sẵn cần đối chiếu video thật; không coi chúng là xác nhận mới của Quân.
+
+> **Phạm vi báo cáo:** Báo cáo ghi nhận toàn bộ quá trình thiết kế, triển khai kỹ thuật và đánh giá thực nghiệm cơ chế Connection Pooling (`psycopg2.pool.ThreadedConnectionPool` kích thước 2–5 kết nối) trong hệ thống `inventory-app` tại hai tệp tin trọng yếu [`init_db.py`](../../init_db.py) và [`app.py`](../../app.py). Tài liệu trình bày phân tích chuyên sâu về sự khác biệt hiệu năng giữa mô hình mở kết nối độc lập từng truy vấn (Per-request Connection) và mô hình tái sử dụng socket thông qua Connection Pool trong môi trường đám mây AWS RDS PostgreSQL (`db.t4g.micro`). Báo cáo đặc biệt tập trung chứng minh cơ chế giải phóng tài nguyên an toàn trong khối `finally`, kiểm thử tính ổn định khi xử lý chuỗi request liên tục ở cả chế độ tuần tự (Sequential) và đa luồng đồng thời (Concurrent Multithreading), cơ chế xử lý chống cạn kiệt kết nối (Backoff Timeout) và phản hồi HTTP 503 (`Retry-After: 5`) khi đạt trần `maxconn`. Báo cáo ghi nhận việc rà soát, tinh chỉnh và kiểm tra 33 unit tests hiện hữu bảo đảm tương thích 100% với cơ chế mới, đi kèm bộ kiểm thử ổn định 6 ca độc lập (`verify_pool_stability.py`), đạt tỷ lệ vượt qua tuyệt đối (33/33 Unit Tests ĐẠT). Bên cạnh đó, tài liệu công bố chi tiết kết quả kiểm thử tải nhẹ (Load Testing) bằng Locust mô phỏng 15 người dùng đồng thời trên cả 3 endpoint đọc, xuất báo cáo CSV và giao dịch kho, ghi nhận các chỉ số hiệu năng thực tế (18.16 RPS, p95 latency 380ms) và xác nhận duy trì 0% lỗi HTTP 500 hệ thống do nghẽn connection. Đặc biệt, báo cáo trình bày trọn vẹn **Kịch bản Live Demo chi tiết từng bước (Step-by-step Demo Flow)** từ Web UI đến Backend API và dịch vụ AWS ([`demo_script.md`](./demo_script.md)), bộ dữ liệu demo trực quan (`W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`, Email Subscriber SNS `24110244@student.hcmute.edu.vn` trạng thái `Confirmed`), cùng **Biên bản kiểm thử toàn trình (E2E Test - `verify_e2e_demo.py`)** đối chiếu chính xác 100% phản hồi Email cảnh báo SNS trên Gmail và file CSV tải lên Amazon S3 Private Bucket (`inventory-reports-us-east-1-24110244`).
 
 [Nhật ký công việc tuần 4](../../logs/week4.md) | [Tài liệu kịch bản Live Demo (`demo_script.md`)](./demo_script.md) | [Video Demo Kiểm thử Chức năng (YouTube)](https://youtu.be/HJp49w3nh94)
 
@@ -70,7 +72,7 @@ Client Response <--- Flask Endpoint <--- conn.close() <--- Execute Query
 
 **Nhược điểm của mô hình cũ:**
 - **Chi phí bắt tay mạng (Network Latency):** Mỗi request đòi hỏi thực hiện 3-way TCP handshake, đàm phán mã hóa SSL/TLS và xác thực tài khoản với PostgreSQL. Độ trễ này dao động từ 15ms đến 40ms đối với kết nối trong VPC.
-- **Hao tổn tài nguyên RDS:** PostgreSQL sử dụng kiến trúc đa tiến trình (Process-per-connection). Mỗi lần một kết nối mới được tạo, hệ điều hành của RDS phải `fork()` một tiến trình backend mới, tiêu tốn từ 2MB đến 10MB bộ nhớ RAM. Trên instance `db.t3.micro` (chỉ có 1GB RAM và 2 vCPU), việc mở/đóng liên tục hàng trăm kết nối dễ dẫn đến tình trạng cạn kiệt RAM và CPU spike.
+- **Hao tổn tài nguyên RDS:** PostgreSQL sử dụng kiến trúc đa tiến trình (Process-per-connection). Mỗi lần một kết nối mới được tạo, hệ điều hành của RDS phải `fork()` một tiến trình backend mới, tiêu tốn từ 2MB đến 10MB bộ nhớ RAM. Trên instance `db.t4g.micro` (chỉ có 1GB RAM và 2 vCPU), việc mở/đóng liên tục hàng trăm kết nối dễ dẫn đến tình trạng cạn kiệt RAM và CPU spike.
 - **Nguy cơ cạn kiệt socket (Socket Exhaustion):** Khi lưu lượng truy cập dồn dập, các socket ở trạng thái `TIME_WAIT` tích tụ nhanh chóng ở cả tầng OS của EC2 và RDS, làm từ chối các kết nối hợp lệ tiếp theo.
 
 **Ưu điểm của mô hình Connection Pooling mới:**
@@ -100,7 +102,7 @@ Client Response <--- Flask Endpoint <--- conn.close() <--- Execute Query
                                               v
                       +-----------------------------------------------+
                       |  Amazon RDS PostgreSQL (inventory-db)        |
-                      |  - db.t3.micro (PostgreSQL 18.3)             |
+                      |  - db.t4g.micro (PostgreSQL 18.3)             |
                       |  - Backend processes cố định (2–5 processes)  |
                       |  - Tiết kiệm RAM & CPU ổn định < 5%           |
                       +-----------------------------------------------+
@@ -531,7 +533,7 @@ Kịch bản kiểm thử tải được đóng gói tại tệp [`locustfile.py
 | **`/api/products`** | `GET` | 3 | 338 | 0 | **0.00%** | **8.78** | 259.8 | 284.2 | 270.0 | 310.0 | 330.0 | 530.0 | 626.7 |
 | **`/api/reports/inventory/csv`** | `GET` | 1 | 116 | 0 | **0.00%** | **3.01** | 259.7 | 288.2 | 270.0 | 320.0 | 360.0 | 530.0 | 555.0 |
 | **`/api/transactions`** | `POST` | 2 | 239 | 0 | **0.00%** | **6.21** | 260.9 | 287.6 | 270.0 | 310.0 | 340.0 | 570.0 | 610.7 |
-| **TOÀN HỆ THỐNG (Aggregated)** | ALL | - | **696** | **0** | **0.00%** | **18.11** | **259.7** | **287.5** | **270.0** | **310.0** | **340.0** | **570.0** | **626.7** |
+| **TOÀN HỆ THỐNG (Aggregated)** | ALL | - | **696** | **0** | **0.00%** | **18.16** | **259.7** | **287.5** | **270.0** | **310.0** | **340.0** | **570.0** | **626.7** |
 
 *Ghi chú: Độ trễ phản hồi đo lường trên môi trường thực tế từ Client (mạng Việt Nam) tới AWS Elastic Beanstalk (Region us-east-1 N. Virginia) bao gồm cả độ trễ vật lý của đường truyền Internet xuyên lục địa (Round-Trip Time ~240–250ms). Khi trừ đi RTT mạng, thời gian xử lý nội bộ tại server (Server Processing Time) chỉ dao động trong khoảng **15ms – 40ms**.*
 
@@ -553,10 +555,10 @@ xychart-beta
 
 ### 6.5. Đánh giá ổn định và xác nhận không xuất hiện lỗi HTTP 500 do nghẽn kết nối
 1. **Tỷ lệ lỗi 0.00% (Zero Failure Rate):** Trong suốt 40 giây kiểm thử liên tục với gần 700 lượt truy vấn đồng thời, hệ thống không xuất hiện bất kỳ lỗi HTTP 500 (Internal Server Error), HTTP 502 (Bad Gateway), hay HTTP 504 (Gateway Timeout). Tệp [`load_test_stats_failures.csv`](./load_test_stats_failures.csv) hoàn toàn sạch (0 bản ghi lỗi).
-2. **Thông lượng duy trì ổn định:** Thông lượng đạt mức trung bình **18.11 requests/giây** (cao điểm đạt **19.40 requests/giây**), đáp ứng tốt nhu cầu nghiệp vụ quản lý kho của doanh nghiệp vừa và nhỏ.
+2. **Thông lượng duy trì ổn định:** Thông lượng đạt mức trung bình **18.16 requests/giây** (cao điểm đạt **19.40 requests/giây**), đáp ứng tốt nhu cầu nghiệp vụ quản lý kho của doanh nghiệp vừa và nhỏ.
 3. **Chứng minh hiệu quả của Connection Pooling:**
-   - Nếu không có Connection Pooling, việc 15 người dùng đồng thời liên tục mở kết nối TCP mới sẽ dẫn đến tình trạng cạn kiệt backend processes trên RDS PostgreSQL `db.t3.micro`, phát sinh lỗi `FATAL: remaining connection slots are reserved for non-replication superuser connections` (HTTP 500).
-   - Nhờ có `ThreadedConnectionPool` (2–5 kết nối) phối hợp cùng cơ chế giải phóng triệt để trong `finally:`, các kết nối được tái sử dụng xoay vòng nhịp nhàng; hàng đợi requests được giải quyết tuần tự với độ trễ p95 chỉ 340ms mà không hề xảy ra hiện tượng cạn kiệt tài nguyên (Connection Starvation).
+   - Nếu không có Connection Pooling, việc 15 người dùng đồng thời liên tục mở kết nối TCP mới sẽ dẫn đến tình trạng cạn kiệt backend processes trên RDS PostgreSQL `db.t4g.micro`, phát sinh lỗi `FATAL: remaining connection slots are reserved for non-replication superuser connections` (HTTP 500).
+   - Nhờ có `ThreadedConnectionPool` (2–5 kết nối) phối hợp cùng cơ chế giải phóng triệt để trong `finally:`, các kết nối được tái sử dụng xoay vòng nhịp nhàng; hàng đợi requests được giải quyết tuần tự với độ trễ p95 chỉ 380ms mà không hề xảy ra hiện tượng cạn kiệt tài nguyên (Connection Starvation).
 
 ---
 
@@ -672,7 +674,7 @@ Tuân thủ nghiêm ngặt nguyên tắc không làm biến đổi dữ liệu s
 | Hạng mục chuẩn bị | Thông số cấu hình thực tế trên AWS (`us-east-1`) | Trạng thái sẵn sàng | Minh chứng hình ảnh trực quan |
 | :--- | :--- | :---: | :--- |
 | **Web UI & REST API Endpoint** | `http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanstalk.com` | `200 OK` (Nginx / Gunicorn) | [`48_week3_web_ui_live.png`](../week_3/screenshots/48_week3_web_ui_live.png) |
-| **Amazon RDS PostgreSQL** | `inventory-db.cde2iuylagyb.us-east-1.rds.amazonaws.com:5432` (`inventory_db`) | Private Subnet (`Available`) | [`55_week3_rds_connectivity.png`](../week_3/screenshots/55_week3_rds_connectivity.png) |
+| **Amazon RDS PostgreSQL** | `inventory-db.c92a24squlld.us-east-1.rds.amazonaws.com:5432` (`inventory_db`) | Private Subnet (`Available`) | [`55_week3_rds_connectivity.png`](../week_3/screenshots/55_week3_rds_connectivity.png) |
 | **Database Connection Pool** | `ThreadedConnectionPool(minconn=2, maxconn=5, timeout=3.0s)` | Active & Thread-safe | [`65_week4_connection_pool_init.png`](./screenshots/65_week4_connection_pool_init.png) |
 | **Amazon S3 Private Bucket** | `inventory-reports-us-east-1-24110244` (Thư mục: `inventory_reports/`) | `Block Public Access: ON`, `SSE-S3 AES256` | [`49_week3_s3_bucket_private.png`](../week_3/screenshots/49_week3_s3_bucket_private.png) |
 | **Amazon SNS Topic ARN** | `arn:aws:sns:us-east-1:041118630529:inventory-low-stock-alert` | Active (`Standard`) | [`50_week3_sns_topic_subscription.png`](../week_3/screenshots/50_week3_sns_topic_subscription.png) |
@@ -788,7 +790,9 @@ export ENDPOINT="http://inventory-env-py312.eba-vbehyxmh.us-east-1.elasticbeanst
 
 ---
 
-## 8. BIÊN BẢN KIỂM THỬ TOÀN TRÌNH (E2E TEST) ĐỐI CHIẾU PHẢN HỒI EMAIL SNS VÀ FILE CSV TRÊN S3 PRIVATE
+## 8. KIỂM THỬ LUỒNG DEMO VÀ BẢNG ĐỐI CHIẾU SNS/S3
+
+> **Giới hạn bằng chứng:** Bộ verify_e2e_demo.py dùng database mô phỏng và mock SNS/S3. Các log PASS bên dưới xác nhận kiểm thử logic, không tự chứng minh email đến Gmail hoặc object tồn tại trên S3 thật. Những bảng/email/CSV và xác nhận dọn dữ liệu bên dưới là nội dung bản gốc của Khanh, cần đối chiếu ảnh/video của phiên thật trước khi dùng làm biên bản nghiệm thu. Đặc biệt, tên Quân ở cột Sign-off chưa được xem là xác nhận thực tế trong bản tổng hợp này.
 
 Nhằm xác nhận toàn bộ các bước trong kịch bản Live Demo vận hành trơn tru và chính xác tuyệt đối, nhóm đã xây dựng bộ kịch bản kiểm thử toàn trình tự động tại [`tests/verify_e2e_demo.py`](../../tests/verify_e2e_demo.py) và thực hiện đối chiếu toàn diện giữa Database RDS, phản hồi Email SNS và tệp CSV trên Amazon S3 Private.
 
@@ -939,19 +943,13 @@ Tuân thủ quy trình bảo vệ dữ liệu sản xuất, toàn bộ các bả
 
 ---
 
-## 9. PHÂN TÍCH HIỆU NĂNG VÀ TỐI ƯU CHI PHÍ HẠ TẦNG CLOUD
+## 9. ĐÁNH GIÁ HIỆU NĂNG VÀ CHI PHÍ
 
-Việc tích hợp Connection Pooling và hoàn thiện quy trình kiểm thử E2E đem lại lợi ích trực tiếp cho hạ tầng chạy trên AWS:
+Connection pooling tái sử dụng kết nối và giới hạn số kết nối của mỗi pool/process. Không suy ra toàn RDS luôn tối đa 5 kết nối khi có nhiều worker hoặc client khác. Chưa có phép đo trước/sau cùng điều kiện để xác nhận mức giảm độ trễ, CPU hoặc số tiền tiết kiệm.
 
-1. **Giảm tải CPU và RAM cho Amazon RDS (`inventory-db`):**
-   - Với kích thước pool giới hạn từ 2 đến 5 kết nối, instance `db.t3.micro` chỉ cần duy trì tối đa 5 tiến trình backend phục vụ cho ứng dụng.
-   - Tránh được các đợt tăng vọt (spikes) tài nguyên CPU khi nhận nhiều request đồng thời, giữ cho mức sử dụng CPU của RDS luôn ổn định dưới ngưỡng 5%.
-2. **Loại bỏ hiện tượng cạn kiệt kết nối (Connection Exhaustion):**
-   - Giới hạn cứng `maxconn = 5` ngăn chặn hoàn toàn nguy cơ ứng dụng tạo ra hàng trăm kết nối vượt quá tham số `max_connections` (mặc định khoảng 83 kết nối trên `db.t3.micro`), bảo vệ cơ sở dữ liệu không rơi vào trạng thái `Out of Memory` (OOM).
-3. **Cải thiện thời gian đáp ứng (Response Time):**
-   - Các truy vấn đọc (`GET /api/products`) và ghi (`POST /api/transactions`) không còn phải chịu độ trễ bắt tay mạng (15–40ms mỗi request), giúp thời gian xử lý trung bình của API giảm xuống dưới 10ms.
-4. **Tối ưu chi phí AWS Learner Lab:**
-   - Ứng dụng vận hành nhẹ nhàng, không đòi hỏi phải nâng cấp instance class của RDS lên các loại đắt tiền hơn (`db.t3.small` hoặc `db.m5.large`), bảo toàn số dư tín dụng \$100 được cấp phép của AWS Learner Lab.
+Theo CSV kết quả đang lưu, tổng cộng 707 requests, 0 failures, khoảng 18,16 RPS, trung bình 292,66 ms, p95 380 ms và p99 540 ms. Nếu đây là phiên dùng để nghiệm thu, mục tiêu trung bình dưới 200 ms chưa đạt. Cần đối chiếu ảnh/HTML nếu các giá trị ở phiên khác khác với CSV; không gộp các phiên thành một kết quả.
+
+Cấu hình hạ tầng và ngân sách thực tế được bổ sung ở mục 10.2: RDS db.t4g.micro, hạn mức Lab 50 USD, retention 7 ngày, Lifecycle có bộ lọc và hai alarms. Chưa có chi phí chi tiết hoặc đo mức tiết kiệm thực tế.
 
 ---
 
@@ -961,17 +959,121 @@ Việc tích hợp Connection Pooling và hoàn thiện quy trình kiểm thử 
 - **Vai trò:** Nhóm trưởng / Backend, Tích hợp, Kiểm thử tổng thể & Kịch bản Live Demo
 - **Công việc đã hoàn thành:**
   1. **Thứ Tư (3.0h):** Triển khai kiến trúc Connection Pooling bằng `psycopg2.pool.ThreadedConnectionPool` (2–5 kết nối) trong [`init_db.py`](../../init_db.py); rà soát 11 điểm kết nối tại [`app.py`](../../app.py) giải phóng qua `release_db_connection(conn)` trong khối `finally:`; xây dựng 6 ca kiểm thử ổn định ([`tests/verify_pool_stability.py`](../../tests/verify_pool_stability.py) - Hình 1) và bảo đảm tương thích 100% bộ 33 unit tests hiện hữu.
-  2. **Thứ Năm (3.0h):** Xây dựng kịch bản kiểm thử tải nhẹ với Locust ([`locustfile.py`](../../locustfile.py) và [`run_load_test.py`](../../run_load_test.py)) mô phỏng 15 concurrent users; hoàn thành đo lường RPS (18.11 req/s), p95/p99 latency (340ms/570ms) và xác nhận 0% lỗi HTTP 500 (*Minh chứng: Hình 2 và Hình 3*).
+  2. **Thứ Năm (3.0h):** Xây dựng kịch bản kiểm thử tải nhẹ với Locust ([`locustfile.py`](../../locustfile.py) và [`run_load_test.py`](../../run_load_test.py)) mô phỏng 15 concurrent users; hoàn thành đo lường RPS (18.16 req/s), p95/p99 latency (380ms/540ms) và xác nhận 0% lỗi HTTP 500 (*Minh chứng: Hình 2 và Hình 3*).
   3. **Thứ Sáu (3.0h):** Soạn thảo kịch bản Live Demo chi tiết từng bước ([`documents/week_4/demo_script.md`](./demo_script.md)) từ Web UI đến Backend API và dịch vụ AWS; chuẩn bị bộ dữ liệu demo trực quan (`W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`, email subscriber SNS thực tế `24110244@student.hcmute.edu.vn`); xây dựng và thực thi bộ kiểm thử toàn trình E2E ([`tests/verify_e2e_demo.py`](../../tests/verify_e2e_demo.py) - 6/6 ca ĐẠT) đối chiếu khớp 100% phản hồi email SNS và file CSV tải lên S3 Private Bucket.
   4. Cập nhật và tổng hợp tài liệu báo cáo kỹ thuật Tuần 4 (`documents/week_4/week4.md`).
 
+
 ### 10.2. Võ Minh Quân (MSSV: `24110312`)
-- **Vai trò:** Database, Hạ tầng, Giám sát CloudWatch & Tối ưu chi phí
-- **Công việc đã hoàn thành:**
-  1. Rà soát thông số cấu hình của Amazon RDS PostgreSQL (`inventory-db`), xác minh tham số `max_connections` và tài nguyên RAM/CPU.
-  2. Giám sát các chỉ số CloudWatch Metrics (DatabaseConnections, CPUUtilization, FreeableMemory) trong quá trình chạy kiểm thử tải và diễn tập E2E.
-  3. Thiết lập CloudWatch Metric Alarms tự động theo dõi ngưỡng CPU RDS > 80% và HTTP 5xx Errors > 1%; cấu hình S3 Lifecycle Rule và CloudWatch Log Retention 7 ngày.
-  4. Phối hợp đối chiếu kết quả kiểm thử E2E trên AWS S3 Console, SNS Console và ký xác nhận (Sign-off) biên bản dọn dẹp dữ liệu thử nghiệm an toàn.
+
+**Vai trò:** Database, hạ tầng, giám sát CloudWatch, rà soát ngân sách và chuẩn bị quy trình dọn tài nguyên.
+
+Phần này bổ sung kết quả hạ tầng chưa trình bày chi tiết ở các mục kỹ thuật của Khanh. Các tên ngày tương ứng lịch phân công, không xác nhận thao tác diễn ra đúng ngày hoặc đủ 14 giờ dự kiến. Tổng hợp ngày 02/11/2026 từ ảnh trao đổi. Khanh thao tác AWS trong tài khoản ứng dụng; Quân chuẩn bị nội dung kiểm tra, đối chiếu kết quả, truy cập API và tổng hợp tài liệu.
+
+#### a. Thứ Tư – Đối chiếu môi trường và giám sát
+
+Tiếp nối tuần 3, nhóm phân biệt DB ứng dụng có endpoint chứa `c92a24squlld` với DB thực hành riêng của Quân chứa `cde2iuylagyb`. Tuần 4 sử dụng môi trường ứng dụng chung của Khanh để nghiệm thu, không chuyển DB_HOST hoặc đồng bộ dữ liệu liên tài khoản.
+
+DB chung là `inventory-db`, class thực tế `db.t4g.micro`, port 5432, Publicly accessible: No. DB SG `sg-08a4ddba66d41f09e` chỉ có một inbound rule PostgreSQL TCP/5432 từ `sg-090b58b601e140423`. Ảnh EC2 xác nhận SG nguồn này gắn với instance `inventory-env-py312`. Đây là đối chiếu cấu hình hiện hữu, không phải xác nhận đã rà soát toàn bộ IAM và mạng.
+
+![Nguồn inbound PostgreSQL của DB](screenshots/76_week4_db_sg.png)
+*Hình 76. DB SG cho phép TCP/5432 từ Web SG.*
+
+![SG gắn với EC2 ứng dụng](screenshots/77_week4_ec2_sg.png)
+*Hình 77. EC2 ứng dụng gắn SG khớp nguồn inbound DB.*
+
+Quân truy cập API danh sách sản phẩm và quan sát dữ liệu JSON. Các ảnh Monitoring ghi CPU khoảng 3,6–4,3%, FreeableMemory khoảng 152–155 triệu bytes và kết nối ban đầu ở mức 0. Đây là quan sát hiện trạng, chưa phải kết quả giám sát trong phiên tải.
+
+![Metrics RDS quan sát trong phiên phối hợp](screenshots/78_week4_rds_metrics.png)
+*Hình 78. Metrics RDS nền; chú ý múi giờ và khoảng thời gian trên ảnh.*
+
+Khanh được sinh viên xác nhận đã deploy bản mới. Tooltip sau đó ghi nhận 2 kết nối lúc 10:50 UTC ngày 01/11/2026 (17:50 UTC+7). Một điểm dữ liệu phù hợp với minconn dự kiến nhưng không đủ chứng minh pool ổn định; chưa có ảnh Running version mới và log tương ứng trong bộ minh chứng bổ sung này.
+
+![Tooltip ghi nhận hai kết nối](screenshots/79_week4_connections_2.png)
+*Hình 79. DatabaseConnections bằng 2 tại thời điểm tooltip.*
+
+**Hai alarm đã tạo và đạt OK:**
+
+| Alarm | Cấu hình | Action |
+| :--- | :--- | :--- |
+| `inventory-rds-cpu-high` | AWS/RDS, CPUUtilization, inventory-db; Average; 5 phút; >80; 1/1 điểm | SNS inventory-low-stock-alert |
+| `inventory-http-5xx-rate-high` | Environment inventory-env-py312; hai metric Sum, 5 phút; tỷ lệ >1%; 1/1 điểm | SNS inventory-low-stock-alert |
+
+Metric math dùng `m1=ApplicationRequestsTotal`, `m2=ApplicationRequests5xx`, công thức `IF(m1>0,100*m2/m1,0)`. Nhóm bật hai custom metrics ở cấp Environment trong Enhanced monitoring; không dùng EnvironmentHealth thay tỷ lệ lỗi. Cả hai alarm dùng Treat missing data as missing và Actions enabled.
+
+![CPU alarm cấu hình và OK](screenshots/68_week4_cpu_alarm_config.png)
+*Hình 68a. CPU alarm đúng DB, chu kỳ và ngưỡng.*
+
+![HTTP alarm cấu hình](screenshots/68b_week4_http_alarm_config.png)
+*Hình 68b. Công thức, điều kiện và trạng thái HTTP 5xx alarm.*
+
+![Hai alarm OK và action HTTP](screenshots/69_week4_cloudwatch_alarms_ok_sns.png)
+*Hình 69a. Cả hai alarm OK; HTTP alarm gửi SNS khi chuyển ALARM.*
+
+![Action CPU alarm](screenshots/69b_week4_cpu_alarm_sns.png)
+*Hình 69b. Notification action của CPU alarm.*
+
+Console từng báo từ chối xem alarms và ListMetrics (explicit deny trong identity-based policy voc-cancel-cred), sau đó việc tạo thành công. Chưa xác định nguyên nhân thay đổi phiên/quyền, không kết luận đã sửa IAM. Chưa kiểm thử email do alarm kích hoạt. OK không đồng nghĩa không có lỗi trong toàn bộ quá trình; công thức trả 0 khi không có request không chứng minh có request thành công.
+
+#### b. Thứ Năm – Retention, Lifecycle và ngân sách
+
+**CloudWatch Logs:** các log groups được chụp của inventory-env-py312, gồm web.stdout.log, Nginx access/error và log triển khai, hiển thị retention 1 week. Nhóm xác minh cấu hình có sẵn là 7 ngày, không thay đổi khi đã đúng. Danh sách nhóm chưa xác nhận từng nhóm có log mới hoặc không có lỗi.
+
+![Retention log ứng dụng](screenshots/71_week4_cloudwatch_log_retention.png)
+*Hình 71. Các log groups được chụp có retention 1 week.*
+
+**S3:** bucket inventory-reports-us-east-1-24110244 ban đầu chưa có rule, Objects hiển thị 0 tại phiên kiểm tra. Nhóm tạo rule expire-temp-reports-7-days, trạng thái Enabled, lọc đồng thời prefix inventory_reports/ và tag cleanup=true; expire current versions sau 7 ngày tính từ lúc tạo object. Không xóa toàn bucket và không cấu hình xóa noncurrent versions.
+
+![Lifecycle filter](screenshots/70b_week4_s3_lifecycle_filter.png)
+*Hình 70a. Bộ lọc kết hợp prefix và tag.*
+
+![Expiration sau bảy ngày](screenshots/70c_week4_s3_lifecycle_expiration.png)
+*Hình 70b. Expire current versions sau 7 ngày.*
+
+![Lifecycle enabled](screenshots/70_week4_s3_lifecycle_rule.png)
+*Hình 70c. Rule được tạo thành công, Enabled.*
+
+Rule chỉ áp dụng object khớp cả hai điều kiện; file ứng dụng xuất chưa có tag không tự chịu rule. Chưa có minh chứng object thử được gắn tag hoặc hết hạn thực tế, chưa xác minh versioning. Không dùng Objects(0) để kết luận chưa từng upload trong quá khứ. Báo cáo cần giữ làm minh chứng không được tự động gắn tag dọn tạm.
+
+**Ngân sách tài khoản Lab:** đã dùng 23,90/50 USD (47,8%), còn 26,10 USD theo phép trừ tại thời điểm chụp. Đây là số tổng tài khoản, chưa tách chi phí dự án/dịch vụ và có thể cập nhật trễ.
+
+![Ngân sách Learner Lab](screenshots/72_week4_aws_lab_budget_summary.png)
+*Hình 72a. Learner Lab hiển thị Used $23.9 of $50; hạn mức thực tế là 50 USD.*
+
+![Giới hạn truy cập Billing](screenshots/72b_week4_billing_permission.png)
+*Hình 72b. Bills từ chối quyền, chưa có chi phí theo dịch vụ.*
+
+Phần kiểm kê sâu EC2/EBS/Elastic IP được tạm bỏ qua theo phạm vi phiên làm việc. Không dừng/xóa máy cũ; không ghi đã tối ưu toàn bộ chi phí hoặc tiết kiệm một số tiền cụ thể.
+
+#### c. Thứ Sáu – Backup và hướng dẫn dọn tài nguyên
+
+Snapshot inventory-db-final-snapshot của DB chung inventory-db, loại manual, tạo lúc 20:18 ngày 01/11/2026 (UTC+7), chuyển từ Creating sang Available. Ảnh ghi PostgreSQL 18.3, DB storage 20 GiB và Full snapshot size 2,9 GiB; hai đại lượng dung lượng khác nhau.
+
+![Snapshot Available](screenshots/73_week4_rds_final_snapshot.png)
+*Hình 73. Manual snapshot hoàn tất. Chưa kiểm thử restore.*
+
+Quân xác nhận đã soạn [teardown_guide.md](./teardown_guide.md): điều kiện trước khi dọn, kiểm tra backup, thứ tự phụ thuộc, biên bản và xác nhận hai thành viên. Chưa phê duyệt hoặc thực hiện teardown. Snapshot mang tên final chỉ phản ánh thời điểm tạo; cần bản mới nếu có thay đổi cần giữ sau demo. Trạng thái Available chưa chứng minh khôi phục thành công.
+
+#### d. Thứ Bảy – Chuẩn bị diễn tập và giới hạn nghiệm thu
+
+Quân đã đọc kịch bản demo chung, chuẩn bị phần kiến trúc, SG, CloudWatch và đối chiếu S3. Báo cáo chung có liên kết video; phần bổ sung này chưa xác minh nội dung và mốc thời gian video nên chưa dùng để khẳng định Quân đã thuyết minh, giám sát đúng phiên tải hoặc ký xác nhận dọn dữ liệu. Cần đối chiếu video/biên bản, email và object thật trước khi cập nhật hoàn thành. Không dùng ảnh metrics nền hoặc test mock thay cho phiên tải và E2E AWS thật.
+
+#### e. Chủ Nhật – Tổng hợp minh chứng và bàn giao
+
+Quân tổng hợp kết quả theo lịch công việc, phân biệt tài khoản, sửa class DB và ngân sách theo ảnh, chuẩn bị chú thích, ghi rõ giới hạn Billing và việc chưa làm. Việc chuẩn hóa và cập nhật báo cáo này thực hiện ngày 02/11/2026, không gán lùi ngày hoặc quy đổi giờ kế hoạch thành giờ thực tế.
+
+Ảnh Environment properties từng lộ mật khẩu không đưa vào bộ ảnh bổ sung. Chưa có bằng chứng đổi secret, khắc phục khóa Flask hardcode hoặc hoàn thiện HTTPS được nêu ở tuần 3; không đánh dấu đã xử lý.
+
+| Hạng mục còn lại | Trạng thái |
+| :--- | :--- |
+| Email do CloudWatch alarm kích hoạt | Chưa kiểm thử |
+| Lifecycle hết hạn và object gắn tag | Chưa kiểm chứng thực tế |
+| Chi phí từng dịch vụ, kiểm kê tài nguyên | Billing bị chặn; kiểm kê tạm bỏ qua |
+| Restore snapshot | Chưa thực hiện |
+| Diễn tập, video, dữ liệu test | Cần đối chiếu nội dung và thời gian thực tế |
+| Teardown | Chỉ có kế hoạch, chưa thực hiện |
+| Lịch sử thay đổi phần bổ sung | Xem Git history của báo cáo và bộ ảnh tuần 4 |
+
 
 ---
 
@@ -982,14 +1084,12 @@ Trong quá trình thực hiện công việc Tuần 4, nhóm đã sử dụng tr
 2. **Hỗ trợ xây dựng kịch bản kiểm thử đa luồng, tải nhẹ & E2E:** Tư vấn thiết kế kịch bản Locust headless với phân bổ trọng số hợp lý, trích xuất chỉ số p95/p99 tự động, và xây dựng bộ kiểm thử toàn trình `verify_e2e_demo.py` đối chiếu SNS & S3.
 3. **Soạn thảo kịch bản Live Demo và chuẩn hóa tài liệu:** Hỗ trợ cấu trúc tài liệu kịch bản trình diễn từng bước (`demo_script.md`), sơ đồ tuần tự Mermaid và biên bản đối soát E2E.
 
-*Toàn bộ mã nguồn, cấu hình và kết quả kiểm thử đều đã được hai sinh viên trực tiếp thực thi, kiểm tra và xác thực trên hệ thống thực tế.*
+Phần kỹ thuật có sử dụng mock; các kết quả AWS phải đối chiếu ảnh/video thực tế. Trong phiên hạ tầng bổ sung, Khanh thao tác AWS, Quân đối chiếu và tổng hợp. Quân sử dụng ChatGPT/Codex hỗ trợ diễn giải ảnh, cấu hình alarms/Lifecycle và soạn báo cáo; không dùng AI thay cho xác nhận kết quả.
 
 ---
 
 ## 12. KẾT LUẬN
 
-Các hạng mục công việc trọng tâm của Tuần 4 về **Connection Pooling (2–5 kết nối)**, **Kiểm thử tải nhẹ (Load Testing)**, **Xây dựng kịch bản Live Demo chi tiết** và **Kiểm thử toàn trình (E2E Testing)** đã được hoàn thành xuất sắc, đáp ứng đầy đủ 100% yêu cầu đề ra:
-- **Mã nguồn Connection Pooling hoàn thiện:** Tích hợp đồng bộ `ThreadedConnectionPool` vào [`init_db.py`](../../init_db.py) và [`app.py`](../../app.py), giải phóng kết nối an toàn 100% trong khối `finally`.
-- **Kiểm thử tải nhẹ thành công mỹ mãn:** Mô phỏng 15 người dùng đồng thời đạt thông lượng **18.11 RPS**, độ trễ p95 đạt **340ms**, và tỷ lệ lỗi đạt **0.00%** (0 lỗi HTTP 500 do nghẽn connection).
-- **Kịch bản Live Demo & Dữ liệu trực quan sẵn sàng:** Hoàn thiện tài liệu [`demo_script.md`](./demo_script.md) với 7 bước trình diễn mạch lạc, phân vai chi tiết, bộ SKU cô lập `W4-DEMO-*` và Email Subscriber SNS thực tế ở trạng thái `Confirmed`.
-- **Kiểm thử toàn trình (E2E) và Unit Tests đạt tuyệt đối:** Toàn bộ **33/33 Unit Tests hiện hữu**, **6/6 Pool Stability Tests**, và **6/6 E2E Demo Flow Tests** (tổng cộng **45/45 ca kiểm thử tự động**) đều vượt qua 100%, xác nhận phản hồi Email SNS và tệp CSV trên Amazon S3 Private hoạt động trơn tru, chính xác và an toàn tuyệt đối.
+Nhóm đã xây dựng mã connection pool, kịch bản và bộ kiểm thử như các mục kỹ thuật trình bày. Phần hạ tầng bổ sung có minh chứng hai alarms OK và SNS actions, retention log 7 ngày, Lifecycle Enabled với prefix/tag, ngân sách Lab và manual snapshot Available.
+
+Không đánh đồng test mock với kiểm thử AWS thật; không dùng một điểm kết nối để xác nhận pool ổn định. Việc nghiệm thu demo/video, email do alarm kích hoạt, restore snapshot, kiểm kê chi phí và xử lý secret còn cần được đối chiếu hoặc thực hiện. Chưa dọn tài nguyên trước nghiệm thu. Báo cáo chưa kết luận hoàn thành 100% các yêu cầu.
