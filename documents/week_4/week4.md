@@ -14,7 +14,7 @@
 
 > **Phạm vi báo cáo:** Báo cáo ghi nhận toàn bộ quá trình thiết kế, triển khai kỹ thuật và đánh giá thực nghiệm cơ chế Connection Pooling (`psycopg2.pool.ThreadedConnectionPool` kích thước 2–5 kết nối) trong hệ thống `inventory-app` tại hai tệp tin trọng yếu [`init_db.py`](../../init_db.py) và [`app.py`](../../app.py). Tài liệu trình bày phân tích chuyên sâu về sự khác biệt hiệu năng giữa mô hình mở kết nối độc lập từng truy vấn (Per-request Connection) và mô hình tái sử dụng socket thông qua Connection Pool trong môi trường đám mây AWS RDS PostgreSQL (`db.t3.micro`). Báo cáo đặc biệt tập trung chứng minh cơ chế giải phóng tài nguyên an toàn trong khối `finally`, kiểm thử tính ổn định khi xử lý chuỗi request liên tục ở cả chế độ tuần tự (Sequential) và đa luồng đồng thời (Concurrent Multithreading), cơ chế xử lý chống cạn kiệt kết nối (Backoff Timeout) và phản hồi HTTP 503 (`Retry-After: 5`) khi đạt trần `maxconn`. Báo cáo ghi nhận việc rà soát, tinh chỉnh và kiểm tra 33 unit tests hiện hữu bảo đảm tương thích 100% với cơ chế mới, đi kèm bộ kiểm thử ổn định 6 ca độc lập (`verify_pool_stability.py`), đạt tỷ lệ vượt qua tuyệt đối (33/33 Unit Tests ĐẠT). Bên cạnh đó, tài liệu công bố chi tiết kết quả kiểm thử tải nhẹ (Load Testing) bằng Locust mô phỏng 15 người dùng đồng thời trên cả 3 endpoint đọc, xuất báo cáo CSV và giao dịch kho, ghi nhận các chỉ số hiệu năng thực tế (18.11 RPS, p95 latency 340ms) và xác nhận duy trì 0% lỗi HTTP 500 hệ thống do nghẽn connection. Đặc biệt, báo cáo trình bày trọn vẹn **Kịch bản Live Demo chi tiết từng bước (Step-by-step Demo Flow)** từ Web UI đến Backend API và dịch vụ AWS ([`demo_script.md`](./demo_script.md)), bộ dữ liệu demo trực quan (`W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`, Email Subscriber SNS `24110244@student.hcmute.edu.vn` trạng thái `Confirmed`), cùng **Biên bản kiểm thử toàn trình (E2E Test - `verify_e2e_demo.py`)** đối chiếu chính xác 100% phản hồi Email cảnh báo SNS trên Gmail và file CSV tải lên Amazon S3 Private Bucket (`inventory-reports-us-east-1-24110244`).
 
-[Nhật ký công việc tuần 4](../../logs/week4.md) | [Tài liệu kịch bản Live Demo (`demo_script.md`)](./demo_script.md)
+[Nhật ký công việc tuần 4](../../logs/week4.md) | [Tài liệu kịch bản Live Demo (`demo_script.md`)](./demo_script.md) | [Video Demo Kiểm thử Chức năng (YouTube)](https://youtu.be/HJp49w3nh94)
 
 ---
 
@@ -561,6 +561,26 @@ xychart-beta
 ---
 
 ## 7. SOẠN THẢO KỊCH BẢN LIVE DEMO CHI TIẾT TỪNG BƯỚC (STEP-BY-STEP DEMO FLOW) VÀ CHUẨN BỊ DỮ LIỆU DEMO TRỰC QUAN
+
+> [!TIP]
+> **Video Demo Kiểm thử Toàn trình & Nghiệp vụ Sản phẩm:**  
+> - **Đường dẫn YouTube:** [https://youtu.be/HJp49w3nh94](https://youtu.be/HJp49w3nh94)  
+> - **Thời lượng & Chất lượng:** Video độ phân giải cao 1080p, thuyết minh chi tiết từng bước theo đúng kịch bản thiết kế.
+> - **Phạm vi kiểm chứng trong video:**
+>   1. Kiểm tra trạng thái hệ thống và xác nhận người nhận cảnh báo AWS SNS (`Confirmed` với email ẩn danh PII).
+>   2. Khởi tạo sản phẩm demo qua REST API và Web UI; kiểm chứng hiển thị huy hiệu `"Sắp hết"` trực quan khi tồn kho $\le$ ngưỡng.
+>   3. Thực hiện giao dịch Nhập kho nguyên tử (Inbound) và kiểm tra tồn kho cập nhật tức thì.
+>   4. Thực hiện giao dịch Xuất kho (Outbound) chạm ngưỡng an toàn $\rightarrow$ Nhận email cảnh báo thời gian thực từ AWS SNS trong hộp thư Gmail.
+>   5. Kiểm chứng cơ chế Debounce chống gửi lặp email khi xuất kho tiếp lúc tồn kho đã dưới ngưỡng.
+>   6. Tải báo cáo CSV có khử mã độc Formula Injection và đẩy báo cáo lưu trữ lên Amazon S3 Private Bucket với mã hóa SSE-S3 AES-256.
+>   7. Kiểm thử các tình huống ngoại lệ (chặn xuất âm kho 409 Conflict, chặn trùng SKU 409, chặn sửa số lượng trực tiếp 400 Bad Request) và dọn dẹp an toàn khôi phục nguyên trạng hệ thống.
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=HJp49w3nh94" target="_blank">
+    <img src="https://img.youtube.com/vi/HJp49w3nh94/maxresdefault.jpg" alt="Video Demo Hệ Thống Quản Lý Kho & Cảnh Báo Tồn Kho" width="85%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  </a>
+  <p><em>(Nhấp vào hình ảnh trên để xem trực tiếp Video Demo trên YouTube - Độ phân giải 1080p Full HD)</em></p>
+</div>
 
 Tài liệu kịch bản trình diễn độc lập được lưu trữ tại [`documents/week_4/demo_script.md`](./demo_script.md). Dưới đây là nội dung thiết kế chi tiết luồng Live Demo từ giao diện Web UI đến Backend RESTful API và các dịch vụ đám mây AWS (RDS PostgreSQL, Amazon SNS, Amazon S3 Private).
 

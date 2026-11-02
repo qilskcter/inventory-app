@@ -22,6 +22,16 @@
 | Tuần 3 | [week3.md](./documents/week_3/week3.md) |
 | Tuần 4 | [week4.md](./documents/week_4/week4.md) |
 
+* **Video Demo Hệ thống & Kiểm thử chức năng (YouTube):** [https://youtu.be/HJp49w3nh94](https://youtu.be/HJp49w3nh94)
+* **Kịch bản Live Demo chi tiết:** [demo_script.md](./documents/week_4/demo_script.md)
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=HJp49w3nh94" target="_blank">
+    <img src="https://img.youtube.com/vi/HJp49w3nh94/maxresdefault.jpg" alt="Video Demo Hệ Thống Quản Lý Kho & Cảnh Báo Tồn Kho" width="80%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  </a>
+  <p><em>(Nhấp vào hình ảnh trên để xem trực tiếp Video Demo trên YouTube - Độ phân giải 1080p Full HD)</em></p>
+</div>
+
 ---
 
 ## Tính năng chính

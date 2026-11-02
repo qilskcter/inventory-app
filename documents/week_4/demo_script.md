@@ -7,7 +7,15 @@
 1. **Nguyễn Đình Khanh** (MSSV: `24110244`) – Nhóm trưởng / Phụ trách Backend, REST API, Tích hợp S3/SNS & Điều phối Live Demo
 2. **Võ Minh Quân** (MSSV: `24110312`) – Thành viên / Phụ trách Database RDS, Hạ tầng VPC/Security Group, CloudWatch & Đối chiếu AWS Console  
 **Công cụ trình diễn:** Trình duyệt Web (Browser), Postman / cURL CLI, AWS Management Console (Beanstalk, RDS, S3 Console, SNS Console, CloudWatch), Hộp thư Gmail (`24110244@student.hcmute.edu.vn`)  
-**Thời lượng trình diễn tiêu chuẩn:** 12 – 15 phút
+**Thời lượng trình diễn tiêu chuẩn:** 12 – 15 phút  
+**Video Demo Thực tế (YouTube):** [https://youtu.be/HJp49w3nh94](https://youtu.be/HJp49w3nh94)
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=HJp49w3nh94" target="_blank">
+    <img src="https://img.youtube.com/vi/HJp49w3nh94/maxresdefault.jpg" alt="Video Demo Hệ Thống Quản Lý Kho & Cảnh Báo Tồn Kho" width="85%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  </a>
+  <p><em>(Nhấp vào hình ảnh trên để xem trực tiếp Video Demo trên YouTube - Độ phân giải 1080p Full HD)</em></p>
+</div>
 
 ---
 
@@ -256,8 +264,11 @@ Trước khi bắt đầu, người trình diễn mở sẵn 4 tab trên màn h�
 ### BƯỚC 6: Xuất báo cáo CSV an toàn và Đối chiếu lưu trữ trên Amazon S3 Private (08:30 – 10:30)
 
 - **Người thực hiện:** Nguyễn Đình Khanh (kích hoạt xuất báo cáo) + Võ Minh Quân (đối chiếu trên AWS S3 Console)
-- **Thao tác 6.1 (Tải CSV trực tiếp trên Browser):** Nhấp vào nút **`📥 Xuất báo cáo CSV`** trên thanh Header của Web UI (`GET /api/reports/inventory/csv`). Mở file vừa tải về để kiểm tra tiếng Việt có dấu (nhờ chuẩn mã hóa `utf-8-sig` 3-byte BOM `\xef\xbb\xbf`).
-- **Thao tác 6.2 (Đẩy báo cáo lưu trữ lên Amazon S3 Private Bucket):**
+- **Thao tác 6.1 (Tải CSV trực tiếp trên Browser):** Nhấp vào nút **`📥 Xuất báo cáo CSV`** trên thanh Header của Web UI (`GET /api/reports/inventory/csv`). Mở file vừa tải về để kiểm tra tiếng Việt có dấu chuẩn UTF-8 (nhờ chuẩn mã hóa `utf-8-sig` 3-byte BOM `\xef\xbb\xbf`).
+- **Thao tác 6.2 (Đối chiếu trạng thái ban đầu trên Amazon S3 Console):**
+  - Chuyển sang Tab 3 (AWS S3 Console), mở Bucket `inventory-reports-us-east-1-24110244`.
+  - **Minh chứng ban đầu:** Quay lướt qua màn hình hiển thị `Objects (0)` – *"No objects. You don't have any objects in this bucket"*, chứng minh bucket hoàn toàn sạch trước khi xuất báo cáo.
+- **Thao tác 6.3 (Đẩy báo cáo lưu trữ lên Amazon S3 Private Bucket qua API):**
   ```bash
   curl -s -X POST "$ENDPOINT/api/reports/inventory/export-s3" | python3 -m json.tool
   ```
@@ -271,13 +282,14 @@ Trước khi bắt đầu, người trình diễn mở sẵn 4 tab trên màn h�
     "total_records": 6
   }
   ```
-- **Thao tác 6.3 (Đối chiếu trực tiếp trên AWS S3 Console):**
-  - Mở S3 Console $\rightarrow$ Bucket `inventory-reports-us-east-1-24110244` $\rightarrow$ Thư mục `inventory_reports/`.
-  - Xác nhận tệp `inventory_report_20261031_070845.csv` vừa xuất hiện với đầy đủ thuộc tính bảo mật:
+- **Thao tác 6.4 (Đối chiếu kết quả thực tế trên AWS S3 Console):**
+  - Quay lại tab S3 Console, nhấp nút **Refresh (hình vòng xoay mũi tên 🔄)**.
+  - Thư mục `inventory_reports/` cùng tệp `inventory_report_20261031_070845.csv` lập tức xuất hiện theo thời gian thực (Real-time).
+  - Nhấp vào chi tiết tệp đối chiếu các thông số an toàn:
     - **Block all public access:** `On` (URL công khai bị chặn `AccessDenied` 100%).
     - **Server-side encryption:** `Amazon S3 managed keys (SSE-S3)` / `AES-256`.
     - **Custom Metadata:** `generated_by: inventory-app`, `report_type: inventory_stock`.
-  - Tải file từ S3 Console về máy và đối chiếu nội dung:
+  - Tải file từ S3 Console về máy và mở kiểm tra:
     ```csv
     Mã ID,Mã SKU,Tên sản phẩm,Số lượng tồn kho,Ngưỡng an toàn,Trạng thái cảnh báo,Cập nhật lần cuối
     1,1,test,11,5,Bình thường,2026-10-16 15:52:10
@@ -287,11 +299,11 @@ Trước khi bắt đầu, người trình diễn mở sẵn 4 tab trên màn h�
     21,W4-DEMO-02,Màn hình Dell UltraSharp 27 4K,15,5,Bình thường,2026-10-31 07:02:15
     22,W4-DEMO-03,'=SUM(A1:A10) Cáp Thunderbolt 4,3,5,Cảnh báo hết hàng,2026-10-31 07:03:00
     ```
-    *(Chứng minh tên sản phẩm `W4-DEMO-03` đã được tự động thêm dấu nháy đơn `'` ở đầu để vô hiệu hóa công thức độc hại trên Excel).*
+    *(Chứng minh tên sản phẩm `W4-DEMO-03` đã được tự động thêm dấu nháy đơn `'` ở đầu để vô hiệu hóa công thức độc hại CSV Formula Injection trên Microsoft Excel).*
 
 ---
 
-### BƯỚC 7: Trình diễn cơ chế bẫy lỗi nghiệp vụ (400, 409, 503) & Dọn dẹp an toàn (10:30 – 14:00)
+### BƯỚC 7: Trình diễn cơ chế bẫy lỗi nghiệp vụ (Negative Testing: 400, 409) (10:30 – 12:30)
 
 - **Người thực hiện:** Võ Minh Quân & Nguyễn Đình Khanh
 - **Thao tác 7.1 (Kiểm chứng chặn xuất âm kho – HTTP 409 Conflict):**
@@ -316,14 +328,24 @@ Trước khi bắt đầu, người trình diễn mở sẵn 4 tab trên màn h�
     -d '{"quantity": 500}'
   ```
   $\rightarrow$ Phản hồi: `HTTP/1.1 400 Bad Request` – `{"error": "Trường không được hỗ trợ: quantity."}` (bắt buộc mọi biến động tồn kho phải đi qua API giao dịch để lưu vết kiểm toán).
-- **Thao tác 7.4 (Dọn dẹp an toàn dữ liệu Demo sau buổi trình diễn – Safe Cleanup):**
-  Sau khi Võ Minh Quân xác nhận (Sign-off) đã đối chiếu xong dữ liệu, Nguyễn Đình Khanh xóa sạch 3 bản ghi thử nghiệm `W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`:
+
+---
+
+### BƯỚC 8: Dọn dẹp an toàn dữ liệu Demo & Kết thúc trình diễn (12:30 – 14:00)
+
+- **Người thực hiện:** Nguyễn Đình Khanh & Võ Minh Quân
+- **Thao tác 8.1 (Dọn dẹp an toàn dữ liệu Demo – Safe Cleanup):**
+  Sau khi hoàn tất toàn bộ chu trình kiểm thử, thực thi lệnh xóa sạch 3 bản ghi thử nghiệm `W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`:
   ```bash
   curl -i -X DELETE "$ENDPOINT/api/products/20"
   curl -i -X DELETE "$ENDPOINT/api/products/21"
   curl -i -X DELETE "$ENDPOINT/api/products/22"
   ```
-  $\rightarrow$ Phản hồi: `HTTP/1.1 204 No Content`. Tải lại trang Web UI xác nhận dữ liệu sản xuất gốc được giữ nguyên vẹn 100%.
+  $\rightarrow$ Phản hồi: `HTTP/1.1 204 No Content`.
+- **Thao tác 8.2 (Xác nhận nguyên trạng trên Web UI):**
+  - Tải lại trang Web UI (`F5`), xác nhận các dòng sản phẩm demo biến mất hoàn toàn, bảng dữ liệu gốc được bảo toàn nguyên vẹn 100%.
+- **Tổng kết:**
+  > *"Hệ thống `inventory-app` đã hoàn thành xuất sắc toàn bộ chu trình kiểm thử chức năng và tích hợp đám mây theo kiến trúc 4 tầng: Web UI thân thiện, REST API an toàn, Amazon RDS PostgreSQL nguyên tử với Connection Pool, Amazon SNS gửi cảnh báo email tức thì có chống spam, Amazon S3 lưu trữ báo cáo mã hóa chuẩn SSE-S3 AES-256, cùng cơ chế bẫy lỗi và dọn dẹp an toàn tuyệt đối."*
 
 ---
 

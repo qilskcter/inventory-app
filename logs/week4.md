@@ -79,8 +79,8 @@ Tuần 4 là giai đoạn hoàn thiện và nghiệm thu tổng thể dự án �
 - [x] Soạn thảo kịch bản Demo ([`documents/week_4/demo_script.md`](../documents/week_4/demo_script.md)) chi tiết các bước thực hiện và phân vai thuyết minh.
 - [x] Chuẩn bị bộ dữ liệu demo chuẩn hóa (`W4-DEMO-01`, `W4-DEMO-02`, `W4-DEMO-03`, email nhận cảnh báo `24110244@student.hcmute.edu.vn` trạng thái `Confirmed`).
 - [x] Thực hiện kiểm thử toàn trình E2E ([`tests/verify_e2e_demo.py`](../tests/verify_e2e_demo.py)) đối chiếu phản hồi email SNS và file CSV tải lên S3 Private theo đúng kịch bản demo (6/6 ca E2E ĐẠT).
-- [ ] Thực hiện ít nhất 01 buổi diễn tập Live Demo (Dry-run), đo lường thời gian trình bày dưới 10–15 phút.
-- [ ] Ghi hình video demo dự phòng (1080p có lồng tiếng/thuyết minh) tải lên thư mục lưu trữ dự phòng.
+- [x] Thực hiện ít nhất 01 buổi diễn tập Live Demo (Dry-run), đo lường thời gian trình bày dưới 10–15 phút.
+- [x] Ghi hình video demo thực tế (1080p có thuyết minh) và tải lên YouTube: [https://youtu.be/HJp49w3nh94](https://youtu.be/HJp49w3nh94).
 
 ### Giai đoạn 4: Hoàn thiện báo cáo kỹ thuật & Minh chứng
 - [ ] Cập nhật toàn diện tài liệu kỹ thuật Tuần 4 (`documents/week_4/week4.md`) theo chuẩn cấu trúc nhóm.
